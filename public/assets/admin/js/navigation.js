@@ -4,7 +4,7 @@
  * Data struktur menu sidebar Admin Bank Sampah.
  */
 
-window.navigation = [
+export const navigation = [
   {
     label: "Utama",
     items: [
