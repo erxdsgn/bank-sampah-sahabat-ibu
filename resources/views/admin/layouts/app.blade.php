@@ -19,11 +19,21 @@
         }();
     </script>
 
-    <script defer src="{{ asset('assets/admin/js/runtime.js') }}"></script>
-    <script defer src="{{ asset('assets/admin/vendor/vendor-fullcalendar.js') }}"></script>
-    <script defer src="{{ asset('assets/admin/vendor/vendor-chartjs.js') }}"></script>
-    <script defer src="{{ asset('assets/admin/vendor/vendors.js') }}"></script>
-    <script defer src="{{ asset('assets/admin/js/2026.js') }}"></script>
+    <!-- Pindahkan semua JS ke sebelum </body> -->
+    <script src="{{ asset('assets/admin/js/runtime.js') }}"></script>
+    <script src="{{ asset('assets/admin/vendor/vendors.js') }}"></script>
+    <script src="{{ asset('assets/admin/vendor/vendor-fullcalendar.js') }}"></script>
+    <script src="{{ asset('assets/admin/vendor/vendor-chartjs.js') }}"></script>
+
+    {{-- 1. Muat data navigasi terlebih dahulu --}}
+    <script src="{{ asset('assets/admin/js/navigation.js') }}"></script>
+
+    {{-- 2. Baru muat renderer sidebar dan layout --}}
+    <script src="{{ asset('assets/admin/js/sidebar.js') }}"></script>
+    <script src="{{ asset('assets/admin/js/topbar.js') }}"></script>
+    <script src="{{ asset('assets/admin/js/footer.js') }}"></script>
+    <script src="{{ asset('assets/admin/js/layout.js') }}"></script>
+
     <link href="{{ asset('assets/admin/css/style.css') }}" rel="stylesheet">
     @stack('head')
 </head>

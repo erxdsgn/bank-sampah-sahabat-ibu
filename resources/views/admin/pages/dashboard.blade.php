@@ -2,8 +2,631 @@
 
 @section('title', 'Dashboard')
 @section('active', 'dashboard')
-@section('crumbs', 'Workspace | Dashboard')
+@section('crumbs', 'Dashboard')
 
 @section('content')
-<section class="hero"><div class="hero-text"><span class="eyebrow" id="heroDate">Thursday · April 23 · 2026</span><h1 class="hero-title">Bank Sampah <span class="accent">Sahabat Ibu</span></h1><p class="hero-sub">Total visits are <strong>+10%</strong> week over week, unique visitors steady, and bounce rate holding at 33%. Two new regions came online overnight.</p></div><div class="hero-actions"><button class="btn btn--ghost"><svg viewbox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg> Export</button> <button class="btn btn--primary"><svg viewbox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg> New report</button></div></section><section aria-label="Key metrics" class="kpi-grid"><article class="kpi-card c-success"><div class="kpi-top"><div class="kpi-identity"><div class="kpi-icon success"><svg viewbox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></div><div class="kpi-label">Total visits</div></div><span class="kpi-pill up"><svg viewbox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10"></path></svg> +10%</span></div><div class="kpi-value">1.24<sup>M</sup></div><div class="kpi-compare"><svg class="up" viewbox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10"></path></svg> up from <strong>1.12M</strong> <span class="sep">·</span> last week</div></article><article class="kpi-card c-danger"><div class="kpi-top"><div class="kpi-identity"><div class="kpi-icon danger"><svg viewbox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6M8 13h8M8 17h8M8 9h2"></path></svg></div><div class="kpi-label">Page views</div></div><span class="kpi-pill down"><svg viewbox="0 0 24 24"><path d="M7 7l10 10M7 17h10V7"></path></svg> −7%</span></div><div class="kpi-value">4.08<sup>M</sup></div><div class="kpi-compare"><svg class="down" viewbox="0 0 24 24"><path d="M7 7l10 10M7 17h10V7"></path></svg> down from <strong>4.39M</strong> <span class="sep">·</span> last week</div></article><article class="kpi-card c-purple"><div class="kpi-top"><div class="kpi-identity"><div class="kpi-icon purple"><svg viewbox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg></div><div class="kpi-label">Unique visitors</div></div><span class="kpi-pill flat"><svg viewbox="0 0 24 24"><path d="M5 12h14"></path></svg> ~12%</span></div><div class="kpi-value">842<sup>K</sup></div><div class="kpi-compare"><svg class="flat" viewbox="0 0 24 24"><path d="M5 12h14"></path></svg> holding around <strong>835K</strong> <span class="sep">·</span> last week</div></article><article class="kpi-card c-primary"><div class="kpi-top"><div class="kpi-identity"><div class="kpi-icon primary"><svg viewbox="0 0 24 24"><path d="M12 20V10M18 20V4M6 20v-4"></path></svg></div><div class="kpi-label">Bounce rate</div></div><span class="kpi-pill info"><svg viewbox="0 0 24 24"><path d="M5 12h14"></path></svg> steady</span></div><div class="kpi-value">33<sup>%</sup></div><div class="kpi-compare"><svg class="info" viewbox="0 0 24 24"><path d="M5 12h14"></path></svg> matching <strong>33%</strong> <span class="sep">·</span> last week</div></article></section><div class="grid"><section class="col-12 card"><div class="card-head"><div class="card-title-wrap"><span class="eyebrow">Geography</span><h2 class="card-title">Site visits</h2></div><a class="card-action" href="#">View report <svg viewbox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"></path></svg></a></div><div class="sv-regions"><div class="sv-region"><div class="sv-region-head"><span class="marker" style="background:var(--purple)"></span> United States</div><div class="sv-region-value">100K<span class="pct">50%</span></div><div class="sv-region-bar"><div class="sv-region-bar-fill" style="width:50%;background:var(--purple)"></div></div></div><div class="sv-region"><div class="sv-region-head"><span class="marker" style="background:var(--success)"></span> Europe</div><div class="sv-region-value">1M<span class="pct">80%</span></div><div class="sv-region-bar"><div class="sv-region-bar-fill" style="width:80%;background:var(--success)"></div></div></div><div class="sv-region"><div class="sv-region-head"><span class="marker" style="background:var(--info)"></span> Australia</div><div class="sv-region-value">450K<span class="pct">40%</span></div><div class="sv-region-bar"><div class="sv-region-bar-fill" style="width:40%;background:var(--info)"></div></div></div><div class="sv-region"><div class="sv-region-head"><span class="marker" style="background:#64748b"></span> India</div><div class="sv-region-value">1B<span class="pct">90%</span></div><div class="sv-region-bar"><div class="sv-region-bar-fill" style="width:90%;background:#64748b"></div></div></div></div><div class="sv-divider"></div><div class="sv-radials"><div class="sv-radial"><div class="sv-radial-chart"><svg viewbox="0 0 80 80"><circle class="radial-track" cx="40" cy="40" r="32"></circle><circle class="radial-fill danger" cx="40" cy="40" r="32" stroke-dasharray="201.06" stroke-dashoffset="50.27"></circle></svg> <span class="pct">75%</span></div><div class="sv-radial-text"><div class="sv-radial-name">New users</div><div class="sv-radial-caption">first-time visitors</div></div></div><div class="sv-radial"><div class="sv-radial-chart"><svg viewbox="0 0 80 80"><circle class="radial-track" cx="40" cy="40" r="32"></circle><circle class="radial-fill info" cx="40" cy="40" r="32" stroke-dasharray="201.06" stroke-dashoffset="100.53"></circle></svg> <span class="pct">50%</span></div><div class="sv-radial-text"><div class="sv-radial-name">New purchases</div><div class="sv-radial-caption">from new visits</div></div></div><div class="sv-radial"><div class="sv-radial-chart"><svg viewbox="0 0 80 80"><circle class="radial-track" cx="40" cy="40" r="32"></circle><circle class="radial-fill warning" cx="40" cy="40" r="32" stroke-dasharray="201.06" stroke-dashoffset="20.11"></circle></svg> <span class="pct">90%</span></div><div class="sv-radial-text"><div class="sv-radial-name">Bounce rate</div><div class="sv-radial-caption">avg engagement</div></div></div></div></section><section class="col-6 card"><div class="card-head"><div class="card-title-wrap"><span class="eyebrow">Performance</span><h2 class="card-title">Monthly stats</h2></div><span class="card-action">April 2026</span></div><div class="chart-canvas-wrap" style="height:240px"><canvas data-chart-key="dashboard-monthly"></canvas></div><div class="monthly-footer"><div class="stat-cell"><div class="stat-cell-label">Sales growth</div><div class="stat-cell-value">54% <svg class="trend-ic" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10"></path></svg></div></div><div class="stat-cell"><div class="stat-cell-label">Dec sales</div><div class="stat-cell-value">$185K <svg class="trend-ic" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10"></path></svg></div></div><div class="stat-cell"><div class="stat-cell-label">Profit growth</div><div class="stat-cell-value">60% <svg class="trend-ic" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10"></path></svg></div></div><div class="stat-cell"><div class="stat-cell-label">Dec profit</div><div class="stat-cell-value">$72K <svg class="trend-ic" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10"></path></svg></div></div></div></section><section class="col-6 card"><div class="card-head"><div class="card-title-wrap"><span class="eyebrow">Personal</span><h2 class="card-title">Todo list</h2></div><a class="card-action" href="#">Add task <svg viewbox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></a></div><ul class="todo-list"><li class="todo-item"><input class="todo-check" id="td1" type="checkbox"/> <label class="todo-text" for="td1">Call John for dinner</label> <span class="todo-badge low">ANYTIME</span></li><li class="todo-item"><input class="todo-check" id="td2" type="checkbox"/> <label class="todo-text" for="td2">Book boss flight</label> <span class="todo-badge upcoming">2 DAYS</span></li><li class="todo-item"><input class="todo-check" id="td3" type="checkbox"/> <label class="todo-text" for="td3">Hit the gym</label> <span class="todo-badge urgent">3 MIN</span></li><li class="todo-item"><input class="todo-check" id="td4" type="checkbox"/> <label class="todo-text" for="td4">Give purchase report</label> <span class="todo-badge warn">LOW PRIORITY</span></li><li class="todo-item"><input class="todo-check" id="td5" type="checkbox"/> <label class="todo-text" for="td5">Watch Foundation S03E04</label> <span class="todo-badge upcoming">TOMORROW</span></li><li class="todo-item is-done"><input checked="checked" class="todo-check" id="td6" type="checkbox"/> <label class="todo-text" for="td6">Give purchase report</label> <span class="todo-badge done">DONE</span></li></ul></section><section class="col-6 card"><div class="card-head"><div class="card-title-wrap"><span class="eyebrow">Commerce</span><h2 class="card-title">Sales report</h2></div></div><div class="sales-summary"><div class="sales-summary-label"><span class="eyebrow">Period</span><h4>April 2026</h4></div><div class="sales-summary-total"><sup>$</sup>6,000</div></div><table class="table"><thead><tr><th>Name</th><th>Status</th><th>Date</th><th style="text-align:right">Price</th></tr></thead><tbody><tr><td class="cell-name">Item #1</td><td><span class="tag t-unavail">Unavailable</span></td><td class="cell-date">Apr 18</td><td class="cell-price pos">$12</td></tr><tr><td class="cell-name">Item #2</td><td><span class="tag t-new">New</span></td><td class="cell-date">Apr 19</td><td class="cell-price pos">$34</td></tr><tr><td class="cell-name">Item #3</td><td><span class="tag t-new">New</span></td><td class="cell-date">Apr 20</td><td class="cell-price neg">−$45</td></tr><tr><td class="cell-name">Item #4</td><td><span class="tag t-unavail">Unavailable</span></td><td class="cell-date">Apr 21</td><td class="cell-price pos">$65</td></tr><tr><td class="cell-name">Item #5</td><td><span class="tag t-used">Used</span></td><td class="cell-date">Apr 22</td><td class="cell-price pos">$78</td></tr><tr><td class="cell-name">Item #6</td><td><span class="tag t-used">Used</span></td><td class="cell-date">Apr 23</td><td class="cell-price neg">−$88</td></tr><tr><td class="cell-name">Item #7</td><td><span class="tag t-old">Old</span></td><td class="cell-date">Apr 22</td><td class="cell-price pos">$56</td></tr></tbody></table><div class="sales-all"><a href="#">Check all sales <svg viewbox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"></path></svg></a></div></section><section class="col-6 card"><div class="card-head"><div class="card-title-wrap"><span class="eyebrow">Today</span><h2 class="card-title">Weather</h2></div><span class="card-action">Rīga, LV</span></div><div class="wx-hero"><div class="wx-temp-block"><div class="wx-icon"><svg viewbox="0 0 64 64"><circle cx="22" cy="22" r="8"></circle><path d="M22 6v4M22 34v4M6 22h4M34 22h4M10 10l3 3M31 31l3 3M34 10l-3 3M13 31l-3 3"></path><path d="M18 44a10 10 0 0 1 10-10 10 10 0 0 1 9.5 7 8 8 0 0 1-1.5 16H20a8 8 0 0 1-2-13z"></path></svg></div><div><div class="wx-temp">32<sup>°F</sup></div><div class="wx-condition">Partly <strong>cloudy</strong> · light breeze</div></div></div><div class="wx-date"><h5>Thursday</h5><p>APR 23, 2026</p></div></div><div class="wx-stats"><div><div class="wx-stat-label">Wind</div><div class="wx-stat-value">10<span class="unit">km/h</span></div></div><div><div class="wx-stat-label">Sunrise</div><div class="wx-stat-value">05:32<span class="unit">am</span></div></div><div><div class="wx-stat-label">Pressure</div><div class="wx-stat-value">1013<span class="unit">hPa</span></div></div></div><div class="wx-forecast"><div class="wx-day is-today"><div class="wx-day-name">THU</div><div class="wx-day-icon"><svg viewbox="0 0 24 24"><path d="M7 18a5 5 0 1 1 1-9.9A6 6 0 0 1 20 11.5 4.5 4.5 0 0 1 19 20.5"></path></svg></div><div class="wx-day-temp">32°</div></div><div class="wx-day"><div class="wx-day-name">FRI</div><div class="wx-day-icon"><svg viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></div><div class="wx-day-temp">30°</div></div><div class="wx-day"><div class="wx-day-name">SAT</div><div class="wx-day-icon"><svg viewbox="0 0 24 24"><path d="M7 18a5 5 0 1 1 1-9.9A6 6 0 0 1 20 11.5 4.5 4.5 0 0 1 19 20.5"></path></svg></div><div class="wx-day-temp">28°</div></div><div class="wx-day"><div class="wx-day-name">SUN</div><div class="wx-day-icon"><svg viewbox="0 0 24 24"><path d="M18 10a6 6 0 0 0-12 0 5 5 0 0 0 0 10h12a5 5 0 0 0 0-10"></path></svg></div><div class="wx-day-temp">32°</div></div><div class="wx-day"><div class="wx-day-name">MON</div><div class="wx-day-icon"><svg viewbox="0 0 24 24"><path d="M8 19v-9M8 14l3 3M8 14l-3 3M16 19v-9M16 14l3 3M16 14l-3 3M20 6a6 6 0 0 0-12 0 5 5 0 0 0 0 10"></path></svg></div><div class="wx-day-temp">24°</div></div><div class="wx-day"><div class="wx-day-name">TUE</div><div class="wx-day-icon"><svg viewbox="0 0 24 24"><path d="M17.7 7.7a6 6 0 1 0-9.1 7.3M3 12h4M15 8h5M18 16h-6M9.5 20h7"></path></svg></div><div class="wx-day-temp">28°</div></div><div class="wx-day"><div class="wx-day-name">WED</div><div class="wx-day-icon"><svg viewbox="0 0 24 24"><path d="M7 18a5 5 0 1 1 1-9.9A6 6 0 0 1 20 11.5 4.5 4.5 0 0 1 19 20.5"></path></svg></div><div class="wx-day-temp">32°</div></div></div></section><section class="col-12 card"><div class="card-head"><div class="card-title-wrap"><span class="eyebrow">Conversations</span><h2 class="card-title">Quick chat</h2></div><a class="card-action" href="#">Open chat <svg viewbox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"></path></svg></a></div><div class="chat-frame"><div class="chat-messages"><div class="chat-row"><div class="chat-avatar">LK</div><div class="chat-stack"><div class="chat-bubble">Morning — just pushed the dependency bump to master.</div><div class="chat-bubble">All 10 stale Dependabot PRs are closed 🎉</div><div class="chat-ts">10:04 AM</div></div></div><div class="chat-row me"><div class="chat-avatar me">JD</div><div class="chat-stack"><div class="chat-bubble">Nice work. Any breaking changes?</div><div class="chat-ts">10:06 AM</div></div></div></div><div class="chat-input-row"><input class="chat-input" placeholder="Reply to Leo…" type="text"/> <button aria-label="Send" class="chat-send"><svg viewbox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4z"></path><path d="M22 2 11 13"></path></svg></button></div></div></section></div>
+
+    <section class="hero">
+        <div class="hero-text">
+            <span class="eyebrow">RINGKASAN</span>
+
+            <h1 class="hero-title">
+                <span class="accent">Dashboard</span>
+            </h1>
+
+            <p class="hero-sub">
+                Ringkasan aktivitas Bank Sampah.
+            </p>
+        </div>
+    </section>
+
+
+    {{-- ========================= --}}
+    {{-- STATISTIK UTAMA --}}
+    {{-- ========================= --}}
+
+    <div class="ws-stat-grid">
+
+        {{-- Jumlah Warga --}}
+        <div class="card ws-stat-card">
+            <div class="ws-stat-icon">
+                👥
+            </div>
+
+            <div>
+                <div class="ws-stat-label">
+                    Jumlah Warga Terdaftar
+                </div>
+
+                <div class="ws-stat-value">
+                    {{ number_format($jumlahWarga, 0, ',', '.') }}
+                </div>
+
+                <div class="ws-stat-description">
+                    Warga terdaftar
+                </div>
+            </div>
+        </div>
+
+
+        {{-- Total Berat Sampah --}}
+        <div class="card ws-stat-card">
+            <div class="ws-stat-icon">
+                ♻️
+            </div>
+
+            <div>
+                <div class="ws-stat-label">
+                    Total Berat Sampah
+                </div>
+
+                <div class="ws-stat-value">
+                    {{ number_format($totalBeratSampah, 2, ',', '.') }}
+                    <span class="ws-stat-unit">Kg</span>
+                </div>
+
+                <div class="ws-stat-description">
+                    Total sampah disetor
+                </div>
+            </div>
+        </div>
+
+
+        {{-- Total Saldo --}}
+        <div class="card ws-stat-card">
+            <div class="ws-stat-icon">
+                💰
+            </div>
+
+            <div>
+                <div class="ws-stat-label">
+                    Total Saldo Warga
+                </div>
+
+                <div class="ws-stat-value">
+                    Rp {{ number_format($totalSaldoWarga, 0, ',', '.') }}
+                </div>
+
+                <div class="ws-stat-description">
+                    Saldo seluruh warga
+                </div>
+            </div>
+        </div>
+
+
+        {{-- Pencairan --}}
+        <div class="card ws-stat-card">
+            <div class="ws-stat-icon">
+                💸
+            </div>
+
+            <div>
+                <div class="ws-stat-label">
+                    Total Pencairan Saldo
+                </div>
+
+                <div class="ws-stat-value">
+                    Rp {{ number_format($totalPencairanSaldo, 0, ',', '.') }}
+                </div>
+
+                <div class="ws-stat-description">
+                    Total pencairan
+                </div>
+            </div>
+        </div>
+
+
+        <div class="ws-stat-break"></div>
+
+
+        {{-- Penjualan --}}
+        <div class="card ws-stat-card">
+            <div class="ws-stat-icon">
+                🚚
+            </div>
+
+            <div>
+                <div class="ws-stat-label">
+                    Penjualan ke Pengepul
+                </div>
+
+                <div class="ws-stat-value">
+                    Rp {{ number_format($totalPenjualanPengepul, 0, ',', '.') }}
+                </div>
+
+                <div class="ws-stat-description">
+                    Total barang keluar
+                </div>
+            </div>
+        </div>
+
+
+        {{-- Kategori --}}
+        <div class="card ws-stat-card">
+            <div class="ws-stat-icon">
+                🗂️
+            </div>
+
+            <div>
+                <div class="ws-stat-label">
+                    Kategori Sampah
+                </div>
+
+                <div class="ws-stat-value">
+                    {{ number_format($jumlahKategoriSampah, 0, ',', '.') }}
+                </div>
+
+                <div class="ws-stat-description">
+                    Kategori terdaftar
+                </div>
+            </div>
+        </div>
+
+
+        {{-- Transaksi --}}
+        <div class="card ws-stat-card">
+            <div class="ws-stat-icon">
+                📋
+            </div>
+
+            <div>
+                <div class="ws-stat-label">
+                    Jumlah Setoran
+                </div>
+
+                <div class="ws-stat-value">
+                    {{ number_format($jumlahSetoran, 0, ',', '.') }}
+                </div>
+
+                <div class="ws-stat-description">
+                    Total transaksi setoran
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    {{-- ========================= --}}
+    {{-- GRAFIK --}}
+    {{-- ========================= --}}
+
+    <div class="dashboard-columns">
+
+        <div class="card chart-card">
+
+            <div class="card-head">
+                <div>
+                    <h2 class="card-title">Setoran Sampah per Bulan</h2>
+                    <p class="card-sub">Total berat sampah tahun {{ now()->year }}</p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="setoranBulananChart"></canvas>
+            </div>
+
+        </div>
+
+
+        <div class="card chart-card">
+
+            <div class="card-head">
+                <div>
+                    <h2 class="card-title">Statistik Jenis Sampah</h2>
+                    <p class="card-sub">Berdasarkan total berat</p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="jenisSampahChart"></canvas>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {{-- ========================= --}}
+    {{-- RIWAYAT SETORAN --}}
+    {{-- ========================= --}}
+
+    <section class="card">
+
+        <div class="card-head">
+            <div>
+                <h2 class="card-title">Riwayat Setoran</h2>
+                <p class="card-sub">10 transaksi setoran terbaru</p>
+            </div>
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table class="data-table">
+
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Tanggal</th>
+                        <th>Warga</th>
+                        <th>Berat</th>
+                        <th>Nilai</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @forelse($riwayatSetoran as $index => $setoran)
+                        <tr>
+
+                            <td>
+                                {{ $index + 1 }}
+                            </td>
+
+                            <td>
+                                {{ \Carbon\Carbon::parse($setoran->tanggal_setoran)->format('d/m/Y') }}
+                            </td>
+
+                            <td>
+                                <strong>
+                                    {{ $setoran->nama }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ number_format($setoran->total_berat, 2, ',', '.') }}
+                                Kg
+                            </td>
+
+                            <td>
+                                Rp {{ number_format($setoran->total_nilai, 0, ',', '.') }}
+                            </td>
+
+                            <td>
+                                <span class="status-badge">
+                                    {{ $setoran->status }}
+                                </span>
+                            </td>
+
+                        </tr>
+
+                    @empty
+
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px;">
+
+                                <div style="font-size: 30px; margin-bottom: 10px;">
+                                    📋
+                                </div>
+
+                                <strong>Belum Ada Riwayat Setoran</strong>
+
+                                <p style="margin: 5px 0 0; color: #6b7280;">
+                                    Belum ada transaksi setoran yang tercatat.
+                                </p>
+
+                            </td>
+                        </tr>
+                    @endforelse
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+    <style>
+        /* =========================
+               STAT CARDS
+            ========================= */
+
+        .ws-stat-grid {
+            display: flex;
+            flex-wrap: wrap;
+            row-gap: 7px;
+            column-gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .ws-stat-break {
+            flex-basis: 100%;
+            width: 0;
+            height: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .ws-stat-card.ws-stat-card {
+            flex: 1 1 180px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: row;
+            gap: 11px;
+            align-items: center;
+            text-align: left;
+        }
+
+        .ws-stat-icon.ws-stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+            margin: 0;
+        }
+
+        .ws-stat-label.ws-stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin: 0 0 4px;
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        .ws-stat-value.ws-stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1.2;
+            text-align: left;
+        }
+
+        .ws-stat-unit.ws-stat-unit {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .ws-stat-description.ws-stat-description {
+            margin-top: 2px;
+            font-size: 11px;
+            color: #9ca3af;
+            text-align: left;
+        }
+
+
+        /* =========================
+               CHART CARDS
+            ========================= */
+
+        .dashboard-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--surface, #ffffff);
+            border: 1px solid var(--border, #e5e7eb);
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .chart-card {
+            padding: 18px 20px;
+        }
+
+        .card-head {
+            padding: 22px 24px;
+            border-bottom: 1px solid var(--border, #e5e7eb);
+        }
+
+        .chart-card .card-head {
+            padding: 0 0 18px;
+            border-bottom: none;
+        }
+
+        .card-title {
+            margin: 0 0 5px;
+            font-size: 17px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .card-sub {
+            margin: 0;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .chart-container {
+            height: 240px;
+            position: relative;
+        }
+
+
+        /* =========================
+               TABLE (samakan dengan Data Warga)
+            ========================= */
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 13px 16px;
+            text-align: left;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 16px;
+            border-bottom: 1px solid #edf0f2;
+            font-size: 13px;
+            color: #374151;
+            vertical-align: middle;
+        }
+
+        .data-table tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: #eef7f1;
+            color: #24a86b;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+
+        @media (max-width: 700px) {
+
+            .dashboard-columns {
+                grid-template-columns: 1fr;
+            }
+
+            .ws-stat-card.ws-stat-card {
+                flex-basis: 140px;
+            }
+
+        }
+    </style>
+
 @endsection
+
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Grafik Setoran per Bulan
+            |--------------------------------------------------------------------------
+            */
+
+            const setoranData = @json($setoranPerBulan);
+
+            const bulan = [
+                'Januari',
+                'Februari',
+                'Maret',
+                'April',
+                'Mei',
+                'Juni',
+                'Juli',
+                'Agustus',
+                'September',
+                'Oktober',
+                'November',
+                'Desember'
+            ];
+
+            const dataBulanan = Array(12).fill(0);
+
+            setoranData.forEach(function(item) {
+                dataBulanan[item.bulan - 1] = Number(item.total_berat);
+            });
+
+
+            const canvasBulanan =
+                document.getElementById('setoranBulananChart');
+
+            if (canvasBulanan) {
+
+                new Chart(canvasBulanan, {
+
+                    type: 'bar',
+
+                    data: {
+                        labels: bulan,
+
+                        datasets: [{
+                            label: 'Berat Sampah (Kg)',
+                            data: dataBulanan,
+                            borderWidth: 1
+                        }]
+                    },
+
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+
+                });
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Statistik Jenis Sampah
+            |--------------------------------------------------------------------------
+            */
+
+            const jenisData = @json($statistikJenisSampah);
+
+            const namaJenis = jenisData.map(function(item) {
+                return item.nama_kategori;
+            });
+
+            const beratJenis = jenisData.map(function(item) {
+                return Number(item.total_berat);
+            });
+
+
+            const canvasJenis =
+                document.getElementById('jenisSampahChart');
+
+            if (canvasJenis) {
+
+                new Chart(canvasJenis, {
+
+                    type: 'doughnut',
+
+                    data: {
+
+                        labels: namaJenis,
+
+                        datasets: [{
+                            label: 'Berat Sampah',
+                            data: beratJenis,
+                            borderWidth: 1
+                        }]
+
+                    },
+
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+
+                });
+
+            }
+
+        });
+    </script>
+@endpush
