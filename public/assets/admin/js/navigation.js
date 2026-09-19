@@ -71,7 +71,7 @@ export const navigation = [
       {
         key: "katalog",
         text: "Katalog Barang",
-        href: "katalog.html",
+        href: '/admin/katalog',
         icon: '<path d="M6 2h9l5 5v15H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/>',
       },
     ],
