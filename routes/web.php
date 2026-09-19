@@ -40,6 +40,68 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 });
 
+
+// === FUNGSI HANDLER UNTUK PENCAIRAN SALDO ===
+$tampilkanPencairan = function () {
+    $dummyData = collect([
+        (object)[
+            'id_pencairan' => 1,
+            'created_at' => '2026-09-17 10:00:00',
+            'warga' => (object)[
+                'nik' => '3509876356289110001',
+                'nama' => 'Ani',
+                'no_hp' => '087872550004',
+                'alamat' => 'jl kyai haji nurhasyim'
+            ],
+            'nominal' => 50000,
+            'metode' => 'Tunai',
+            'status' => 'menunggu'
+        ],
+        (object)[
+            'id_pencairan' => 2,
+            'created_at' => '2026-09-16 08:30:00',
+            'warga' => (object)[
+                'nik' => '3509281145110003',
+                'nama' => 'ijut',
+                'no_hp' => '082245607023',
+                'alamat' => 'jl jl'
+            ],
+            'nominal' => 100000,
+            'metode' => 'Transfer Bank',
+            'status' => 'selesai'
+        ],
+        (object)[
+            'id_pencairan' => 3,
+            'created_at' => '2026-09-16 14:15:00',
+            'warga' => (object)[
+                'nik' => '3509281111110001',
+                'nama' => 'budi',
+                'no_hp' => '082245607041',
+                'alamat' => 'jl kaki kanan'
+            ],
+            'nominal' => 500000,
+            'metode' => 'Transfer Bank',
+            'status' => 'menunggu'
+        ]
+    ]);
+
+    return view('admin.pages.pencairan', [
+        'pencairan' => $dummyData
+    ]);
+};
+
+
+// 1. Tangkap jika diklik dari halaman utama / Dashboard
+Route::get('/pencairan-saldo.html', $tampilkanPencairan);
+
+// 2. Tangkap jika diklik dari dalam Data Warga (solusi untuk error 404 tadi)
+Route::get('/admin/pages/pencairan-saldo.html', $tampilkanPencairan);
+
+// 3. Tangkap jika diklik dari URL admin lainnya
+Route::get('/admin/pencairan-saldo.html', $tampilkanPencairan);
+// ===========================================
+
+
 // Route::prefix('communications')->group(function () {
 //     Route::get('/email', [PageController::class, 'email'])->name('email.index');
 //     Route::get('/email/compose', [PageController::class, 'compose'])->name('email.compose');

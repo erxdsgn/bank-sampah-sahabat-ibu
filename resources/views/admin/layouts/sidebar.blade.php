@@ -10,7 +10,7 @@
     <!-- Group: Workspace -->
     <nav class="nav-section">
         <div class="nav-label">Workspace</div>
-        <a class="nav-link {{ request()->is('admin/dashboard') ? 'is-active' : '' }}" href="{{ url('/admin/dashboard') }}">
+        <a class="nav-link {{ request()->is('admin') ? 'is-active' : '' }}" href="{{ url('/admin') }}">
             Dashboard
         </a>
     </nav>
@@ -18,7 +18,7 @@
     <!-- Group: Kelola Data Master -->
     <nav class="nav-section">
         <div class="nav-label">Master Data</div>
-        <a class="nav-link" href="#">Data Warga</a>
+        <a class="nav-link {{ request()->is('admin/pages/warga*') ? 'is-active' : '' }}" href="{{ url('/admin/pages/warga') }}">Data Warga</a>
         <a class="nav-link" href="#">Kategori & Harga Sampah</a>
         <a class="nav-link" href="#">Katalog Produk Daur Ulang</a>
         <a class="nav-link" href="#">Artikel Edukasi</a>
@@ -29,7 +29,7 @@
         <div class="nav-label">Transaksi</div>
         <a class="nav-link" href="#">Verifikasi Setoran</a>
         <a class="nav-link" href="#">Riwayat Transaksi Setoran</a>
-        <a class="nav-link" href="#">Pencairan Saldo</a>
+        <a class="nav-link {{ request()->is('admin/pencairan*') ? 'is-active' : '' }}" href="{{ url('/admin/pencairan') }}">Pencairan Saldo</a>
         <a class="nav-link" href="#">Penjualan ke Pengepul</a>
     </nav>
 
