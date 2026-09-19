@@ -89,8 +89,13 @@ $tampilkanPencairan = function () {
         'pencairan' => $dummyData
     ]);
 };
+Route::get('/admin/pilih-warga', function () {
+    return view('admin.pages.pilih-warga');
+});
 
-
+Route::get('/admin/riwayat-pencairan', function () {
+    return view('admin.pages.riwayat-pencairan');
+});
 // 1. Tangkap jika diklik dari halaman utama / Dashboard
 Route::get('/pencairan-saldo.html', $tampilkanPencairan);
 

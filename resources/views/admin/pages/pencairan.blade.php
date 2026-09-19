@@ -20,7 +20,7 @@
 
     <section class="card" style="background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); overflow: hidden; border: 1px solid #f3f4f6;">
 
-        <!-- SEARCH BAR -->
+        <!-- SEARCH BAR & TOMBOL AKSI -->
         <div class="table-toolbar" style="display: flex; justify-content: space-between; padding: 20px;">
             <div class="table-search" style="position: relative; width: 400px;">
                 <svg viewBox="0 0 24 24" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; fill: none; stroke: #9ca3af; stroke-width: 2;">
@@ -29,9 +29,23 @@
                 </svg>
                 <input type="text" id="searchPencairan" placeholder="Cari NIK, nama, nomor HP, atau alamat..." autocomplete="off" style="width: 100%; padding: 10px 10px 10px 40px; border-radius: 10px; border: 1px solid #e5e7eb; outline: none; font-size: 14px; transition: 0.2s;">
             </div>
-            <button onclick="window.location.reload()" style="background: transparent; border: 1px solid #e5e7eb; padding: 8px 16px; border-radius: 8px; font-weight: 600; color: #4b5563; cursor: pointer;">
-                Refresh
-            </button>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button onclick="window.location.reload()" style="background: transparent; border: 1px solid #e5e7eb; padding: 8px 16px; border-radius: 8px; font-weight: 600; color: #4b5563; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+                    Refresh
+                </button>
+                
+                <!-- TOMBOL BARU: RIWAYAT -->
+                <a href="/admin/riwayat-pencairan" style="background: #f3f4f6; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 8px; font-weight: 600; color: #374151; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; transition: 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+                    Lihat Riwayat
+                </a>
+
+                <!-- TOMBOL PILIH WARGA -->
+                <a href="/admin/pilih-warga" style="background: #16a34a; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; color: #fff; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2); transition: 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M12 5v14m-7-7h14"></path></svg>
+                    Pilih Warga
+                </a>
+            </div>
         </div>
 
         <!-- TABLE -->
