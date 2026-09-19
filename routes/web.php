@@ -38,6 +38,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             ->name('warga.destroy');
     });
 
+    Route::view('/pages/keuangan', 'admin.pages.keuangan.index')
+    ->name('keuangan');
+
 });
 
 // Route::prefix('communications')->group(function () {

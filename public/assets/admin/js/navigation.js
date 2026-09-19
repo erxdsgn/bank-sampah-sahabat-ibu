@@ -65,7 +65,7 @@ export const navigation = [
       {
         key: "keuangan",
         text: "Keuangan",
-        href: "keuangan.html",
+        href: "/admin/pages/keuangan",
         icon: '<path d="M3 10h18v10H3z"/><path d="M5 10V7l7-4 7 4v3"/><path d="M7 14h.01M12 14h.01M17 14h.01"/>',
       },
       {

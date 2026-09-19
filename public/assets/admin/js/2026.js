@@ -328,7 +328,7 @@
                                     class="icon-btn"
                                     data-dropdown
                                     aria-label="Messages"
-                                >
+                                > 
                                     <svg viewBox="0 0 24 24">
                                         <rect
                                             x="3"
