@@ -24,7 +24,9 @@ function renderBreadcrumbs(crumbsString) {
         i > 0
           ? '<svg class="sep" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>'
           : "";
+
       const isLast = i === parts.length - 1;
+
       return `${separator}<span${isLast ? ' class="current"' : ""}>${label}</span>`;
     })
     .join("");
@@ -43,6 +45,7 @@ export function renderTopbar(crumbsString) {
         </button>
         ${renderBreadcrumbs(crumbsString)}
       </div>
+
       <div class="topbar-actions">
         <button class="cmd" data-palette-open>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -55,11 +58,13 @@ export function renderTopbar(crumbsString) {
             <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             <span class="count danger">3</span>
           </button>
+
           <div class="dd-menu" role="menu">
             <div class="dd-head">
               <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               Notifications
             </div>
+
             <div class="dd-list">
               <a class="dd-item" href="#">
                 <div class="dd-avatar a1">JD</div>
@@ -68,6 +73,7 @@ export function renderTopbar(crumbsString) {
                   <div class="dd-time">5 MIN AGO</div>
                 </div>
               </a>
+
               <a class="dd-item" href="#">
                 <div class="dd-avatar a2">MD</div>
                 <div class="dd-body">
@@ -75,6 +81,7 @@ export function renderTopbar(crumbsString) {
                   <div class="dd-time">7 MIN AGO</div>
                 </div>
               </a>
+
               <a class="dd-item" href="#">
                 <div class="dd-avatar a3">LD</div>
                 <div class="dd-body">
@@ -83,6 +90,7 @@ export function renderTopbar(crumbsString) {
                 </div>
               </a>
             </div>
+
             <a class="dd-footer" href="#">View all notifications →</a>
           </div>
         </div>
@@ -92,11 +100,13 @@ export function renderTopbar(crumbsString) {
             <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
             <span class="count info">3</span>
           </button>
+
           <div class="dd-menu" role="menu">
             <div class="dd-head">
               <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
               Messages
             </div>
+
             <div class="dd-list">
               <a class="dd-item" href="#">
                 <div class="dd-avatar a1">JD</div>
@@ -105,6 +115,7 @@ export function renderTopbar(crumbsString) {
                   <div class="dd-preview">Want to create your own customized data generator for your app…</div>
                 </div>
               </a>
+
               <a class="dd-item" href="#">
                 <div class="dd-avatar a2">MD</div>
                 <div class="dd-body">
@@ -112,6 +123,7 @@ export function renderTopbar(crumbsString) {
                   <div class="dd-preview">Want to create your own customized data generator for your app…</div>
                 </div>
               </a>
+
               <a class="dd-item" href="#">
                 <div class="dd-avatar a3">LD</div>
                 <div class="dd-body">
@@ -120,6 +132,7 @@ export function renderTopbar(crumbsString) {
                 </div>
               </a>
             </div>
+
             <a class="dd-footer" href="#">View all messages →</a>
           </div>
         </div>
@@ -128,24 +141,30 @@ export function renderTopbar(crumbsString) {
 
         <div class="dd-wrap">
           <div class="avatar" data-dropdown tabindex="0" role="button" aria-label="Account menu">JD</div>
+
           <div class="dd-menu dd-profile" role="menu">
             <div class="dd-profile-head">
               <div class="dd-profile-name">John Doe</div>
               <div class="dd-profile-email">john@adminator.app</div>
             </div>
+
             <a class="dd-menu-item" href="#">
               <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               Settings
             </a>
+
             <a class="dd-menu-item" href="#">
               <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               Profile
             </a>
+
             <a class="dd-menu-item" href="email.html">
               <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
               Messages
             </a>
+
             <div class="dd-divider"></div>
+
             <a class="dd-menu-item danger" href="#">
               <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
               Logout
@@ -154,4 +173,72 @@ export function renderTopbar(crumbsString) {
         </div>
       </div>
     </header>`;
+}
+
+export function initThemeToggle() {
+  const html = document.documentElement;
+  const themeToggle = document.getElementById("themeToggle");
+
+  if (!themeToggle) return;
+
+  function updateIcon() {
+    const isDark =
+      html.getAttribute("data-theme") === "dark";
+
+    themeToggle.innerHTML = isDark
+      ? `
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        >
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="M4.93 4.93l1.41 1.41"/>
+          <path d="M17.66 17.66l1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="M4.93 19.07l1.41-1.41"/>
+          <path d="M17.66 6.34l1.41-1.41"/>
+        </svg>
+      `
+      : `
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        >
+          <path
+            d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"
+          />
+        </svg>
+      `;
+  }
+
+  updateIcon();
+
+  themeToggle.addEventListener("click", () => {
+    const currentTheme =
+      html.getAttribute("data-theme");
+
+    const newTheme =
+      currentTheme === "dark"
+        ? "light"
+        : "dark";
+
+    html.setAttribute(
+      "data-theme",
+      newTheme
+    );
+
+    localStorage.setItem(
+      "dash26-theme",
+      newTheme
+    );
+
+    updateIcon();
+  });
 }
