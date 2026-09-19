@@ -37,6 +37,6 @@
     <nav class="nav-section">
         <div class="nav-label">Laporan & Akun</div>
         <a class="nav-link" href="#">Laporan Keuangan</a>
-        <a class="nav-link" href="#">Pengaturan Akun</a>
+       <a class="nav-link" href="{{ url('/pengaturan-akun.html') }}">Pengaturan Akun</a>
     </nav>
 </aside>

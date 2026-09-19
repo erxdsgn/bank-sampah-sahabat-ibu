@@ -96,6 +96,21 @@ Route::get('/admin/pilih-warga', function () {
 Route::get('/admin/riwayat-pencairan', function () {
     return view('admin.pages.riwayat-pencairan');
 });
+
+// Tangkap URL pengaturan-akun.html
+Route::get('/pengaturan-akun.html', function () {
+    return view('admin.pages.pengaturan');
+});
+
+Route::get('/admin/pengaturan-akun.html', function () {
+    return view('admin.pages.pengaturan');
+});
+
+// Tangkap jika Pengaturan diklik dari dalam halaman Data Warga
+Route::get('/admin/pages/pengaturan-akun.html', function () {
+    return view('admin.pages.pengaturan');
+});
+
 // 1. Tangkap jika diklik dari halaman utama / Dashboard
 Route::get('/pencairan-saldo.html', $tampilkanPencairan);
 
