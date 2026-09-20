@@ -48,10 +48,6 @@
     <script type="module" src="{{ asset('assets/admin/js/footer.js') }}"></script>
     <script type="module" src="{{ asset('assets/admin/js/layout.js') }}"></script>
 
-    @stack('scripts')
-</body>
-</html>
-
     {{-- Script Injeksi Rendering Sidebar --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -89,5 +85,4 @@
 
     @stack('scripts')
 </body>
-
 </html>

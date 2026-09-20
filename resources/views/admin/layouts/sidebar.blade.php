@@ -36,6 +36,9 @@
     <!-- Group: Laporan & Pengaturan -->
     <nav class="nav-section">
         <div class="nav-label">Laporan & Akun</div>
+        <a class="nav-link {{ request()->is('admin/laporan*') ? 'is-active' : '' }}" href="{{ url('/admin/laporan') }}">
+            Laporan & Riwayat
+        </a>
         <a class="nav-link" href="#">Laporan Keuangan</a>
         <a class="nav-link" href="#">Pengaturan Akun</a>
     </nav>

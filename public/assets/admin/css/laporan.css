@@ -1,0 +1,618 @@
+/* public/assets/admin/css/laporan.css
+   Gaya khusus halaman Laporan & Riwayat. Semua class berawalan .lp-
+   sehingga tidak bentrok dengan CSS admin lain. */
+
+.lp {
+    --lp-green: #16a34a;
+    --lp-green-dark: #15803d;
+    --lp-green-soft: #f0fdf4;
+    --lp-amber: #b45309;
+    --lp-amber-soft: #fffbeb;
+    --lp-blue: #1d4ed8;
+    --lp-blue-soft: #eff6ff;
+    --lp-red: #b91c1c;
+    --lp-red-soft: #fef2f2;
+    --lp-ink: #111827;
+    --lp-muted: #6b7280;
+    --lp-line: #e5e7eb;
+    --lp-subtle: #f9fafb;
+
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    color: var(--lp-ink);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.lp *,
+.lp *::before,
+.lp *::after {
+    box-sizing: border-box;
+}
+
+.lp--narrow {
+    max-width: 900px;
+    margin-inline: auto;
+    width: 100%;
+}
+
+.lp-hidden {
+    display: none !important;
+}
+
+/* ---------- Judul halaman ---------- */
+.lp-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.lp-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.lp-sub {
+    margin: 4px 0 0;
+    color: var(--lp-muted);
+}
+
+.lp-back {
+    color: var(--lp-muted);
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.lp-back:hover {
+    color: var(--lp-green-dark);
+}
+
+.lp-head__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.lp-head__actions form {
+    margin: 0;
+}
+
+/* ---------- Tombol ---------- */
+.lp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--lp-line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--lp-ink);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.lp-btn:hover {
+    background: var(--lp-subtle);
+}
+
+.lp-btn:focus-visible,
+.lp-link:focus-visible {
+    outline: 2px solid var(--lp-green);
+    outline-offset: 2px;
+}
+
+.lp-btn--primary {
+    background: var(--lp-green);
+    border-color: var(--lp-green);
+    color: #fff;
+}
+
+.lp-btn--primary:hover {
+    background: var(--lp-green-dark);
+}
+
+.lp-btn--dark {
+    background: var(--lp-ink);
+    border-color: var(--lp-ink);
+    color: #fff;
+}
+
+.lp-btn--dark:hover {
+    background: #1f2937;
+}
+
+.lp-btn--danger {
+    color: var(--lp-red);
+    border-color: #fecaca;
+}
+
+.lp-btn--danger:hover {
+    background: var(--lp-red-soft);
+}
+
+/* ---------- Pesan ---------- */
+.lp-alert {
+    padding: 12px 16px;
+    border: 1px solid;
+    border-radius: 8px;
+}
+
+.lp-alert--success {
+    background: var(--lp-green-soft);
+    border-color: #bbf7d0;
+    color: #166534;
+}
+
+.lp-alert--error {
+    background: var(--lp-red-soft);
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.lp-alert p {
+    margin: 0;
+    font-weight: 600;
+}
+
+.lp-alert ul {
+    margin: 4px 0 0;
+    padding-left: 20px;
+}
+
+/* ---------- Kartu ---------- */
+.lp-card {
+    background: #fff;
+    border: 1px solid var(--lp-line);
+    border-radius: 12px;
+}
+
+.lp-card--clip {
+    overflow: hidden;
+}
+
+.lp-card__pad {
+    padding: 20px;
+}
+
+.lp-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--lp-line);
+}
+
+.lp-card__title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.lp-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.lp-kode {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.lp-badges {
+    display: flex;
+    gap: 8px;
+}
+
+/* ---------- Ringkasan ---------- */
+.lp-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.lp-stat {
+    padding: 16px 18px;
+    background: #fff;
+    border: 1px solid var(--lp-line);
+    border-radius: 12px;
+}
+
+.lp-stat__label {
+    margin: 0;
+    color: var(--lp-muted);
+}
+
+.lp-stat__value {
+    margin: 4px 0 0;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.lp-stat__value--green { color: var(--lp-green-dark); }
+.lp-stat__value--amber { color: var(--lp-amber); }
+.lp-stat__value--blue  { color: var(--lp-blue); }
+
+.lp-note {
+    margin: -8px 0 0;
+    color: var(--lp-muted);
+    font-size: 12px;
+}
+
+/* ---------- Form & filter ---------- */
+.lp-filter {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    padding: 16px;
+}
+
+.lp-filter__full {
+    grid-column: 1 / -1;
+}
+
+.lp-filter__actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.lp-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.lp-grid__full {
+    grid-column: 1 / -1;
+}
+
+.lp-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.lp-hint {
+    font-weight: 400;
+    color: var(--lp-muted);
+}
+
+.lp-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    color: inherit;
+    font: inherit;
+}
+
+.lp-input:focus {
+    outline: 0;
+    border-color: var(--lp-green);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+}
+
+textarea.lp-input {
+    resize: vertical;
+}
+
+.lp-input--short {
+    max-width: 260px;
+}
+
+.lp-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* ---------- Rincian item di form ---------- */
+.lp-items {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lp-items th {
+    padding: 0 8px 8px 0;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--lp-muted);
+    white-space: nowrap;
+}
+
+.lp-items td {
+    padding: 0 8px 8px 0;
+    vertical-align: top;
+}
+
+.lp-items .lp-items__nama   { min-width: 200px; }
+.lp-items .lp-items__berat  { width: 110px; }
+.lp-items .lp-items__harga  { width: 140px; }
+.lp-items .lp-items__sub    { width: 140px; text-align: right; }
+.lp-items .lp-items__act    { width: 40px; padding-right: 0; }
+
+.lp-items td.lp-items__sub {
+    padding-top: 9px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.lp-remove {
+    width: 32px;
+    height: 38px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: #9ca3af;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.lp-remove:hover {
+    background: var(--lp-red-soft);
+    color: var(--lp-red);
+}
+
+.lp-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--lp-line);
+    color: var(--lp-muted);
+}
+
+.lp-total strong {
+    color: var(--lp-ink);
+    font-size: 18px;
+}
+
+/* ---------- Tabel ---------- */
+.lp-table-wrap {
+    overflow-x: auto;
+}
+
+.lp-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lp-table th {
+    padding: 10px 16px;
+    background: var(--lp-subtle);
+    border-bottom: 1px solid var(--lp-line);
+    color: var(--lp-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.lp-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+}
+
+.lp-table tbody tr:hover {
+    background: var(--lp-subtle);
+}
+
+.lp-table tfoot td {
+    background: var(--lp-subtle);
+    border-bottom: 0;
+    font-weight: 700;
+}
+
+.lp-table .lp-num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.lp-table .lp-nowrap {
+    white-space: nowrap;
+}
+
+.lp-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.lp-empty {
+    padding: 48px 16px !important;
+    text-align: center;
+    color: var(--lp-muted);
+}
+
+/* ---------- Badge ---------- */
+.lp-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.lp-badge--green { background: var(--lp-green-soft); border-color: #bbf7d0; color: var(--lp-green-dark); }
+.lp-badge--amber { background: var(--lp-amber-soft); border-color: #fde68a; color: var(--lp-amber); }
+.lp-badge--blue  { background: var(--lp-blue-soft);  border-color: #bfdbfe; color: var(--lp-blue); }
+.lp-badge--red   { background: var(--lp-red-soft);   border-color: #fecaca; color: var(--lp-red); }
+.lp-badge--gray  { background: var(--lp-subtle);     border-color: var(--lp-line); color: var(--lp-muted); }
+
+/* ---------- Link aksi di tabel ---------- */
+.lp-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    white-space: nowrap;
+}
+
+.lp-actions form {
+    margin: 0;
+}
+
+.lp-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--lp-green-dark);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.lp-link:hover {
+    text-decoration: underline;
+}
+
+.lp-link--muted  { color: var(--lp-muted); }
+.lp-link--danger { color: var(--lp-red); }
+
+/* ---------- Detail ---------- */
+.lp-dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 24px;
+    margin: 0;
+}
+
+.lp-dl dt {
+    color: var(--lp-muted);
+}
+
+.lp-dl dd {
+    margin: 2px 0 0;
+    font-weight: 600;
+}
+
+.lp-dl dd.lp-plain {
+    font-weight: 400;
+}
+
+.lp-dl__full {
+    grid-column: 1 / -1;
+}
+
+.lp-big {
+    margin: 4px 0 0;
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--lp-amber);
+}
+
+/* ---------- Paginasi ---------- */
+.lp-pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--lp-line);
+    color: var(--lp-muted);
+    font-size: 13px;
+}
+
+.lp .pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lp .pagination li > a,
+.lp .pagination li > span,
+.lp .pagination .page-link {
+    display: inline-block;
+    min-width: 32px;
+    padding: 5px 10px;
+    border: 1px solid var(--lp-line);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--lp-ink);
+    font-size: 13px;
+    text-align: center;
+    text-decoration: none;
+}
+
+.lp .pagination li > a:hover {
+    background: var(--lp-subtle);
+}
+
+.lp .pagination li.active > span,
+.lp .pagination .active .page-link {
+    background: var(--lp-green);
+    border-color: var(--lp-green);
+    color: #fff;
+}
+
+.lp .pagination li.disabled > span,
+.lp .pagination .disabled .page-link {
+    background: var(--lp-subtle);
+    color: #9ca3af;
+}
+
+/* ---------- Responsif ---------- */
+@media (max-width: 900px) {
+    .lp-filter {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .lp-filter,
+    .lp-grid,
+    .lp-dl {
+        grid-template-columns: 1fr;
+    }
+
+    .lp-title {
+        font-size: 19px;
+    }
+}
+
+/* ---------- Cetak ---------- */
+@media print {
+    .lp-noprint {
+        display: none !important;
+    }
+
+    .lp-card {
+        break-inside: avoid;
+    }
+}

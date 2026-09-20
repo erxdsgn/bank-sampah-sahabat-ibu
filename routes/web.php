@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\WargaController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\LaporanController;
 
 Route::get('/', [HomeController::class, 'index'])->name('dashboard');
 
@@ -38,6 +39,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             ->name('warga.destroy');
     });
 
+    // Laporan & Riwayat
+    Route::resource('laporan', LaporanController::class)
+        ->parameters(['laporan' => 'transaksi']);
 });
 
 // Route::prefix('communications')->group(function () {

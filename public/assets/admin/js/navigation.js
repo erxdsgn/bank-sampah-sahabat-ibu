@@ -89,7 +89,7 @@ export const navigation = [
       {
         key: "laporan-riwayat",
         text: "Laporan & Riwayat",
-        href: "laporan-riwayat.html",
+        href: "/admin/laporan",
         icon: '<path d="M4 19V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14"/><path d="M8 17v-4M12 17V8M16 17v-6"/><path d="M3 21h18"/>',
       },
     ],
