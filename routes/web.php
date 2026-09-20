@@ -4,6 +4,8 @@ use App\Http\Controllers\Admin\AuthViewController;
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\WargaController;
+use App\Http\Controllers\Admin\KategoriSampahController;
+use App\Http\Controllers\Admin\HargaSampahController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('dashboard');
@@ -40,21 +42,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 });
 
-// Route::prefix('communications')->group(function () {
-//     Route::get('/email', [PageController::class, 'email'])->name('email.index');
-//     Route::get('/email/compose', [PageController::class, 'compose'])->name('email.compose');
-//     Route::get('/chat', [PageController::class, 'chat'])->name('chat');
-//     Route::get('/calendar', [PageController::class, 'calendar'])->name('calendar');
-// });
+// Kategori Sampah
+Route::prefix('admin')->name('admin.')->group(function () {
+    
+    Route::resource('kategori-sampah', KategoriSampahController::class)
+        ->parameters(['kategori-sampah' => 'kategoriSampah']);
 
-// Route::prefix('maps')->name('maps.')->group(function () {
-//     Route::get('/vector', [PageController::class, 'vectorMaps'])->name('vector');
-//     Route::get('/google', [PageController::class, 'googleMaps'])->name('google');
-// });
+    Route::prefix('kategori-sampah/{kategoriSampah}/harga')->name('kategori-sampah.harga.')->group(function () {
+        Route::get('/', [HargaSampahController::class, 'index'])->name('index');
+        Route::post('/', [HargaSampahController::class, 'store'])->name('store');
+        Route::delete('/{hargaSampah}', [HargaSampahController::class, 'destroy'])->name('destroy');
+    });
 
-// Route::get('/blank', [PageController::class, 'blank'])->name('pages.blank');
-
-// Route::middleware('guest')->group(function () {
-//     Route::get('/login', [AuthViewController::class, 'showLogin'])->name('login');
-//     Route::get('/register', [AuthViewController::class, 'showRegister'])->name('register');
-// });
+});

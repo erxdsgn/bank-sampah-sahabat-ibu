@@ -23,7 +23,7 @@ export const navigation = [
       {
         key: "kategori-harga",
         text: "Kategori & Harga Sampah",
-        href: "kategori-harga.html",
+        href: "/admin/kategori-sampah",
         icon: '<path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"/><path d="M16 3h5v5"/><path d="m21 3-9 9"/><path d="M8 8h3M8 12h3M8 16h8"/>',
       },
       {
