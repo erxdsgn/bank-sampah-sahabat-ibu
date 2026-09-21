@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Kontak WhatsApp Resmi Bank Sampah
+    |--------------------------------------------------------------------------
+    |
+    | Konfigurasi nomor WhatsApp terpusat yang akan digunakan untuk pesan
+    | pemesanan katalog produk oleh warga/pembeli.
+    |
+    */
+
+    'nomor_wa' => env('BANK_SAMPAH_WA', '6282141055879'),
+
 ];

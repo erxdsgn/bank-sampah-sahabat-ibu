@@ -34,27 +34,28 @@ class WargaController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'nik' => 'required|unique:warga,nik',
+        $validated = $request->validate([
+            'nik' => 'required|string|max:16|unique:warga,nik',
             'nama' => 'required|string|max:255',
-            'no_hp' => 'nullable|string|max:20',
-            'alamat' => 'nullable|string',
-            'jumlah_anggota_keluarga' => 'nullable|integer|min:0',
+            'no_hp' => 'nullable|string|max:14',
+            'jumlah_anggota_keluarga' => 'nullable|integer|min:1',
+            'alamat' => 'required|string',
         ]);
 
-        Warga::create([
-            'nik' => $request->nik,
-            'nama' => $request->nama,
-            'no_hp' => $request->no_hp,
-            'alamat' => $request->alamat,
-            'jumlah_anggota_keluarga' => $request->jumlah_anggota_keluarga ?? 0,
+        $warga = Warga::create([
+            'nik' => $validated['nik'],
+            'nama' => $validated['nama'],
+            'no_hp' => $validated['no_hp'] ?? null,
+            'jumlah_anggota_keluarga' => $validated['jumlah_anggota_keluarga'] ?? 0,
+            'alamat' => $validated['alamat'] ?? null,
             'saldo' => 0,
             'tanggal_daftar' => now(),
         ]);
 
-        return redirect()
-            ->route('admin.warga')
-            ->with('success', 'Data warga berhasil ditambahkan.');
+        return response()->json([
+            'message' => 'Data warga berhasil ditambahkan.',
+            'data' => $warga,
+        ]);
     }
 
     /**

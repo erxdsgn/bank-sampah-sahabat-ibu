@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title') · {{ config('app.name', 'Adminator') }}</title>
 
     <script>
@@ -17,12 +17,12 @@
         }();
     </script>
 
-    <script defer src="{{ asset('js/runtime.js') }}"></script>
-    <script defer src="{{ asset('js/vendor-fullcalendar.js') }}"></script>
-    <script defer src="{{ asset('js/vendor-chartjs.js') }}"></script>
-    <script defer src="{{ asset('js/vendors.js') }}"></script>
-    <script defer src="{{ asset('js/2026.js') }}"></script>
-    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+    {{-- Script JS dari public/assets/admin/js/ --}}
+    <script defer src="{{ asset('assets/admin/js/runtime.js') }}"></script>
+    <script defer src="{{ asset('assets/admin/js/2026.js') }}"></script>
+
+    {{-- File CSS dari public/assets/admin/css/ --}}
+    <link href="{{ asset('assets/admin/css/style.css') }}" rel="stylesheet">
 </head>
 <body>
 <div class="auth-shell">

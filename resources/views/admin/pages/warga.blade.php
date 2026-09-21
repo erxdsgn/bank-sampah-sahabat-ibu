@@ -21,12 +21,12 @@
         </div>
 
         <div class="hero-actions">
-            <a href="{{ route('admin.warga.form-warga') }}" class="btn btn--primary">
+            <button class="btn btn--primary" type="button" onclick="bukaModal('modalTambah')">
                 <svg viewBox="0 0 24 24">
                     <path d="M12 5v14M5 12h14"></path>
                 </svg>
                 Tambah Warga
-            </a>
+            </button>
         </div>
     </section>
 
@@ -312,6 +312,67 @@
         </div>
     </div>
 
+    <!-- ============================================= -->
+    <!-- MODAL: TAMBAH WARGA                            -->
+    <!-- ============================================= -->
+    <div class="modal-overlay" id="modalTambah">
+        <div class="modal-box">
+
+            <div class="modal-head">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 5v14M5 12h14"></path>
+                    </svg>
+                    Tambah Warga
+                </h3>
+                <button class="modal-close" type="button" onclick="tutupModal('modalTambah')">&times;</button>
+            </div>
+
+            <form id="formTambahWarga" onsubmit="return simpanTambahWarga(event)">
+
+                <div class="modal-body">
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label for="tambahNik">NIK</label>
+                            <input type="text" id="tambahNik" maxlength="16" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tambahNama">Nama Lengkap</label>
+                            <input type="text" id="tambahNama" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tambahHp">No. HP</label>
+                            <input type="text" id="tambahHp" maxlength="14" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tambahKeluarga">Anggota Keluarga</label>
+                            <input type="number" id="tambahKeluarga" min="1" value="1">
+                        </div>
+
+                        <div class="form-group form-group--full">
+                            <label for="tambahAlamat">Alamat</label>
+                            <textarea id="tambahAlamat" rows="3" required></textarea>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-foot">
+                    <button class="btn btn--ghost" type="button" onclick="tutupModal('modalTambah')">Batal</button>
+                    <button class="btn btn--primary" type="submit">Simpan Warga</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
 
     <!-- ============================================= -->
     <!-- MODAL: EDIT WARGA                              -->
@@ -426,8 +487,8 @@
 
     <style>
         /* =========================
-                   TABLE
-                ========================= */
+                               TABLE
+                            ========================= */
 
         .card {
             background: var(--surface, #ffffff);
@@ -590,8 +651,8 @@
 
 
         /* =========================
-                       MODAL (tema mengikuti .card)
-                    ========================= */
+                                   MODAL (tema mengikuti .card)
+                                ========================= */
 
         .modal-overlay {
             display: none;
@@ -865,8 +926,8 @@
         }
 
         /* =========================
-                       TOAST
-                    ========================= */
+                                   TOAST
+                                ========================= */
 
         .toast-wrap {
             position: fixed;
@@ -1123,6 +1184,56 @@
 
         }
 
+        /*
+    |--------------------------------------------------------------------------
+    | Tombol Tambah -> popup form tambah warga
+    |--------------------------------------------------------------------------
+    */
+
+        function simpanTambahWarga(event) {
+
+            event.preventDefault();
+
+            const payload = {
+                nik: document.getElementById('tambahNik').value,
+                nama: document.getElementById('tambahNama').value,
+                no_hp: document.getElementById('tambahHp').value,
+                jumlah_anggota_keluarga: document.getElementById('tambahKeluarga').value,
+                alamat: document.getElementById('tambahAlamat').value,
+            };
+
+            fetch(`{{ route('admin.warga.store') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(async (res) => {
+                    if (!res.ok) {
+                        const err = await res.json().catch(() => ({}));
+                        const pesan = err.errors ?
+                            Object.values(err.errors).flat().join(' ') :
+                            (err.message || 'Gagal menyimpan data warga.');
+                        throw new Error(pesan);
+                    }
+                    return res.json();
+                })
+                .then(() => {
+                    tutupModal('modalTambah');
+                    document.getElementById('formTambahWarga').reset();
+                    showToast('Berhasil', 'Data warga baru telah ditambahkan.');
+                    setTimeout(() => window.location.reload(), 800);
+                })
+                .catch((err) => {
+                    showToast('Gagal menyimpan', err.message, 'error');
+                });
+
+            return false;
+        }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -1187,7 +1298,7 @@
                 alamat: document.getElementById('editAlamat').value,
             };
 
-            fetch(`/admin/page/warga/${id}`, {
+            fetch(`/admin/pages/warga/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1244,7 +1355,7 @@
             const id = wargaAkanDihapus.id_warga;
             const namaDihapus = wargaAkanDihapus.nama || 'Warga';
 
-            fetch(`/admin/page/warga/${id}`, {
+            fetch(`/admin/pages/warga/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'Accept': 'application/json',

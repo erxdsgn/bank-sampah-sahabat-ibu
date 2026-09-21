@@ -2,24 +2,19 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Admin;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Buat akun Admin default untuk login
+        Admin::create([
+            'nama'     => 'Admin Bank Sampah Sahabat Ibu',
+            'username' => 'adminBSSI',
+            'password' => bcrypt('121212'), // Password untuk login
         ]);
     }
 }
+
