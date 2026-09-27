@@ -3,93 +3,158 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <link rel="icon" type="image/png" href="{{ asset('assets/admin/img/logo-bssi.png') }}">
-    <title>@yield('title', 'Dashboard') · {{ config('app.name', 'Adminator') }}</title>
 
-    {{-- Applies saved theme --}}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <link
+        rel="icon"
+        type="image/png"
+        href="{{ asset('assets/admin/img/logo-bssi.png') }}"
+    >
+
+    <title>
+        @yield('title', 'Dashboard') ·
+        {{ config('app.name', 'Adminator') }}
+    </title>
+
+    {{-- =====================================================
+        APPLY SAVED THEME
+    ====================================================== --}}
     <script>
-        ! function() {
+        (() => {
             try {
-                var t = localStorage.getItem("dash26-theme"),
-                    e = window.matchMedia("(prefers-color-scheme: dark)").matches;
-                document.documentElement.setAttribute("data-theme", t || (e ? "dark" : "light"));
-            } catch (t) {
-                document.documentElement.setAttribute("data-theme", "light");
+                const savedTheme = localStorage.getItem('dash26-theme');
+
+                const systemDark =
+                    window.matchMedia &&
+                    window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+                document.documentElement.setAttribute(
+                    'data-theme',
+                    savedTheme || (systemDark ? 'dark' : 'light')
+                );
+            } catch (error) {
+                document.documentElement.setAttribute(
+                    'data-theme',
+                    'light'
+                );
             }
-        }();
+        })();
     </script>
 
-    <link href="{{ asset('assets/admin/css/style.css') }}" rel="stylesheet">
+    {{-- Main CSS --}}
+    <link
+        rel="stylesheet"
+        href="{{ asset('assets/admin/css/style.css') }}"
+    >
+
     @stack('head')
 </head>
 
-<body data-active="@yield('active', 'dashboard')" data-crumbs="@yield('crumbs', 'Dashboard')">
+
+<body
+    data-active="@yield('active', 'dashboard')"
+    data-crumbs="@yield('crumbs', 'Dashboard')"
+>
+
+    {{-- =====================================================
+        APP SHELL
+    ====================================================== --}}
     <div class="shell">
+
+        {{-- Sidebar --}}
         <div data-shell-sidebar></div>
+
+
+        {{-- =================================================
+            MAIN AREA
+        ================================================== --}}
         <div class="main">
+
+            {{-- Topbar --}}
             <div data-shell-topbar></div>
+
+
+            {{-- Page Content --}}
             <main class="content">
                 @yield('content')
             </main>
+
+
+            {{-- Footer --}}
             <div data-shell-footer></div>
+
         </div>
+
     </div>
 
-    {{-- Vendors & Runtime --}}
+
+    {{-- =====================================================
+        VENDORS
+    ====================================================== --}}
     <script src="{{ asset('assets/admin/js/runtime.js') }}"></script>
+
     <script src="{{ asset('assets/admin/vendor/vendors.js') }}"></script>
+
     <script src="{{ asset('assets/admin/vendor/vendor-fullcalendar.js') }}"></script>
+
     <script src="{{ asset('assets/admin/vendor/vendor-chartjs.js') }}"></script>
 
-    {{-- Panggil modul utama dengan type="module" --}}
-    <script type="module" src="{{ asset('assets/admin/js/navigation.js') }}"></script>
-    <script type="module" src="{{ asset('assets/admin/js/sidebar.js') }}"></script>
-    <script type="module" src="{{ asset('assets/admin/js/topbar.js') }}"></script>
-    <script type="module" src="{{ asset('assets/admin/js/footer.js') }}"></script>
-    <script type="module" src="{{ asset('assets/admin/js/layout.js') }}"></script>
 
-    @stack('scripts')
-</body>
-</html>
+    {{-- =====================================================
+        ADMIN MODULES
+    ====================================================== --}}
+    <script type="module">
 
-    {{-- Script Injeksi Rendering Sidebar --}}
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const sidebarTarget = document.querySelector('[data-shell-sidebar]');
-            const activeKey = document.body.getAttribute('data-active') || 'dashboard';
+        /*
+         * Sidebar sudah meng-import navigation.js
+         * sendiri, sehingga navigation.js tidak perlu
+         * di-import lagi di sini.
+         */
 
-            if (sidebarTarget && window.navigation) {
-                let html = '<aside class="sidebar"><div class="sidebar-content">';
+        import {
+            renderSidebar
+        } from "{{ asset('assets/admin/js/sidebar.js') }}";
 
-                window.navigation.forEach(group => {
-                    html += `<div class="nav-group"><div class="nav-label">${group.label}</div><ul class="nav-list">`;
+        import "{{ asset('assets/admin/js/topbar.js') }}";
 
-                    group.items.forEach(item => {
-                        const isActive = item.key === activeKey ? 'active' : '';
-                        html += `
-                            <li class="nav-item">
-                                <a href="${item.href}" class="nav-link ${isActive}">
-                                    <span class="nav-icon">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${item.icon}</svg>
-                                    </span>
-                                    <span class="nav-text">${item.text}</span>
-                                </a>
-                            </li>
-                        `;
-                    });
+        import "{{ asset('assets/admin/js/footer.js') }}";
 
-                    html += `</ul></div>`;
-                });
+        import "{{ asset('assets/admin/js/layout.js') }}";
 
-                html += '</div></aside>';
-                sidebarTarget.innerHTML = html;
-            }
-        });
+
+        /*
+         * Render sidebar setelah DOM tersedia.
+         */
+        if (document.readyState === 'loading') {
+
+            document.addEventListener(
+                'DOMContentLoaded',
+                () => {
+                    renderSidebar();
+                },
+                {
+                    once: true
+                }
+            );
+
+        } else {
+
+            renderSidebar();
+
+        }
+
     </script>
 
+
+    {{-- Page-specific scripts --}}
     @stack('scripts')
+
 </body>
 
 </html>

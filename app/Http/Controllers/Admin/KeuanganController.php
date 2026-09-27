@@ -76,38 +76,23 @@ class KeuanganController extends Controller
 
     /**
      * Perbarui transaksi.
+     *
+     * DINONAKTIFKAN: transaksi yang sudah tersimpan tidak boleh diedit sama sekali,
+     * baik transaksi kas manual maupun transaksi otomatis dari modul lain.
+     * Transaksi hanya bisa dilihat (show) atau dihapus (destroy).
      */
     public function update(Request $request, Keuangan $keuangan)
     {
-        if ($keuangan->tipe_referensi) {
-            $pesan = 'Transaksi ini tercatat otomatis dari modul lain ('
-                . $keuangan->tipe_referensi
-                . ') dan tidak bisa diubah manual di sini.';
-
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['status' => 'error', 'message' => $pesan], 422);
-            }
-
-            return redirect()
-                ->route('admin.keuangan.index')
-                ->with('error', $pesan);
-        }
-
-        $data = $this->validasi($request);
-
-        $keuangan->update($data);
+        $pesan = 'Transaksi yang sudah tersimpan tidak dapat diedit. '
+            . 'Silakan hapus transaksi ini lalu buat transaksi baru jika diperlukan perubahan.';
 
         if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'status'  => 'success',
-                'message' => 'Transaksi berhasil diperbarui.',
-                'data'    => $keuangan
-            ]);
+            return response()->json(['status' => 'error', 'message' => $pesan], 422);
         }
 
         return redirect()
             ->route('admin.keuangan.index')
-            ->with('success', 'Transaksi berhasil diperbarui.');
+            ->with('error', $pesan);
     }
 
     /**
@@ -144,7 +129,7 @@ class KeuanganController extends Controller
     }
 
     /**
-     * Aturan validasi bersama untuk store & update (transaksi manual saja).
+     * Aturan validasi untuk store (transaksi manual saja).
      */
     private function validasi(Request $request): array
     {

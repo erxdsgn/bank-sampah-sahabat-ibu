@@ -1,30 +1,20 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Penjualan ke Pengepul')
+@section('title', 'Penjualan Sampah')
 @section('active', 'penjualan-pengepul')
-@section('crumbs', 'Transaksi Sampah | Penjualan ke Pengepul')
+@section('crumbs', 'Transaksi Sampah | Penjualan Sampah')
 
 @section('content')
-
-    @php
-        $barangKeluar = collect($barangKeluar)->sortByDesc('id_barang_keluar')->values();
-    @endphp
 
     <section class="hero">
         <div class="hero-text">
             <span class="eyebrow">TRANSAKSI SAMPAH</span>
-
-            <h1 class="hero-title">
-                Penjualan ke <span class="accent">Pengepul</span>
-            </h1>
-
-            <p class="hero-sub">
-                Kelola data penjualan sampah yang telah dipilah kepada pengepul.
-            </p>
+            <h1 class="hero-title">Penjualan <span class="accent">Sampah</span></h1>
+            <p class="hero-sub">Catat transaksi penjualan sampah bank sampah ke pengepul[cite: 1].</p>
         </div>
 
         <div class="hero-actions">
-            <button class="btn btn--primary" type="button" onclick="bukaModalTambah()">
+            <button class="btn btn--primary" type="button" onclick="bukaModal('modalTambahPenjualan')">
                 <svg viewBox="0 0 24 24">
                     <path d="M12 5v14M5 12h14"></path>
                 </svg>
@@ -33,485 +23,231 @@
         </div>
     </section>
 
-
-    <!-- SUMMARY -->
-    <section class="summary-grid summary-grid--3">
-
-        <div class="summary-card">
-            <div class="summary-card-top">
-                <div>
-                    <div class="summary-label">Total Penjualan</div>
-                    <div class="summary-value">Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</div>
-                </div>
-                <div class="summary-icon summary-icon--income">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 3v18"></path>
-                        <path d="M17 7c0-2-2.2-3-5-3s-5 1-5 3 2.2 3 5 3 5 1 5 3-2.2 3-5 3-5-1-5-3"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="summary-info">Akumulasi seluruh transaksi penjualan</div>
-        </div>
-
-        <div class="summary-card">
-            <div class="summary-card-top">
-                <div>
-                    <div class="summary-label">Total Sampah Terjual</div>
-                    <div class="summary-value">{{ number_format($totalBeratKg, 2, ',', '.') }} Kg</div>
-                </div>
-                <div class="summary-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M3 7h18l-1.5 12a2 2 0 0 1-2 2H6.5a2 2 0 0 1-2-2z"></path>
-                        <path d="M8 7V5a4 4 0 0 1 8 0v2"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="summary-info">Akumulasi berat sampah yang telah dijual</div>
-        </div>
-
-        <div class="summary-card">
-            <div class="summary-card-top">
-                <div>
-                    <div class="summary-label">Jumlah Transaksi</div>
-                    <div class="summary-value">{{ $jumlahTransaksi }}</div>
-                </div>
-                <div class="summary-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M8 6h13"></path>
-                        <path d="M8 12h13"></path>
-                        <path d="M8 18h13"></path>
-                        <path d="M3 6h.01"></path>
-                        <path d="M3 12h.01"></path>
-                        <path d="M3 18h.01"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="summary-info">Total transaksi yang tercatat</div>
-        </div>
-
-    </section>
-
-
     <section class="card">
-
-        <!-- SEARCH -->
+        <!-- SEARCH TABLE -->
         <div class="table-toolbar">
-
             <div class="table-search">
                 <svg viewBox="0 0 24 24">
                     <circle cx="11" cy="11" r="7"></circle>
                     <path d="m21 21-4.3-4.3"></path>
                 </svg>
-                <input type="text" id="searchPenjualan" placeholder="Cari kategori atau pengepul..." autocomplete="off">
+                <input type="text" id="searchPenjualan" placeholder="Cari nama pengepul, kategori, atau tanggal..."
+                    autocomplete="off">
             </div>
 
-            <div class="toolbar-right">
-                <select id="filterKategori" class="toolbar-select">
-                    <option value="">Semua Kategori</option>
-                    @foreach ($kategori as $kat)
-                        <option value="{{ $kat->id_kategori }}">{{ $kat->nama_kategori }}</option>
-                    @endforeach
-                </select>
-
-                <button class="btn btn--ghost" type="button" onclick="window.location.reload()">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path>
-                        <path d="M21 3v5h-5"></path>
-                    </svg>
-                    Refresh
-                </button>
-            </div>
-
+            <button class="btn btn--ghost" type="button" onclick="window.location.reload()">
+                <svg viewBox="0 0 24 24">
+                    <path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path>
+                    <path d="M21 3v5h-5"></path>
+                </svg>
+                Refresh
+            </button>
         </div>
 
-
-        <!-- TABLE -->
+        <!-- TABLE PENJUALAN -->
         <div class="table-responsive">
             <table class="data-table" id="penjualanTable">
                 <thead>
                     <tr>
                         <th>No</th>
                         <th>Tanggal</th>
-                        <th>Pengepul</th>
+                        <th>Nama Pengepul</th>
                         <th>Kategori Sampah</th>
-                        <th>Berat</th>
-                        <th>Harga / Gram</th>
-                        <th>Total</th>
-                        <th>Aksi</th>
+                        <th>Kuantitas</th>
+                        <th>Harga Satuan</th>
+                        <th>Total Harga</th>
                     </tr>
                 </thead>
-
-                <tbody id="penjualanTableBody">
+                <tbody>
                     @forelse ($barangKeluar as $index => $item)
-                        <tr data-kategori-id="{{ $item->id_kategori }}">
-                            <td class="row-number">{{ $index + 1 }}</td>
-                            <td class="nowrap">
-                                {{ \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d M Y') }}
-                            </td>
-                            <td><strong>{{ $item->pembeli }}</strong></td>
+                        @php
+                            $satuanKat = strtolower($item->kategori->satuan ?? 'kg');
+                            $isKg = ($satuanKat === 'kg');
+                            // Jika kg, nilai di database (berat_gram) dibagi 1000. Jika pcs/lainnya, tampilkan apa adanya.
+                            $kuantitasTampil = $isKg ? (($item->berat_gram ?? 0) / 1000) : ($item->berat_gram ?? 0);
+                            $formattedKuantitas = $isKg
+                                ? number_format($kuantitasTampil, 2, ',', '.')
+                                : number_format($kuantitasTampil, 0, ',', '.');
+
+                            $hargaSatuanTampil = $isKg ? (($item->harga_jual_per_gram ?? 0) * 1000) : ($item->harga_jual_per_gram ?? 0);
+                        @endphp
+                        <tr>
+                            <td>{{ $index + 1 }}</td>
+                            <td>{{ \Carbon\Carbon::parse($item->tanggal ?? $item->created_at)->format('d/m/Y') }}</td>
+                            <td><strong>{{ $item->pembeli ?? 'Umum' }}</strong></td>
+                            <td>{{ $item->kategori->nama_kategori ?? '-' }}</td>
+                            <td>{{ $formattedKuantitas }} {{ $item->kategori->satuan ?? 'kg' }}</td>
+                            <td>Rp {{ number_format($hargaSatuanTampil, 0, ',', '.') }}</td>
                             <td>
-                                <span class="badge badge--info">{{ $item->kategori->nama_kategori ?? '-' }}</span>
-                            </td>
-                            <td>{{ number_format($item->berat_gram, 0, ',', '.') }} gram</td>
-                            <td>Rp {{ number_format($item->harga_jual_per_gram, 0, ',', '.') }}</td>
-                            <td>
-                                <strong class="saldo amount-in">
-                                    Rp {{ number_format($item->total, 0, ',', '.') }}
+                                <strong class="saldo">
+                                    Rp {{ number_format($item->total ?? 0, 0, ',', '.') }}
                                 </strong>
-                            </td>
-                            <td>
-                                <div class="table-actions">
-
-                                    <button class="icon-btn" title="Lihat Detail" type="button"
-                                        onclick='lihatDetail(@json($item))'>
-                                        <svg viewBox="0 0 24 24">
-                                            <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path>
-                                            <circle cx="12" cy="12" r="2.5"></circle>
-                                        </svg>
-                                    </button>
-
-                                    <button class="icon-btn" title="Edit Penjualan" type="button"
-                                        onclick='editPenjualan(@json($item))'>
-                                        <svg viewBox="0 0 24 24">
-                                            <path d="M12 20h9"></path>
-                                            <path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"></path>
-                                        </svg>
-                                    </button>
-
-                                    <button class="icon-btn danger" title="Hapus Penjualan" type="button"
-                                        onclick='hapusPenjualan(@json($item))'>
-                                        <svg viewBox="0 0 24 24">
-                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path d="M19 6 18 20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                                            <path d="M10 11v6M14 11v6"></path>
-                                        </svg>
-                                    </button>
-
-                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" style="text-align: center; padding: 40px;">
-                                <div style="font-size: 30px; margin-bottom: 10px;">📋</div>
-                                <strong>Belum Ada Data Penjualan</strong>
-                                <p style="margin: 5px 0 0; color: #6b7280;">
-                                    Belum ada data penjualan sampah ke pengepul.
-                                </p>
+                            <td colspan="7" class="empty-table">
+                                <div class="empty-icon">🗑️</div>
+                                <strong>Belum Ada Transaksi Penjualan</strong>
+                                <p>Silakan catat penjualan sampah baru.</p>
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
-
-            <div class="catalog-empty" id="penjualanKosongCari" style="display: none;">
-                <div style="font-size: 30px; margin-bottom: 10px;">🔍</div>
-                <strong>Data Tidak Ditemukan</strong>
-                <p style="margin: 5px 0 0; color: #6b7280;">
-                    Tidak ada data yang cocok dengan pencarian atau filter ini.
-                </p>
-            </div>
         </div>
 
-
-        <!-- FOOTER -->
         <div class="table-footer">
             <div class="table-info">
-                Menampilkan <strong id="jumlahTampil">{{ $barangKeluar->count() }}</strong>
-                dari <strong>{{ $barangKeluar->count() }}</strong> transaksi
+                Total transaksi:
+                <strong>{{ is_countable($barangKeluar) ? count($barangKeluar) : $barangKeluar->count() }}</strong>
             </div>
         </div>
-
     </section>
-
 
     <!-- TOAST -->
     <div class="toast-wrap" id="toastWrap"></div>
 
-
-    <!-- MODAL: TAMBAH / EDIT PENJUALAN -->
-    <div class="modal-overlay" id="modalPenjualan">
+    <!-- MODAL TAMBAH PENJUALAN -->
+    <div class="modal-overlay" id="modalTambahPenjualan">
         <div class="modal-box">
-
             <div class="modal-head">
-                <h3 class="modal-title" id="modalPenjualanTitle">
+                <h3 class="modal-title">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 5v14M5 12h14"></path>
                     </svg>
-                    Tambah Penjualan ke Pengepul
+                    Tambah Transaksi Penjualan ke Pengepul
                 </h3>
-                <button class="modal-close" type="button" onclick="tutupModal('modalPenjualan')">&times;</button>
+                <button class="modal-close" type="button" onclick="tutupModal('modalTambahPenjualan')">&times;</button>
             </div>
 
-            <form id="formPenjualan" onsubmit="return simpanPenjualan(event)">
+            <form id="formTambahPenjualan" onsubmit="return simpanPenjualan(event)">
                 <div class="modal-body">
-
-                    <input type="hidden" id="penjualanId">
-
                     <div class="form-grid">
 
-                        <div class="form-group">
-                            <label for="penjualanTanggal">Tanggal Penjualan</label>
-                            <input type="date" id="penjualanTanggal" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="penjualanPembeli">Nama Pengepul</label>
-                            <input type="text" id="penjualanPembeli" placeholder="Contoh: Pak Budi" required>
-                        </div>
-
+                        <!-- NAMA PENGEPUL -->
                         <div class="form-group form-group--full">
-                            <label for="penjualanKategori">Kategori Sampah</label>
-                            <select id="penjualanKategori" required>
-                                <option value="">-- Pilih Kategori Sampah --</option>
-                                @foreach ($kategori as $kat)
-                                    <option value="{{ $kat->id_kategori }}">{{ $kat->nama_kategori }}</option>
+                            <label for="tambahPembeli">Nama Pengepul</label>
+                            <input type="text" id="tambahPembeli" placeholder="Masukkan nama pengepul / pembeli..."
+                                required autocomplete="off">
+                        </div>
+
+                        <!-- PILIH KATEGORI SAMPAH -->
+                        <div class="form-group form-group--full">
+                            <label for="cariKategori">Kategori Sampah</label>
+                            <div class="combo" id="comboKategori">
+                                <input type="text" id="cariKategori" class="combo-input"
+                                    placeholder="Ketik jenis / kategori sampah..." autocomplete="off">
+                                <div class="combo-list" id="listKategori"></div>
+                            </div>
+                            <select id="tambahKategori" class="combo-hidden" tabindex="-1" aria-hidden="true" required>
+                                <option value="">-- Pilih Kategori --</option>
+                                @foreach ($kategoriSampah as $k)
+                                    @php
+                                        $satuan = strtolower($k->satuan ?? 'kg');
+                                        $stok = $k->stok_tersedia ?? 0;
+                                        $formattedStok =
+                                            $satuan === 'pcs' || fmod($stok, 1) == 0
+                                                ? number_format($stok, 0, ',', '.')
+                                                : number_format($stok, 2, ',', '.');
+                                    @endphp
+                                    <option value="{{ $k->id_kategori }}" data-stok="{{ $formattedStok }}"
+                                        data-satuan="{{ $k->satuan ?? 'kg' }}">
+                                        {{ $k->nama_kategori }} (Stok: {{ $formattedStok }} {{ $k->satuan ?? 'kg' }})
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
 
+                        <!-- HARGA SATUAN DAN KUANTITAS -->
                         <div class="form-group">
-                            <label for="penjualanBerat">Berat Sampah (Gram)</label>
-                            <input type="number" id="penjualanBerat" min="1" step="1"
-                                placeholder="Contoh: 25000" oninput="hitungTotalPreview()" required>
+                            <label for="tambahHargaSatuan">Harga Jual per <span class="label-satuan">Satuan</span>
+                                (Rp)</label>
+                            <input type="number" id="tambahHargaSatuan" min="0" placeholder="Masukkan harga"
+                                required>
                         </div>
 
                         <div class="form-group">
-                            <label for="penjualanHarga">Harga Jual per Gram</label>
-                            <input type="number" id="penjualanHarga" min="0" step="0.01"
-                                placeholder="Contoh: 4" oninput="hitungTotalPreview()" required>
+                            <label for="tambahKuantitas">Kuantitas (<span class="label-satuan">Satuan</span>)</label>
+                            <input type="number" id="tambahKuantitas" step="any" min="0.01"
+                                placeholder="Masukkan jumlah" required>
                         </div>
 
+                        <!-- TOTAL HARGA (KALKULASI) -->
                         <div class="form-group form-group--full">
-                            <div class="total-preview">
-                                <span class="detail-label">Total Penjualan</span>
-                                <strong class="saldo amount-in" id="totalPreview">Rp 0</strong>
-                            </div>
+                            <span class="detail-label">Total Penerimaan Penjualan</span>
+                            <span class="detail-value saldo" id="totalHargaDisplay">Rp 0</span>
+                        </div>
+
+                        <!-- TANGGAL TRANSAKSI -->
+                        <div class="form-group form-group--full">
+                            <label for="tambahTanggal">Tanggal Transaksi</label>
+                            <input type="date" id="tambahTanggal" required>
                         </div>
 
                     </div>
-
                 </div>
 
                 <div class="modal-foot">
-                    <button class="btn btn--ghost" type="button" onclick="tutupModal('modalPenjualan')">Batal</button>
-                    <button class="btn btn--primary" type="submit" id="penjualanSubmitBtn">Simpan Penjualan</button>
+                    <button class="btn btn--ghost" type="button"
+                        onclick="tutupModal('modalTambahPenjualan')">Batal</button>
+                    <button class="btn btn--primary" type="submit">Simpan Transaksi</button>
                 </div>
             </form>
-
         </div>
     </div>
 
-
-    <!-- MODAL: DETAIL PENJUALAN -->
-    <div class="modal-overlay" id="modalDetail">
-        <div class="modal-box">
-
-            <div class="modal-head">
-                <h3 class="modal-title">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path>
-                        <circle cx="12" cy="12" r="2.5"></circle>
-                    </svg>
-                    Detail Penjualan
-                </h3>
-                <button class="modal-close" type="button" onclick="tutupModal('modalDetail')">&times;</button>
-            </div>
-
-            <div class="modal-body">
-
-                <div class="detail-grid">
-
-                    <div class="detail-item">
-                        <span class="detail-label">Tanggal</span>
-                        <span class="detail-value" id="detailTanggal">-</span>
-                    </div>
-
-                    <div class="detail-item">
-                        <span class="detail-label">Pengepul</span>
-                        <span class="detail-value" id="detailPembeli">-</span>
-                    </div>
-
-                    <div class="detail-item detail-item--full">
-                        <span class="detail-label">Kategori Sampah</span>
-                        <span id="detailKategori">-</span>
-                    </div>
-
-                    <div class="detail-item">
-                        <span class="detail-label">Berat</span>
-                        <span class="detail-value" id="detailBerat">-</span>
-                    </div>
-
-                    <div class="detail-item">
-                        <span class="detail-label">Harga / Gram</span>
-                        <span class="detail-value" id="detailHarga">-</span>
-                    </div>
-
-                    <div class="detail-item detail-item--full">
-                        <span class="detail-label">Total Penjualan</span>
-                        <span class="detail-value saldo amount-in" id="detailTotal">-</span>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="modal-foot">
-                <button class="btn btn--ghost" type="button" onclick="tutupModal('modalDetail')">Tutup</button>
-            </div>
-
-        </div>
-    </div>
-
-
-    <!-- MODAL: KONFIRMASI HAPUS -->
-    <div class="modal-overlay" id="modalHapus">
-        <div class="modal-box modal-box--sm">
-
-            <div class="modal-body modal-body--center">
-
-                <div class="confirm-icon">
-                    <svg viewBox="0 0 24 24">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6 18 20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                        <path d="M10 11v6M14 11v6"></path>
-                    </svg>
-                </div>
-
-                <h3 class="confirm-title">Hapus Data Penjualan?</h3>
-
-                <p class="confirm-text">
-                    Anda akan menghapus data penjualan kepada
-                    <strong id="hapusPembeli">-</strong>
-                    sebesar <span id="hapusTotal">-</span>.
-                    Tindakan ini tidak dapat dibatalkan.
-                </p>
-
-            </div>
-
-            <div class="modal-foot modal-foot--center">
-                <button class="btn btn--ghost" type="button" onclick="tutupModal('modalHapus')">Batal</button>
-                <button class="btn btn--danger" type="button" onclick="konfirmasiHapusPenjualan()">Ya, Hapus</button>
-            </div>
-
-        </div>
-    </div>
-
-
+    <!-- STYLESHEET -->
     <style>
-        /* =========================
-                   SUMMARY
-                ========================= */
-
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
+        :root {
+            --penjualan-page: #f5f7fb;
+            --penjualan-surface: #ffffff;
+            --penjualan-surface-secondary: #f8fafc;
+            --penjualan-text: #1f2937;
+            --penjualan-text-secondary: #6b7280;
+            --penjualan-text-muted: #9ca3af;
+            --penjualan-border: #e5e7eb;
+            --penjualan-table-head: #f8fafc;
+            --penjualan-table-hover: #fafafa;
+            --penjualan-input: #ffffff;
+            --penjualan-shadow: 0 8px 25px rgba(15, 23, 42, .06);
         }
 
-        .summary-grid--3 {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+        [data-theme="dark"] {
+            --penjualan-page: #0b1220;
+            --penjualan-surface: #151d2f;
+            --penjualan-surface-secondary: #1b2438;
+            --penjualan-text: #f1f5f9;
+            --penjualan-text-secondary: #aab6c8;
+            --penjualan-text-muted: #748198;
+            --penjualan-border: #29364d;
+            --penjualan-table-head: #111a2c;
+            --penjualan-table-hover: #202b40;
+            --penjualan-input: #111a2c;
+            --penjualan-shadow: 0 8px 25px rgba(0, 0, 0, .25);
         }
-
-        .summary-card {
-            border: 1px solid var(--border, #e5e7eb);
-            background: var(--surface, #ffffff);
-            border-radius: 14px;
-            padding: 18px;
-            min-width: 0;
-        }
-
-        .summary-card-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .summary-label {
-            font-size: 13px;
-            color: #6b7280;
-            margin-bottom: 8px;
-        }
-
-        .summary-value {
-            font-size: 21px;
-            font-weight: 800;
-            line-height: 1.25;
-            color: #1f2937;
-        }
-
-        .summary-icon {
-            width: 40px;
-            height: 40px;
-            flex: 0 0 40px;
-            border-radius: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #eef2ff;
-            color: var(--primary, #4338ca);
-        }
-
-        .summary-icon--income {
-            background: #dcfce7;
-            color: #16a34a;
-        }
-
-        .summary-icon svg {
-            width: 20px;
-            height: 20px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 1.8;
-        }
-
-        .summary-info {
-            margin-top: 12px;
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        @media (max-width: 1100px) {
-
-            .summary-grid,
-            .summary-grid--3 {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @media (max-width: 560px) {
-
-            .summary-grid,
-            .summary-grid--3 {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* =========================
-                   TABLE
-                ========================= */
 
         .card {
-            background: var(--surface, #ffffff);
-            border: 1px solid var(--border, #e5e7eb);
+            background: var(--penjualan-surface);
+            border: 1px solid var(--penjualan-border);
             border-radius: 14px;
             overflow: hidden;
+            box-shadow: var(--penjualan-shadow);
         }
 
         .table-toolbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
             padding: 16px 24px;
-            flex-wrap: wrap;
         }
 
         .table-search {
-            width: 360px;
+            width: 400px;
+            max-width: 100%;
             position: relative;
+            color: var(--penjualan-text-muted);
         }
 
         .table-search svg {
@@ -524,44 +260,31 @@
             fill: none;
             stroke: currentColor;
             stroke-width: 1.8;
+            pointer-events: none;
         }
 
         .table-search input {
             width: 100%;
             height: 40px;
             padding: 0 14px 0 40px;
-            border: 1px solid #dfe3e8;
+            border: 1px solid var(--penjualan-border);
             border-radius: 8px;
             outline: none;
             box-sizing: border-box;
+            background: var(--penjualan-input);
+            color: var(--penjualan-text);
+            font-family: inherit;
+            font-size: 13px;
+            transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+        }
+
+        .table-search input::placeholder {
+            color: var(--penjualan-text-muted);
         }
 
         .table-search input:focus {
-            border-color: var(--primary);
-        }
-
-        .toolbar-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .toolbar-select {
-            height: 40px;
-            padding: 0 12px;
-            border: 1px solid #dfe3e8;
-            border-radius: 8px;
-            background: #fff;
-            font-family: inherit;
-            font-size: 13px;
-            color: #374151;
-            outline: none;
-            cursor: pointer;
-        }
-
-        .toolbar-select:focus {
-            border-color: var(--primary, #4338ca);
+            border-color: var(--primary, #16a34a);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
         }
 
         .table-responsive {
@@ -572,136 +295,72 @@
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 950px;
+            min-width: 900px;
         }
 
         .data-table th {
-            background: #f8fafc;
-            color: #64748b;
+            background: var(--penjualan-table-head);
+            color: var(--penjualan-text-secondary);
             font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
             padding: 13px 16px;
             text-align: left;
-            border-top: 1px solid #e5e7eb;
-            border-bottom: 1px solid #e5e7eb;
+            border-top: 1px solid var(--penjualan-border);
+            border-bottom: 1px solid var(--penjualan-border);
             white-space: nowrap;
         }
 
         .data-table td {
             padding: 16px;
-            border-bottom: 1px solid #edf0f2;
+            border-bottom: 1px solid var(--penjualan-border);
             font-size: 13px;
-            color: #374151;
+            color: var(--penjualan-text);
             vertical-align: middle;
+            background: var(--penjualan-surface);
+            transition: background .15s ease, color .15s ease;
         }
 
-        .data-table tbody tr:hover {
-            background: #fafafa;
-        }
-
-        .nowrap {
-            white-space: nowrap;
+        .data-table tbody tr:hover td {
+            background: var(--penjualan-table-hover);
         }
 
         .saldo {
+            color: #22c55e !important;
             white-space: nowrap;
-        }
-
-        .amount-in {
-            color: #16a34a;
-        }
-
-        .table-actions {
-            display: flex;
-            gap: 6px;
-        }
-
-        .icon-btn {
-            width: 34px;
-            height: 34px;
-            border: 1px solid #e1e5e9;
-            background: #fff;
-            border-radius: 7px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        .icon-btn svg {
-            width: 16px;
-            height: 16px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 1.8;
-        }
-
-        .icon-btn:hover {
-            background: #f3f4f6;
-        }
-
-        .icon-btn.danger {
-            color: #dc2626;
-        }
-
-        .icon-btn.danger:hover {
-            background: #fef2f2;
-            border-color: #fecaca;
-        }
-
-        .table-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 24px;
-        }
-
-        .table-info {
-            font-size: 13px;
-            color: #6b7280;
-        }
-
-        .badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 11px;
             font-weight: 700;
         }
 
-        .badge--info {
-            background: #e0f2fe;
-            color: #0369a1;
-        }
-
-        .catalog-empty {
+        .empty-table {
             text-align: center;
-            padding: 50px 20px;
+            padding: 50px 40px !important;
+            background: var(--penjualan-surface) !important;
         }
 
-        /* =========================
-                   TOTAL PREVIEW
-                ========================= */
-
-        .total-preview {
-            background: #f0faf5;
-            border: 1px solid #ccefdc;
-            border-radius: 10px;
-            padding: 14px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+        .empty-icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+            opacity: .8;
         }
 
-        /* =========================
-                   MODAL (tema mengikuti .card)
-                ========================= */
+        .empty-table strong {
+            display: block;
+            color: var(--penjualan-text);
+            font-size: 14px;
+        }
+
+        .empty-table p {
+            margin: 5px 0 0;
+            color: var(--penjualan-text-secondary);
+            font-size: 13px;
+        }
 
         .modal-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.5);
+            background: rgba(2, 6, 23, .68);
+            backdrop-filter: blur(3px);
             align-items: center;
             justify-content: center;
             padding: 20px;
@@ -717,14 +376,11 @@
             max-width: 560px;
             max-height: 90vh;
             overflow-y: auto;
-            background: var(--surface, #ffffff);
-            border: 1px solid var(--border, #e5e7eb);
+            background: var(--penjualan-surface);
+            border: 1px solid var(--penjualan-border);
             border-radius: 14px;
-            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
-        }
-
-        .modal-box--sm {
-            max-width: 420px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, .30);
+            color: var(--penjualan-text);
         }
 
         .modal-head {
@@ -732,14 +388,15 @@
             align-items: center;
             justify-content: space-between;
             padding: 20px 24px;
-            border-bottom: 1px solid #edf0f2;
+            border-bottom: 1px solid var(--penjualan-border);
+            background: var(--penjualan-surface);
         }
 
         .modal-title {
             margin: 0;
             font-size: 16px;
             font-weight: 700;
-            color: #1f2937;
+            color: var(--penjualan-text);
             display: flex;
             align-items: center;
             gap: 10px;
@@ -749,7 +406,7 @@
             width: 18px;
             height: 18px;
             fill: none;
-            stroke: currentColor;
+            stroke: #22c55e;
             stroke-width: 1.8;
         }
 
@@ -761,22 +418,13 @@
             border-radius: 7px;
             font-size: 20px;
             line-height: 1;
-            color: #6b7280;
+            color: var(--penjualan-text-muted);
             cursor: pointer;
-        }
-
-        .modal-close:hover {
-            background: #f3f4f6;
-            color: #111827;
         }
 
         .modal-body {
             padding: 22px 24px;
-        }
-
-        .modal-body--center {
-            text-align: center;
-            padding-top: 28px;
+            background: var(--penjualan-surface);
         }
 
         .modal-foot {
@@ -784,22 +432,8 @@
             justify-content: flex-end;
             gap: 10px;
             padding: 16px 24px;
-            border-top: 1px solid #edf0f2;
-        }
-
-        .modal-foot--center {
-            justify-content: center;
-        }
-
-        .btn--danger {
-            background: #dc2626;
-            color: #fff;
-            border: 1px solid #dc2626;
-        }
-
-        .btn--danger:hover {
-            background: #b91c1c;
-            border-color: #b91c1c;
+            border-top: 1px solid var(--penjualan-border);
+            background: var(--penjualan-surface);
         }
 
         .form-grid {
@@ -821,13 +455,12 @@
         .form-group label {
             font-size: 12px;
             font-weight: 700;
-            color: #374151;
+            color: var(--penjualan-text-secondary);
         }
 
         .form-group input,
-        .form-group select,
-        .form-group textarea {
-            border: 1px solid #dfe3e8;
+        .form-group select {
+            border: 1px solid var(--penjualan-border);
             border-radius: 8px;
             padding: 9px 12px;
             font-size: 13px;
@@ -835,28 +468,15 @@
             outline: none;
             box-sizing: border-box;
             width: 100%;
+            background: var(--penjualan-input);
+            color: var(--penjualan-text);
+            transition: border-color .2s ease, box-shadow .2s ease;
         }
 
         .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            border-color: var(--primary, #4338ca);
-        }
-
-        .detail-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px 20px;
-        }
-
-        .detail-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .detail-item--full {
-            grid-column: 1 / -1;
+        .form-group select:focus {
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
         }
 
         .detail-label {
@@ -864,63 +484,80 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .03em;
-            color: #9ca3af;
+            color: var(--penjualan-text-muted);
+            display: block;
         }
 
         .detail-value {
-            font-size: 14px;
-            color: #1f2937;
-        }
-
-        .confirm-icon {
-            width: 56px;
-            height: 56px;
-            margin: 0 auto 14px;
-            border-radius: 50%;
-            background: #fef2f2;
-            color: #dc2626;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .confirm-icon svg {
-            width: 24px;
-            height: 24px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 1.8;
-        }
-
-        .confirm-title {
-            margin: 0 0 8px;
             font-size: 16px;
-            font-weight: 700;
-            color: #1f2937;
+            color: var(--penjualan-text);
         }
 
-        .confirm-text {
-            margin: 0;
+        /* COMBOBOX STYLES */
+        .combo {
+            position: relative;
+        }
+
+        .combo-hidden {
+            display: none !important;
+        }
+
+        .combo-input {
+            width: 100%;
+            border: 1px solid var(--penjualan-border);
+            border-radius: 8px;
+            padding: 9px 12px;
             font-size: 13px;
-            color: #6b7280;
-            line-height: 1.6;
+            font-family: inherit;
+            outline: none;
+            box-sizing: border-box;
+            background: var(--penjualan-input);
+            color: var(--penjualan-text);
         }
 
-        @media (max-width: 560px) {
-
-            .form-grid,
-            .detail-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .table-search {
-                width: 100%;
-            }
+        .combo-input:focus {
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
         }
 
-        /* =========================
-                   TOAST
-                ========================= */
+        .combo-list {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--penjualan-surface);
+            border: 1px solid var(--penjualan-border);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, .22);
+            z-index: 20;
+        }
+
+        .combo-list.show {
+            display: block;
+        }
+
+        .combo-item {
+            padding: 9px 12px;
+            font-size: 13px;
+            color: var(--penjualan-text);
+            cursor: pointer;
+        }
+
+        .combo-item:hover,
+        .combo-item.is-active {
+            background: var(--penjualan-table-hover);
+            color: #22c55e;
+        }
+
+        .combo-empty {
+            padding: 12px;
+            font-size: 12.5px;
+            color: var(--penjualan-text-muted);
+            text-align: center;
+        }
 
         .toast-wrap {
             position: fixed;
@@ -939,25 +576,25 @@
             gap: 12px;
             min-width: 300px;
             max-width: 380px;
-            background: var(--surface, #ffffff);
-            border: 1px solid var(--border, #e5e7eb);
-            border-left: 4px solid #16a34a;
+            background: var(--penjualan-surface);
+            border: 1px solid var(--penjualan-border);
+            border-left: 4px solid #22c55e;
             border-radius: 10px;
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, .25);
             padding: 14px 16px;
             pointer-events: auto;
         }
 
         .toast.toast--error {
-            border-left-color: #dc2626;
+            border-left-color: #ef4444;
         }
 
         .toast-icon {
             width: 22px;
             height: 22px;
             border-radius: 50%;
-            background: #dcfce7;
-            color: #16a34a;
+            background: rgba(34, 197, 94, .13);
+            color: #22c55e;
             flex-shrink: 0;
             display: flex;
             align-items: center;
@@ -965,16 +602,8 @@
         }
 
         .toast.toast--error .toast-icon {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .toast-icon svg {
-            width: 13px;
-            height: 13px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2.4;
+            background: rgba(239, 68, 68, .13);
+            color: #ef4444;
         }
 
         .toast-body {
@@ -984,89 +613,247 @@
         .toast-title {
             font-size: 13px;
             font-weight: 700;
-            color: #1f2937;
+            color: var(--penjualan-text);
             margin: 0 0 2px;
         }
 
         .toast-text {
             font-size: 12.5px;
-            color: #6b7280;
+            color: var(--penjualan-text-secondary);
             margin: 0;
-            line-height: 1.5;
         }
 
         .toast-close {
             border: none;
             background: transparent;
-            color: #9ca3af;
+            color: var(--penjualan-text-muted);
             font-size: 16px;
-            line-height: 1;
             cursor: pointer;
-            padding: 0;
-            flex-shrink: 0;
+        }
+
+        @media (max-width: 560px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group--full {
+                grid-column: auto;
+            }
         }
     </style>
 
-
+    <!-- JAVASCRIPT SYSTEM -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            /* TANGGAL DEFAULT HARI INI */
+            const today = new Date().toISOString().split('T')[0];
+            const inputTanggal = document.getElementById('tambahTanggal');
+            if (inputTanggal) inputTanggal.value = today;
 
-            @if (session('success'))
-                showToast('Berhasil', @json(session('success')));
-            @endif
-
+            /* FILTER TABEL PENJUALAN */
             const searchInput = document.getElementById('searchPenjualan');
-            const filterKategori = document.getElementById('filterKategori');
-
-            if (searchInput) searchInput.addEventListener('keyup', filterTabel);
-            if (filterKategori) filterKategori.addEventListener('change', filterTabel);
-
-            document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
-                overlay.addEventListener('click', function(e) {
-                    if (e.target === overlay) overlay.classList.remove('active');
+            const table = document.getElementById('penjualanTable');
+            if (searchInput && table) {
+                searchInput.addEventListener('keyup', function() {
+                    const keyword = this.value.toLowerCase().trim();
+                    table.querySelectorAll('tbody tr').forEach(function(row) {
+                        row.style.display = row.textContent.toLowerCase().includes(keyword) ? '' :
+                            'none';
+                    });
                 });
+            }
+
+            /* INISIALISASI COMBOBOX KATEGORI */
+            initGenericCombo('comboKategori', 'tambahKategori', 'cariKategori', 'listKategori', onSelectKategori);
+
+            /* CALCULATE TOTAL SAAT KUANTITAS ATAU HARGA DIUBAH */
+            const elKuantitas = document.getElementById('tambahKuantitas');
+            const elHarga = document.getElementById('tambahHargaSatuan');
+
+            if (elKuantitas) elKuantitas.addEventListener('input', hitungTotal);
+            if (elHarga) elHarga.addEventListener('input', hitungTotal);
+        });
+
+        /* REUSABLE SEARCHABLE COMBOBOX */
+        function initGenericCombo(wrapId, selectId, inputId, listId, onSelectCallback) {
+            const select = document.getElementById(selectId);
+            const input = document.getElementById(inputId);
+            const list = document.getElementById(listId);
+
+            if (!select || !input || !list) return;
+
+            const data = Array.from(select.options)
+                .filter(o => o.value !== '')
+                .map(o => ({
+                    value: o.value,
+                    label: o.textContent.replace(/\s+/g, ' ').trim(),
+                    stok: o.dataset.stok || 0,
+                    satuan: o.dataset.satuan || 'kg',
+                    harga: o.dataset.harga || ''
+                }));
+
+            let aktif = -1;
+
+            function escapeHtml(s) {
+                return String(s).replace(/[&<>"']/g, c => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                } [c]));
+            }
+
+            function render(keyword) {
+                const k = (keyword || '').toLowerCase().trim();
+                const hasil = data.filter(d => d.label.toLowerCase().includes(k));
+                aktif = -1;
+
+                list.innerHTML = hasil.length ?
+                    hasil.map(d => `<div class="combo-item" data-value="${d.value}">${escapeHtml(d.label)}</div>`).join(
+                        '') :
+                    `<div class="combo-empty">Data tidak ditemukan</div>`;
+            }
+
+            function pilih(value) {
+                const d = data.find(x => x.value === String(value));
+                if (!d) return;
+
+                select.value = d.value;
+                input.value = d.label;
+                list.classList.remove('show');
+
+                if (typeof onSelectCallback === 'function') {
+                    onSelectCallback(d);
+                }
+            }
+
+            function sorot(arah) {
+                const items = list.querySelectorAll('.combo-item');
+                if (!items.length) return;
+                aktif = (aktif + arah + items.length) % items.length;
+                items.forEach((el, i) => el.classList.toggle('is-active', i === aktif));
+                items[aktif].scrollIntoView({
+                    block: 'nearest'
+                });
+            }
+
+            input.addEventListener('focus', function() {
+                render(select.value ? '' : this.value);
+                list.classList.add('show');
             });
 
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    document.querySelectorAll('.modal-overlay.active').forEach(function(overlay) {
-                        overlay.classList.remove('active');
-                    });
+            input.addEventListener('input', function() {
+                select.value = '';
+                render(this.value);
+                list.classList.add('show');
+                if (typeof onSelectCallback === 'function') {
+                    onSelectCallback(null);
                 }
             });
 
-        });
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (!list.classList.contains('show')) {
+                        render(this.value);
+                        list.classList.add('show');
+                    }
+                    sorot(1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    sorot(-1);
+                } else if (e.key === 'Enter') {
+                    const items = list.querySelectorAll('.combo-item');
+                    if (list.classList.contains('show') && aktif > -1 && items[aktif]) {
+                        e.preventDefault();
+                        pilih(items[aktif].dataset.value);
+                    }
+                } else if (e.key === 'Escape') {
+                    list.classList.remove('show');
+                }
+            });
 
-        /*
-        |--------------------------------------------------------------------------
-        | Helper: buka / tutup modal
-        |--------------------------------------------------------------------------
-        */
+            list.addEventListener('mousedown', function(e) {
+                const item = e.target.closest('.combo-item');
+                if (!item) return;
+                e.preventDefault();
+                pilih(item.dataset.value);
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#' + wrapId)) list.classList.remove('show');
+            });
+        }
+
+        /* CALLBACK KETIKA KATEGORI SAMPAH DIPILIH */
+        function onSelectKategori(data) {
+            const inputHarga = document.getElementById('tambahHargaSatuan');
+            const labelSatuans = document.querySelectorAll('.label-satuan');
+
+            if (data) {
+                labelSatuans.forEach(el => el.textContent = data.satuan);
+                if (inputHarga) inputHarga.focus();
+            } else {
+                labelSatuans.forEach(el => el.textContent = 'Satuan');
+            }
+            hitungTotal();
+        }
+
+        /* KALKULASI HARGA x KUANTITAS */
+        function hitungTotal() {
+            const harga = parseFloat(document.getElementById('tambahHargaSatuan')?.value) || 0;
+            const kuantitas = parseFloat(document.getElementById('tambahKuantitas')?.value) || 0;
+            const total = harga * kuantitas;
+
+            const display = document.getElementById('totalHargaDisplay');
+            if (display) {
+                display.textContent = formatRupiah(total);
+            }
+        }
+
+        /* MODAL CONTROL & UTILS */
         function bukaModal(id) {
-            document.getElementById(id).classList.add('active');
+            if (id === 'modalTambahPenjualan') {
+                const form = document.getElementById('formTambahPenjualan');
+                if (form) form.reset();
+
+                const setVal = (id, val) => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = val;
+                };
+
+                setVal('tambahPembeli', '');
+                setVal('tambahKategori', '');
+                setVal('cariKategori', '');
+                setVal('tambahHargaSatuan', '');
+                setVal('tambahKuantitas', '');
+
+                document.querySelectorAll('.label-satuan').forEach(el => el.textContent = 'Satuan');
+
+                const totalDisplay = document.getElementById('totalHargaDisplay');
+                if (totalDisplay) totalDisplay.textContent = 'Rp 0';
+
+                const today = new Date().toISOString().split('T')[0];
+                setVal('tambahTanggal', today);
+            }
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.add('active');
         }
 
         function tutupModal(id) {
-            document.getElementById(id).classList.remove('active');
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.remove('active');
         }
 
         function formatRupiah(angka) {
             return 'Rp ' + (Number(angka) || 0).toLocaleString('id-ID');
         }
 
-        function formatTanggal(tgl) {
-            if (!tgl) return '-';
-            const d = new Date(tgl);
-            if (isNaN(d)) return tgl;
-            return d.toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            });
-        }
-
         function showToast(title, text, type = 'success') {
             const wrap = document.getElementById('toastWrap');
+            if (!wrap) return;
+
             const toast = document.createElement('div');
             toast.className = 'toast' + (type === 'error' ? ' toast--error' : '');
 
@@ -1075,216 +862,80 @@
                 '<path d="M20 6 9 17l-5-5"></path>';
 
             toast.innerHTML = `
-                <div class="toast-icon"><svg viewBox="0 0 24 24">${iconPath}</svg></div>
-                <div class="toast-body">
-                    <p class="toast-title">${title}</p>
-                    <p class="toast-text">${text}</p>
-                </div>
-                <button class="toast-close" type="button" aria-label="Tutup">&times;</button>
-            `;
+            <div class="toast-icon"><svg viewBox="0 0 24 24">${iconPath}</svg></div>
+            <div class="toast-body">
+                <p class="toast-title">${title}</p>
+                <p class="toast-text">${text}</p>
+            </div>
+            <button class="toast-close" type="button" onclick="this.parentElement.remove()">&times;</button>
+        `;
 
-            function hapusToast() {
-                toast.remove();
-            }
-
-            toast.querySelector('.toast-close').addEventListener('click', hapusToast);
             wrap.appendChild(toast);
-            setTimeout(hapusToast, 3500);
+            setTimeout(() => toast.remove(), 3500);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Pencarian + filter
-        |--------------------------------------------------------------------------
-        */
-        function filterTabel() {
-            const keyword = (document.getElementById('searchPenjualan')?.value || '').toLowerCase().trim();
-            const kategoriId = document.getElementById('filterKategori')?.value || '';
-
-            const rows = document.querySelectorAll('#penjualanTableBody tr[data-kategori-id]');
-            let tampil = 0;
-
-            rows.forEach(function(row) {
-                const cocokKategori = !kategoriId || row.dataset.kategoriId === kategoriId;
-                const cocokCari = !keyword || row.textContent.toLowerCase().includes(keyword);
-
-                const cocok = cocokKategori && cocokCari;
-                row.style.display = cocok ? '' : 'none';
-
-                if (cocok) {
-                    tampil++;
-                    const no = row.querySelector('.row-number');
-                    if (no) no.textContent = tampil;
-                }
-            });
-
-            const kosongCari = document.getElementById('penjualanKosongCari');
-            if (kosongCari) {
-                kosongCari.style.display = (rows.length > 0 && tampil === 0) ? '' : 'none';
-            }
-
-            const info = document.getElementById('jumlahTampil');
-            if (info) info.textContent = tampil;
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Hitung total preview
-        |--------------------------------------------------------------------------
-        */
-        function hitungTotalPreview() {
-            const berat = parseFloat(document.getElementById('penjualanBerat').value) || 0;
-            const harga = parseFloat(document.getElementById('penjualanHarga').value) || 0;
-            const total = berat * harga;
-
-            document.getElementById('totalPreview').textContent = formatRupiah(total);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Tambah / Edit penjualan
-        |--------------------------------------------------------------------------
-        */
-        function bukaModalTambah() {
-            document.getElementById('formPenjualan').reset();
-            document.getElementById('penjualanId').value = '';
-            document.getElementById('penjualanTanggal').value = new Date().toISOString().substring(0, 10);
-            document.getElementById('totalPreview').textContent = 'Rp 0';
-            document.getElementById('modalPenjualanTitle').lastChild.textContent = ' Tambah Penjualan ke Pengepul';
-            document.getElementById('penjualanSubmitBtn').textContent = 'Simpan Penjualan';
-            bukaModal('modalPenjualan');
-        }
-
-        function editPenjualan(item) {
-            document.getElementById('penjualanId').value = item.id_barang_keluar;
-            document.getElementById('penjualanTanggal').value = (item.tanggal || '').substring(0, 10);
-            document.getElementById('penjualanPembeli').value = item.pembeli || '';
-            document.getElementById('penjualanKategori').value = item.id_kategori || '';
-            document.getElementById('penjualanBerat').value = item.berat_gram || 0;
-            document.getElementById('penjualanHarga').value = item.harga_jual_per_gram || 0;
-
-            hitungTotalPreview();
-
-            document.getElementById('modalPenjualanTitle').lastChild.textContent = ' Edit Penjualan ke Pengepul';
-            document.getElementById('penjualanSubmitBtn').textContent = 'Simpan Perubahan';
-
-            bukaModal('modalPenjualan');
-        }
-
+        /* SIMPAN TRANSAKSI VIA AJAX */
         function simpanPenjualan(event) {
             event.preventDefault();
 
-            const id = document.getElementById('penjualanId').value;
+            const namaPembeli = document.getElementById('tambahPembeli')?.value.trim();
+            const idKategori = document.getElementById('tambahKategori')?.value;
+            const kuantitas = document.getElementById('tambahKuantitas')?.value;
+            const hargaSatuan = document.getElementById('tambahHargaSatuan')?.value;
+            const tanggal = document.getElementById('tambahTanggal')?.value;
+
+            if (!namaPembeli) {
+                showToast('Gagal menyimpan', 'Silakan masukkan nama pengepul terlebih dahulu.', 'error');
+                document.getElementById('tambahPembeli')?.focus();
+                return false;
+            }
+
+            if (!idKategori) {
+                showToast('Gagal menyimpan', 'Silakan pilih kategori sampah.', 'error');
+                document.getElementById('cariKategori')?.focus();
+                return false;
+            }
+
+            if (!hargaSatuan || parseFloat(hargaSatuan) <= 0) {
+                showToast('Gagal menyimpan', 'Silakan masukkan harga jual yang valid.', 'error');
+                document.getElementById('tambahHargaSatuan')?.focus();
+                return false;
+            }
 
             const payload = {
-                tanggal: document.getElementById('penjualanTanggal').value,
-                pembeli: document.getElementById('penjualanPembeli').value,
-                id_kategori: document.getElementById('penjualanKategori').value,
-                berat_gram: document.getElementById('penjualanBerat').value,
-                harga_jual_per_gram: document.getElementById('penjualanHarga').value,
+                pembeli: namaPembeli,
+                id_kategori: idKategori,
+                kuantitas: kuantitas,
+                harga_satuan: hargaSatuan,
+                tanggal_transaksi: tanggal
             };
 
-            const url = id ?
-                `{{ url('admin/pages/penjualan-pengepul') }}/${id}` :
-                `{{ route('admin.penjualan-pengepul.store') }}`;
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
-            fetch(url, {
-                    method: id ? 'PUT' : 'POST',
+            fetch(`{{ route('admin.penjualan-pengepul.store') }}`, {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify(payload)
                 })
                 .then(async (res) => {
                     if (!res.ok) {
                         const err = await res.json().catch(() => ({}));
-                        const pesan = err.errors ?
-                            Object.values(err.errors).flat().join(' ') :
-                            (err.message || 'Gagal menyimpan data penjualan.');
-                        throw new Error(pesan);
+                        throw new Error(err.message || 'Gagal menyimpan transaksi.');
                     }
                     return res.json();
                 })
                 .then(() => {
-                    tutupModal('modalPenjualan');
-                    showToast('Berhasil disimpan', id ?
-                        'Perubahan data penjualan telah tersimpan.' :
-                        'Data penjualan baru telah ditambahkan.');
+                    tutupModal('modalTambahPenjualan');
+                    showToast('Berhasil', 'Transaksi penjualan ke pengepul berhasil ditambahkan.');
                     setTimeout(() => window.location.reload(), 800);
                 })
-                .catch((err) => {
-                    showToast('Gagal menyimpan', err.message, 'error');
-                });
+                .catch((err) => showToast('Gagal menyimpan', err.message, 'error'));
 
             return false;
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Detail penjualan
-        |--------------------------------------------------------------------------
-        */
-        function lihatDetail(item) {
-            document.getElementById('detailTanggal').textContent = formatTanggal(item.tanggal);
-            document.getElementById('detailPembeli').textContent = item.pembeli || '-';
-            document.getElementById('detailKategori').innerHTML =
-                `<span class="badge badge--info">${(item.kategori && item.kategori.nama_kategori) || '-'}</span>`;
-            document.getElementById('detailBerat').textContent =
-                Number(item.berat_gram || 0).toLocaleString('id-ID') + ' gram';
-            document.getElementById('detailHarga').textContent = formatRupiah(item.harga_jual_per_gram);
-            document.getElementById('detailTotal').textContent = formatRupiah(item.total);
-
-            bukaModal('modalDetail');
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Hapus penjualan
-        |--------------------------------------------------------------------------
-        */
-        let penjualanAkanDihapus = null;
-
-        function hapusPenjualan(item) {
-            penjualanAkanDihapus = item;
-
-            document.getElementById('hapusPembeli').textContent = item.pembeli || '-';
-            document.getElementById('hapusTotal').textContent = formatRupiah(item.total);
-
-            bukaModal('modalHapus');
-        }
-
-        function konfirmasiHapusPenjualan() {
-            if (!penjualanAkanDihapus) return;
-
-            const id = penjualanAkanDihapus.id_barang_keluar;
-            const pembeli = penjualanAkanDihapus.pembeli || 'Data';
-
-            fetch(`{{ url('admin/pages/penjualan-pengepul') }}/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    }
-                })
-                .then(async (res) => {
-                    if (!res.ok) {
-                        const err = await res.json().catch(() => ({}));
-                        throw new Error(err.message || 'Gagal menghapus data.');
-                    }
-                    return res.json();
-                })
-                .then(() => {
-                    tutupModal('modalHapus');
-                    showToast('Berhasil dihapus', `Data penjualan kepada ${pembeli} telah dihapus.`);
-                    penjualanAkanDihapus = null;
-                    setTimeout(() => window.location.reload(), 800);
-                })
-                .catch((err) => {
-                    showToast('Gagal menghapus', err.message, 'error');
-                });
-        }
     </script>
-
 @endsection

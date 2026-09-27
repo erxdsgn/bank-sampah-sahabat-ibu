@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -19,9 +20,33 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Hapus sesi lama dari perangkat/browser yang sama
+            |--------------------------------------------------------------------------
+            |
+            | User-Agent digunakan untuk mengenali browser/perangkat.
+            | Jika perangkat/browser yang sama login kembali,
+            | sesi lama akan dihapus.
+            |
+            */
+            $admin = Auth::user();
+
+            DB::table('sessions')
+                ->where('user_id', $admin->id_admin)
+                ->where('user_agent', $request->userAgent())
+                ->delete();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Buat session login baru
+            |--------------------------------------------------------------------------
+            */
             $request->session()->regenerate();
 
-            return redirect()->intended(route('admin.dashboard'))
+            return redirect()
+                ->intended(route('admin.dashboard'))
                 ->with('success', 'Selamat datang kembali!');
         }
 
@@ -40,6 +65,8 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('success', 'Anda telah keluar dari sistem.');
+        return redirect()
+            ->route('login')
+            ->with('success', 'Anda telah keluar dari sistem.');
     }
 }

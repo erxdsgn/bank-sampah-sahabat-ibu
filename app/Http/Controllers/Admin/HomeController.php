@@ -137,6 +137,38 @@ class HomeController extends Controller
     }
 
     /**
+     * Update Profil Admin
+     */
+    public function updateProfil(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'nama'     => ['required', 'string', 'max:100'],
+            'username' => ['required', 'string', 'max:50'],
+            'alamat'   => ['nullable', 'string', 'max:255'],
+            'password' => ['nullable', 'string', 'min:6'],
+        ]);
+
+        /** @var Admin $admin */
+        $admin = Auth::user();
+
+        $data = [
+            'nama'     => $request->nama,
+            'username' => $request->username,
+            'alamat'   => $request->alamat,
+        ];
+
+        // Password hanya diperbarui jika diisi
+        if ($request->filled('password')) {
+            $data['password'] = $request->password;
+        }
+
+        $admin->update($data);
+
+        return back()->with('success', 'Profil admin berhasil diperbarui.');
+    }
+
+
+    /**
      * Form Kontak
      */
     public function storeContact(Request $request): RedirectResponse

@@ -14,7 +14,6 @@ class KategoriSampah extends Model
 
     protected $table = 'kategori_sampah';
 
-    // Primary key custom, bukan default 'id'
     protected $primaryKey = 'id_kategori';
 
     protected $fillable = [
@@ -23,42 +22,64 @@ class KategoriSampah extends Model
         'satuan',
     ];
 
+    protected $casts = [
+        'id_induk' => 'integer',
+        'id_kategori' => 'integer',
+    ];
+
     /**
-     * Kategori induk dari baris ini (null kalau ini kategori induk paling atas).
+     * Kategori induk.
      */
     public function induk(): BelongsTo
     {
-        return $this->belongsTo(KategoriSampah::class, 'id_induk', 'id_kategori');
+        return $this->belongsTo(
+            KategoriSampah::class,
+            'id_induk',
+            'id_kategori'
+        );
     }
 
     /**
-     * Daftar sub-kategori (anak) dari kategori ini.
+     * Sub-kategori.
      */
     public function anak(): HasMany
     {
-        return $this->hasMany(KategoriSampah::class, 'id_induk', 'id_kategori');
+        return $this->hasMany(
+            KategoriSampah::class,
+            'id_induk',
+            'id_kategori'
+        );
     }
 
     /**
-     * Relasi ke semua riwayat harga sampah.
+     * Semua riwayat harga.
      */
     public function hargaSampah(): HasMany
     {
-        return $this->hasMany(HargaSampah::class, 'id_kategori', 'id_kategori');
+        return $this->hasMany(
+            HargaSampah::class,
+            'id_kategori',
+            'id_kategori'
+        );
     }
 
     /**
-     * Relasi untuk mengambil 1 harga sampah terbaru.
+     * Harga terbaru berdasarkan tanggal berlaku.
      */
     public function hargaTerbaru(): HasOne
     {
-        return $this->hasOne(HargaSampah::class, 'id_kategori', 'id_kategori')
-                    ->latestOfMany('updated_at');
+        return $this->hasOne(
+            HargaSampah::class,
+            'id_kategori',
+            'id_kategori'
+        )->ofMany([
+            'tanggal_berlaku' => 'max',
+            'id_harga' => 'max',
+        ]);
     }
 
     /**
-     * Scope: hanya kategori anak (yang punya id_induk terisi).
-     * Digunakan untuk dropdown form setoran/verifikasi.
+     * Scope kategori anak.
      */
     public function scopeHanyaAnak($query)
     {
@@ -66,25 +87,135 @@ class KategoriSampah extends Model
     }
 
     /**
-     * Nama lengkap untuk ditampilkan, misalnya "Plastik - Botol Plastik Bening (PET)".
+     * Nama lengkap kategori.
+     *
+     * Contoh:
+     * Plastik - Botol Plastik
      */
     public function getNamaLengkapAttribute(): string
     {
-        return $this->induk
-            ? "{$this->induk->nama_kategori} - {$this->nama_kategori}"
-            : $this->nama_kategori;
+        if ($this->induk) {
+            return $this->induk->nama_kategori
+                . ' - '
+                . $this->nama_kategori;
+        }
+
+        return $this->nama_kategori;
     }
 
     /**
-     * Helper: Cari kategori berdasarkan teks/nama yang dikirim dari form
-     * (Mendukung nama lengkap "Plastik - Botol" maupun nama tunggal "Botol")
+     * Normalisasi satuan kategori.
      */
-    public static function cariBerdasarkanNama(string $nama): ?self
+    public function getSatuanNormalAttribute(): string
     {
-        $namaClean = mb_strtolower(trim($nama));
-        $semua = self::with(['induk', 'hargaTerbaru'])->get();
+        $satuan = strtolower(
+            trim(
+                (string) $this->satuan
+            )
+        );
 
-        return $semua->first(fn ($k) => mb_strtolower($k->nama_lengkap) === $namaClean)
-            ?? $semua->first(fn ($k) => mb_strtolower($k->nama_kategori) === $namaClean);
+        return match ($satuan) {
+            'g',
+            'gram' =>
+                'gram',
+
+            'kg',
+            'kilogram' =>
+                'kg',
+
+            'pcs',
+            'piece',
+            'pieces' =>
+                'pcs',
+
+            'l',
+            'liter',
+            'litre' =>
+                'liter',
+
+            default =>
+                'gram',
+        };
+    }
+
+    /**
+     * Simbol satuan.
+     */
+    public function getSimbolSatuanAttribute(): string
+    {
+        return match (
+            $this->satuan_normal
+        ) {
+            'gram' =>
+                'gram',
+
+            'kg' =>
+                'kg',
+
+            'pcs' =>
+                'pcs',
+
+            'liter' =>
+                'L',
+
+            default =>
+                'gram',
+        };
+    }
+
+    /**
+     * Ambil harga terbaru.
+     */
+    public function getHargaSatuanAktualAttribute(): float
+    {
+        return (float) (
+            $this->hargaTerbaru
+                ->harga_satuan
+                ?? 0
+        );
+    }
+
+    /**
+     * Hitung total harga.
+     */
+    public function hitungTotalHarga(
+        float $jumlah
+    ): float {
+        return round(
+            $jumlah *
+            $this->harga_satuan_aktual,
+            2
+        );
+    }
+
+    /**
+     * Cari kategori berdasarkan nama.
+     */
+    public static function cariBerdasarkanNama(
+        string $nama
+    ): ?self {
+        $namaClean =
+            mb_strtolower(
+                trim($nama)
+            );
+
+        $semua = self::with([
+            'induk',
+            'hargaTerbaru',
+        ])->get();
+
+        return $semua->first(
+            fn ($k) =>
+                mb_strtolower(
+                    $k->nama_lengkap
+                ) === $namaClean
+        )
+        ??
+        $semua->first(
+            fn ($k) =>
+                mb_strtolower(
+                    $k->nama_kategori
+                ) === $namaClean
+        );
     }
 }

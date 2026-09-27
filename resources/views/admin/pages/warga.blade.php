@@ -6,17 +6,15 @@
 
 @section('content')
 
+    <!-- HERO SECTION -->
     <section class="hero">
         <div class="hero-text">
             <span class="eyebrow">MASTER DATA</span>
-
             <h1 class="hero-title">
                 Data <span class="accent">Warga</span>
             </h1>
-
             <p class="hero-sub">
-                Kelola data masyarakat yang telah terdaftar sebagai anggota
-                Bank Sampah.
+                Kelola data masyarakat yang telah terdaftar sebagai anggota Bank Sampah.
             </p>
         </div>
 
@@ -30,229 +28,197 @@
         </div>
     </section>
 
+    <!-- STATS SUMMARY -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon--blue">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Total Warga</span>
+                <span class="stat-value">{{ $warga->count() }} orang</span>
+            </div>
+        </div>
 
+        <div class="stat-card">
+            <div class="stat-icon stat-icon--green">
+                <svg viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Total Saldo Terkumpul</span>
+                <span class="stat-value">Rp {{ number_format($warga->sum('saldo'), 0, ',', '.') }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon stat-icon--amber">
+                <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Rekening Terverifikasi</span>
+                <span class="stat-value">{{ $warga->where('status_rekening', 'verified')->count() }} Rekening</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DATA TABLE CARD -->
     <section class="card">
-
-
-
-        <!-- SEARCH -->
+        <!-- TOOLBAR / SEARCH + FILTER -->
         <div class="table-toolbar">
-
             <div class="table-search">
-
                 <svg viewBox="0 0 24 24">
                     <circle cx="11" cy="11" r="7"></circle>
                     <path d="m21 21-4.3-4.3"></path>
                 </svg>
-
-                <input type="text" id="searchWarga" placeholder="Cari NIK, nama, nomor HP, atau alamat..."
-                    autocomplete="off">
-
+                <input type="text" id="searchWarga" placeholder="Cari NIK, nama, nomor HP, atau alamat..." autocomplete="off">
             </div>
 
-            <button class="btn btn--ghost" type="button" onclick="window.location.reload()">
-                <svg viewBox="0 0 24 24">
-                    <path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path>
-                    <path d="M21 3v5h-5"></path>
-                </svg>
-
-                Refresh
-            </button>
-
+            <div class="filter-pills" id="filterPills">
+                <button class="fpill active" type="button" data-filter="all">Semua</button>
+                <button class="fpill" type="button" data-filter="verified">Terverifikasi</button>
+                <button class="fpill" type="button" data-filter="unverified">Belum Verifikasi</button>
+            </div>
         </div>
-
 
         <!-- TABLE -->
         <div class="table-responsive">
-
             <table class="data-table" id="wargaTable">
-
                 <thead>
                     <tr>
-                        <th>No</th>
+                        <th style="width: 50px;">No</th>
+                        <th>Warga</th>
                         <th>NIK</th>
-                        <th>Nama</th>
                         <th>No. HP</th>
                         <th>Alamat</th>
-                        <th>Anggota Keluarga</th>
+                        <th>Anggota</th>
                         <th>Saldo</th>
-                        <th>Tanggal Daftar</th>
-                        <th>Aksi</th>
+                        <th>Rekening / E-Wallet</th>
+                        <th>Tgl Daftar</th>
+                        <th style="text-align: center;">Aksi</th>
                     </tr>
                 </thead>
-
-
                 <tbody>
-
                     @forelse($warga as $index => $item)
-                        <tr>
-
+                        <tr data-status="{{ $item->nama_bank_ewallet ? $item->status_rekening : 'none' }}">
                             <!-- NO -->
-                            <td>
-                                {{ $index + 1 }}
-                            </td>
+                            <td class="text-subtle">{{ $index + 1 }}</td>
 
+                            <!-- NAMA WARGA -->
+                            <td>
+                                <strong class="user-name">{{ $item->nama }}</strong>
+                            </td>
 
                             <!-- NIK -->
                             <td>
-                                <span class="mono">
-                                    {{ $item->nik }}
-                                </span>
+                                <span class="mono">{{ $item->nik }}</span>
                             </td>
-
-
-                            <!-- NAMA -->
-                            <td>
-                                <strong>
-                                    {{ $item->nama }}
-                                </strong>
-                            </td>
-
 
                             <!-- NO HP -->
-                            <td>
-                                {{ $item->no_hp ?? '-' }}
-                            </td>
-
+                            <td>{{ $item->no_hp ?? '-' }}</td>
 
                             <!-- ALAMAT -->
                             <td>
-                                {{ $item->alamat ?? '-' }}
+                                <div class="truncate-text" title="{{ $item->alamat }}">
+                                    {{ $item->alamat ?? '-' }}
+                                </div>
                             </td>
-
 
                             <!-- JUMLAH ANGGOTA KELUARGA -->
                             <td>
-                                {{ $item->jumlah_anggota_keluarga ?? 0 }}
-                                orang
+                                <span class="kategori-tag">
+                                    {{ $item->jumlah_anggota_keluarga ?? 0 }} orang
+                                </span>
                             </td>
-
 
                             <!-- SALDO -->
                             <td>
-                                <strong class="saldo">
+                                <strong class="saldo-text">
                                     Rp {{ number_format($item->saldo ?? 0, 0, ',', '.') }}
                                 </strong>
                             </td>
 
+                            <!-- REKENING / E-WALLET -->
+                            <td>
+                                @if ($item->nama_bank_ewallet)
+                                    <div class="bank-info">
+                                        <strong>{{ $item->nama_bank_ewallet }}</strong>
+                                        <span class="mono text-subtle">{{ $item->nomor_rekening ?? '-' }}</span>
+                                        <div>
+                                            <span class="status-badge {{ $item->status_rekening === 'verified' ? 'status-badge--approved' : 'status-badge--pending' }}">
+                                                {{ $item->status_rekening === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                @else
+                                    <span class="text-subtle">-</span>
+                                @endif
+                            </td>
 
                             <!-- TANGGAL DAFTAR -->
-                            <td>
+                            <td class="text-subtle">
                                 @if ($item->tanggal_daftar)
-                                    {{ \Carbon\Carbon::parse($item->tanggal_daftar)->translatedFormat('d F Y') }}
+                                    {{ \Carbon\Carbon::parse($item->tanggal_daftar)->translatedFormat('d M Y') }}
                                 @else
                                     -
                                 @endif
                             </td>
 
-
                             <!-- AKSI -->
                             <td>
-
-                                <div class="table-actions">
-
-                                    <!-- DETAIL -->
-                                    <button class="icon-btn" title="Lihat Detail" type="button"
-                                        onclick='lihatWarga(@json($item))'>
-
+                                <div class="table-actions" style="justify-content: center;">
+                                    <button class="icon-btn" title="Lihat Detail" type="button" onclick='lihatWarga(@json($item))'>
                                         <svg viewBox="0 0 24 24">
                                             <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path>
                                             <circle cx="12" cy="12" r="2.5"></circle>
                                         </svg>
-
                                     </button>
 
-
-                                    <!-- EDIT -->
-                                    <button class="icon-btn" title="Edit Data" type="button"
-                                        onclick='editWarga(@json($item))'>
-
+                                    <button class="icon-btn icon-btn--primary" title="Edit Data" type="button" onclick='editWarga(@json($item))'>
                                         <svg viewBox="0 0 24 24">
                                             <path d="M12 20h9"></path>
                                             <path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"></path>
                                         </svg>
-
                                     </button>
 
-
-                                    <!-- HAPUS -->
-                                    <button class="icon-btn danger" title="Hapus Data" type="button"
-                                        onclick='hapusWarga(@json($item))'>
-
+                                    <button class="icon-btn icon-btn--danger" title="Hapus Data" type="button" onclick='hapusWarga(@json($item))'>
                                         <svg viewBox="0 0 24 24">
                                             <polyline points="3 6 5 6 21 6"></polyline>
                                             <path d="M19 6 18 20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
                                             <path d="M10 11v6M14 11v6"></path>
                                         </svg>
-
                                     </button>
-
                                 </div>
-
                             </td>
-
                         </tr>
-
                     @empty
-
                         <tr>
-
-                            <td colspan="9" style="text-align: center; padding: 40px;">
-
-                                <div style="font-size: 30px; margin-bottom: 10px;">
-                                    📋
-                                </div>
-
+                            <td colspan="10" style="text-align: center; padding: 40px;">
+                                <div style="font-size: 30px; margin-bottom: 10px;">📋</div>
                                 <strong>Belum Ada Data Warga</strong>
-
-                                <p style="margin: 5px 0 0; color: #6b7280;">
+                                <p class="empty-desc" style="margin: 5px 0 0;">
                                     Belum ada masyarakat yang terdaftar di Bank Sampah.
                                 </p>
-
                             </td>
-
                         </tr>
                     @endforelse
-
                 </tbody>
-
             </table>
-
         </div>
-
 
         <!-- FOOTER -->
         <div class="table-footer">
-
             <div class="table-info">
-
-                Total warga:
-
-                <strong>
-                    {{ $warga->count() }}
-                </strong>
-
-                orang
-
+                Total warga: <strong>{{ $warga->count() }}</strong> orang
             </div>
-
         </div>
-
     </section>
 
-
-    <!-- ============================================= -->
-    <!-- TOAST NOTIFIKASI                               -->
-    <!-- ============================================= -->
+    <!-- TOAST NOTIFIKASI -->
     <div class="toast-wrap" id="toastWrap"></div>
 
-
-    <!-- ============================================= -->
-    <!-- MODAL: DETAIL WARGA                            -->
-    <!-- ============================================= -->
+    <!-- MODAL: DETAIL WARGA -->
     <div class="modal-overlay" id="modalDetail">
         <div class="modal-box">
-
             <div class="modal-head">
                 <h3 class="modal-title">
                     <svg viewBox="0 0 24 24">
@@ -265,7 +231,6 @@
             </div>
 
             <div class="modal-body">
-
                 <div class="detail-avatar-row">
                     <div class="detail-avatar" id="detailAvatar">-</div>
                     <div>
@@ -275,7 +240,6 @@
                 </div>
 
                 <div class="detail-grid">
-
                     <div class="detail-item">
                         <span class="detail-label">No. HP</span>
                         <span class="detail-value" id="detailHp">-</span>
@@ -288,7 +252,7 @@
 
                     <div class="detail-item">
                         <span class="detail-label">Saldo</span>
-                        <span class="detail-value saldo" id="detailSaldo">-</span>
+                        <span class="detail-value saldo-text" id="detailSaldo">-</span>
                     </div>
 
                     <div class="detail-item">
@@ -301,52 +265,61 @@
                         <span class="detail-value" id="detailAlamat">-</span>
                     </div>
 
-                </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Bank / E-Wallet</span>
+                        <span class="detail-value" id="detailBank">-</span>
+                    </div>
 
+                    <div class="detail-item">
+                        <span class="detail-label">No. Rekening / HP E-Wallet</span>
+                        <span class="detail-value mono" id="detailNoRekening">-</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="detail-label">Nama Pemilik Rekening</span>
+                        <span class="detail-value" id="detailPemilikRekening">-</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="detail-label">Status Rekening</span>
+                        <span class="detail-value" id="detailStatusRekening">-</span>
+                    </div>
+                </div>
             </div>
 
             <div class="modal-foot">
                 <button class="btn btn--ghost" type="button" onclick="tutupModal('modalDetail')">Tutup</button>
             </div>
-
         </div>
     </div>
 
-    <!-- ============================================= -->
-    <!-- MODAL: TAMBAH WARGA                            -->
-    <!-- ============================================= -->
+    <!-- MODAL: TAMBAH WARGA -->
     <div class="modal-overlay" id="modalTambah">
         <div class="modal-box">
-
             <div class="modal-head">
                 <h3 class="modal-title">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 5v14M5 12h14"></path>
-                    </svg>
+                    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
                     Tambah Warga
                 </h3>
                 <button class="modal-close" type="button" onclick="tutupModal('modalTambah')">&times;</button>
             </div>
 
             <form id="formTambahWarga" onsubmit="return simpanTambahWarga(event)">
-
                 <div class="modal-body">
-
                     <div class="form-grid">
-
                         <div class="form-group">
                             <label for="tambahNik">NIK</label>
-                            <input type="text" id="tambahNik" maxlength="16" required>
+                            <input type="text" id="tambahNik" maxlength="16" required placeholder="Masukkan NIK 16 digit">
                         </div>
 
                         <div class="form-group">
                             <label for="tambahNama">Nama Lengkap</label>
-                            <input type="text" id="tambahNama" required>
+                            <input type="text" id="tambahNama" required placeholder="Nama lengkap warga">
                         </div>
 
                         <div class="form-group">
                             <label for="tambahHp">No. HP</label>
-                            <input type="text" id="tambahHp" maxlength="14" required>
+                            <input type="text" id="tambahHp" maxlength="14" required placeholder="08xxxxxxxxxx">
                         </div>
 
                         <div class="form-group">
@@ -356,30 +329,41 @@
 
                         <div class="form-group form-group--full">
                             <label for="tambahAlamat">Alamat</label>
-                            <textarea id="tambahAlamat" rows="3" required></textarea>
+                            <textarea id="tambahAlamat" rows="3" required placeholder="Alamat domisili lengkap..."></textarea>
                         </div>
 
-                    </div>
+                        <div class="form-group">
+                            <label for="tambahBankInput">Bank / E-Wallet</label>
+                            <div class="combo" id="comboBankTambah">
+                                <input type="text" id="tambahBankInput" class="combo-input" placeholder="Ketik atau pilih bank/e-wallet..." maxlength="50" autocomplete="off">
+                                <div class="combo-list" id="listBankTambah"></div>
+                            </div>
+                            <input type="hidden" id="tambahBank">
+                        </div>
 
+                        <div class="form-group">
+                            <label for="tambahNoRekening">No. Rekening / No. HP E-Wallet</label>
+                            <input type="text" id="tambahNoRekening" maxlength="30" placeholder="Nomor rekening / e-wallet">
+                        </div>
+
+                        <div class="form-group form-group--full">
+                            <label for="tambahPemilikRekening">Nama Pemilik Rekening</label>
+                            <input type="text" id="tambahPemilikRekening" placeholder="Nama pada akun rekening / e-wallet">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="modal-foot">
                     <button class="btn btn--ghost" type="button" onclick="tutupModal('modalTambah')">Batal</button>
                     <button class="btn btn--primary" type="submit">Simpan Warga</button>
                 </div>
-
             </form>
-
         </div>
     </div>
 
-
-    <!-- ============================================= -->
-    <!-- MODAL: EDIT WARGA                              -->
-    <!-- ============================================= -->
+    <!-- MODAL: EDIT WARGA -->
     <div class="modal-overlay" id="modalEdit">
         <div class="modal-box">
-
             <div class="modal-head">
                 <h3 class="modal-title">
                     <svg viewBox="0 0 24 24">
@@ -392,13 +376,10 @@
             </div>
 
             <form id="formEditWarga" onsubmit="return simpanWarga(event)">
-
                 <div class="modal-body">
-
                     <input type="hidden" id="editId">
 
                     <div class="form-grid">
-
                         <div class="form-group">
                             <label for="editNik">NIK</label>
                             <input type="text" id="editNik" maxlength="16" required>
@@ -434,29 +415,47 @@
                             <textarea id="editAlamat" rows="3"></textarea>
                         </div>
 
-                    </div>
+                        <div class="form-group">
+                            <label for="editBankInput">Bank / E-Wallet</label>
+                            <div class="combo" id="comboBankEdit">
+                                <input type="text" id="editBankInput" class="combo-input" placeholder="Ketik atau pilih bank/e-wallet..." maxlength="50" autocomplete="off">
+                                <div class="combo-list" id="listBankEdit"></div>
+                            </div>
+                            <input type="hidden" id="editBank">
+                        </div>
 
+                        <div class="form-group">
+                            <label for="editNoRekening">No. Rekening / No. HP E-Wallet</label>
+                            <input type="text" id="editNoRekening" maxlength="30">
+                        </div>
+
+                        <div class="form-group form-group--full">
+                            <label for="editPemilikRekening">Nama Pemilik Rekening</label>
+                            <input type="text" id="editPemilikRekening">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editStatusRekening">Status Rekening</label>
+                            <select id="editStatusRekening">
+                                <option value="unverified">Belum Verifikasi</option>
+                                <option value="verified">Terverifikasi</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="modal-foot">
                     <button class="btn btn--ghost" type="button" onclick="tutupModal('modalEdit')">Batal</button>
                     <button class="btn btn--primary" type="submit">Simpan Perubahan</button>
                 </div>
-
             </form>
-
         </div>
     </div>
 
-
-    <!-- ============================================= -->
-    <!-- MODAL: KONFIRMASI HAPUS                        -->
-    <!-- ============================================= -->
+    <!-- MODAL: KONFIRMASI HAPUS -->
     <div class="modal-overlay" id="modalHapus">
         <div class="modal-box modal-box--sm">
-
             <div class="modal-body modal-body--center">
-
                 <div class="confirm-icon">
                     <svg viewBox="0 0 24 24">
                         <polyline points="3 6 5 6 21 6"></polyline>
@@ -468,63 +467,88 @@
                 <h3 class="confirm-title">Hapus Data Warga?</h3>
 
                 <p class="confirm-text">
-                    Anda akan menghapus data
-                    <strong id="hapusNama">-</strong>
+                    Anda akan menghapus data <strong id="hapusNama">-</strong>
                     (NIK: <span class="mono" id="hapusNik">-</span>).
                     Tindakan ini tidak dapat dibatalkan.
                 </p>
-
             </div>
 
             <div class="modal-foot modal-foot--center">
                 <button class="btn btn--ghost" type="button" onclick="tutupModal('modalHapus')">Batal</button>
                 <button class="btn btn--danger" type="button" onclick="konfirmasiHapus()">Ya, Hapus</button>
             </div>
-
         </div>
     </div>
 
-
+    <!-- STYLES -->
     <style>
-        /* =========================
-                               TABLE
-                            ========================= */
+        /* =========================================================
+           VARIABEL TEMA (Light / Dark)
+           Disamakan dengan Dashboard: memakai penamaan dan palet
+           warna --dashboard-* yang sama persis, supaya semua
+           halaman admin konsisten saat toggle data-theme.
+           ========================================================= */
+        :root {
+            --dashboard-page: #f5f7fb;
+            --dashboard-card: #ffffff;
+            --dashboard-card-secondary: #f8fafc;
+            --dashboard-text: #1f2937;
+            --dashboard-text-secondary: #6b7280;
+            --dashboard-text-muted: #9ca3af;
+            --dashboard-border: #e5e7eb;
+            --dashboard-table-head: #f8fafc;
+            --dashboard-table-row: #ffffff;
+            --dashboard-table-hover: #fafafa;
+            --dashboard-input: #ffffff;
+            --dashboard-shadow: 0 8px 25px rgba(15, 23, 42, .06);
+        }
+
+        [data-theme="dark"] {
+            --dashboard-page: #0b1220;
+            --dashboard-card: #151d2f;
+            --dashboard-card-secondary: #1b2438;
+            --dashboard-text: #f1f5f9;
+            --dashboard-text-secondary: #aab6c8;
+            --dashboard-text-muted: #748198;
+            --dashboard-border: #29364d;
+            --dashboard-table-head: #111a2c;
+            --dashboard-table-row: #151d2f;
+            --dashboard-table-hover: #202b40;
+            --dashboard-input: #1b2438;
+            --dashboard-shadow: 0 8px 25px rgba(0, 0, 0, .25);
+        }
+
+        body {
+            background: var(--dashboard-page);
+            color: var(--dashboard-text);
+            transition: background-color .25s ease, color .25s ease;
+        }
+
+        /* =========================================================
+           TEMA BERSAMA
+           ========================================================= */
 
         .card {
-            background: var(--surface, #ffffff);
-            border: 1px solid var(--border, #e5e7eb);
+            background: var(--dashboard-card);
+            border: 1px solid var(--dashboard-border);
             border-radius: 14px;
             overflow: hidden;
-        }
-
-        .card-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 22px 24px;
-            border-bottom: 1px solid var(--border, #e5e7eb);
-        }
-
-        .card-title {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .card-sub {
-            margin: 5px 0 0;
-            color: #6b7280;
-            font-size: 13px;
+            box-shadow: var(--dashboard-shadow);
+            transition: background-color .25s ease, border-color .25s ease, color .25s ease, box-shadow .25s ease;
         }
 
         .table-toolbar {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
             padding: 16px 24px;
         }
 
         .table-search {
-            width: 400px;
+            width: 360px;
+            max-width: 100%;
             position: relative;
         }
 
@@ -538,20 +562,23 @@
             fill: none;
             stroke: currentColor;
             stroke-width: 1.8;
+            color: var(--dashboard-text-secondary);
         }
 
         .table-search input {
             width: 100%;
             height: 40px;
             padding: 0 14px 0 40px;
-            border: 1px solid #dfe3e8;
+            border: 1px solid var(--dashboard-border);
             border-radius: 8px;
             outline: none;
             box-sizing: border-box;
+            background: var(--dashboard-input);
+            color: var(--dashboard-text);
         }
 
         .table-search input:focus {
-            border-color: var(--primary);
+            border-color: var(--primary, #4338ca);
         }
 
         .table-responsive {
@@ -562,32 +589,37 @@
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1150px;
+            min-width: 1200px;
+            background: var(--dashboard-table-row);
+            color: var(--dashboard-text);
         }
 
         .data-table th {
-            background: #f8fafc;
-            color: #64748b;
+            background: var(--dashboard-table-head);
+            color: var(--dashboard-text-secondary);
             font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
             padding: 13px 16px;
             text-align: left;
-            border-top: 1px solid #e5e7eb;
-            border-bottom: 1px solid #e5e7eb;
+            border-top: 1px solid var(--dashboard-border);
+            border-bottom: 1px solid var(--dashboard-border);
             white-space: nowrap;
+            transition: background-color .25s ease, color .25s ease, border-color .25s ease;
         }
 
         .data-table td {
             padding: 16px;
-            border-bottom: 1px solid #edf0f2;
+            border-bottom: 1px solid var(--dashboard-border);
             font-size: 13px;
-            color: #374151;
+            color: var(--dashboard-text);
             vertical-align: middle;
+            background: var(--dashboard-table-row);
+            transition: background-color .25s ease, color .25s ease, border-color .25s ease;
         }
 
-        .data-table tbody tr:hover {
-            background: #fafafa;
+        .data-table tbody tr:hover td {
+            background: var(--dashboard-table-hover);
         }
 
         .mono {
@@ -595,9 +627,20 @@
             font-size: 12px;
         }
 
-        .saldo {
+        .text-subtle { color: var(--dashboard-text-secondary); }
+
+        .user-name { font-weight: 700; color: var(--dashboard-text); }
+
+        .truncate-text {
+            max-width: 220px;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
+
+        .saldo-text { color: #15803d; white-space: nowrap; }
+
+        .bank-info { display: flex; flex-direction: column; gap: 1px; }
 
         .table-actions {
             display: flex;
@@ -607,13 +650,15 @@
         .icon-btn {
             width: 34px;
             height: 34px;
-            border: 1px solid #e1e5e9;
-            background: #fff;
+            border: 1px solid var(--dashboard-border);
+            background: var(--dashboard-card);
             border-radius: 7px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            color: var(--dashboard-text-secondary);
+            transition: background-color .2s ease, color .2s ease, border-color .2s ease;
         }
 
         .icon-btn svg {
@@ -622,19 +667,14 @@
             fill: none;
             stroke: currentColor;
             stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .icon-btn:hover {
-            background: #f3f4f6;
-        }
-
-        .icon-btn.danger {
-            color: #dc2626;
-        }
-
-        .icon-btn.danger:hover {
-            background: #fef2f2;
-            border-color: #fecaca;
+            background: var(--dashboard-table-hover);
+            color: var(--dashboard-text);
+            border-color: var(--dashboard-border);
         }
 
         .table-footer {
@@ -646,13 +686,10 @@
 
         .table-info {
             font-size: 13px;
-            color: #6b7280;
+            color: var(--dashboard-text-secondary);
         }
 
-
-        /* =========================
-                                   MODAL (tema mengikuti .card)
-                                ========================= */
+        .empty-desc { color: var(--dashboard-text-secondary); }
 
         .modal-overlay {
             display: none;
@@ -671,30 +708,22 @@
 
         .modal-box {
             width: 100%;
-            max-width: 560px;
+            max-width: 580px;
             max-height: 90vh;
             overflow-y: auto;
-            background: var(--surface, #ffffff);
-            border: 1px solid var(--border, #e5e7eb);
+            background: var(--dashboard-card);
+            border: 1px solid var(--dashboard-border);
             border-radius: 14px;
             box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
             animation: modalPop .15s ease-out;
+            transition: background-color .25s ease, border-color .25s ease, color .25s ease;
         }
 
-        .modal-box--sm {
-            max-width: 420px;
-        }
+        .modal-box--sm { max-width: 420px; }
 
         @keyframes modalPop {
-            from {
-                opacity: 0;
-                transform: translateY(8px) scale(.98);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            from { opacity: 0; transform: translateY(8px) scale(.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .modal-head {
@@ -702,14 +731,14 @@
             align-items: center;
             justify-content: space-between;
             padding: 20px 24px;
-            border-bottom: 1px solid #edf0f2;
+            border-bottom: 1px solid var(--dashboard-border);
         }
 
         .modal-title {
             margin: 0;
             font-size: 16px;
             font-weight: 700;
-            color: #1f2937;
+            color: var(--dashboard-text);
             display: flex;
             align-items: center;
             gap: 10px;
@@ -721,6 +750,8 @@
             fill: none;
             stroke: currentColor;
             stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .modal-close {
@@ -731,35 +762,27 @@
             border-radius: 7px;
             font-size: 20px;
             line-height: 1;
-            color: #6b7280;
+            color: var(--dashboard-text-secondary);
             cursor: pointer;
         }
 
         .modal-close:hover {
-            background: #f3f4f6;
-            color: #111827;
+            background: var(--dashboard-table-hover);
+            color: var(--dashboard-text);
         }
 
-        .modal-body {
-            padding: 22px 24px;
-        }
-
-        .modal-body--center {
-            text-align: center;
-            padding-top: 28px;
-        }
+        .modal-body { padding: 22px 24px; }
+        .modal-body--center { text-align: center; padding-top: 28px; }
 
         .modal-foot {
             display: flex;
             justify-content: flex-end;
             gap: 10px;
             padding: 16px 24px;
-            border-top: 1px solid #edf0f2;
+            border-top: 1px solid var(--dashboard-border);
         }
 
-        .modal-foot--center {
-            justify-content: center;
-        }
+        .modal-foot--center { justify-content: center; }
 
         .btn--danger {
             background: #dc2626;
@@ -772,14 +795,13 @@
             border-color: #b91c1c;
         }
 
-        /* --- Detail modal --- */
         .detail-avatar-row {
             display: flex;
             align-items: center;
             gap: 14px;
             padding-bottom: 18px;
             margin-bottom: 18px;
-            border-bottom: 1px solid #edf0f2;
+            border-bottom: 1px solid var(--dashboard-border);
         }
 
         .detail-avatar {
@@ -796,47 +818,29 @@
             flex-shrink: 0;
         }
 
-        .detail-nama {
-            font-size: 16px;
-            font-weight: 700;
-            color: #1f2937;
-        }
-
-        .detail-nik {
-            margin-top: 3px;
-            color: #6b7280;
-        }
+        .detail-nama { font-size: 16px; font-weight: 700; color: var(--dashboard-text); }
+        .detail-nik { margin-top: 3px; color: var(--dashboard-text-secondary); }
 
         .detail-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px 20px;
+            gap: 14px 18px;
         }
 
-        .detail-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .detail-item--full {
-            grid-column: 1 / -1;
-        }
+        .detail-item { display: flex; flex-direction: column; gap: 2px; }
+        .detail-item--full { grid-column: 1 / -1; }
 
         .detail-label {
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .03em;
-            color: #9ca3af;
+            color: var(--dashboard-text-muted);
+            display: block;
         }
 
-        .detail-value {
-            font-size: 14px;
-            color: #1f2937;
-        }
+        .detail-value { font-size: 14px; color: var(--dashboard-text); }
 
-        /* --- Edit modal --- */
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -849,19 +853,18 @@
             gap: 6px;
         }
 
-        .form-group--full {
-            grid-column: 1 / -1;
-        }
+        .form-group--full { grid-column: 1 / -1; }
 
         .form-group label {
             font-size: 12px;
             font-weight: 700;
-            color: #374151;
+            color: var(--dashboard-text-secondary);
         }
 
         .form-group input,
+        .form-group select,
         .form-group textarea {
-            border: 1px solid #dfe3e8;
+            border: 1px solid var(--dashboard-border);
             border-radius: 8px;
             padding: 9px 12px;
             font-size: 13px;
@@ -869,65 +872,17 @@
             outline: none;
             box-sizing: border-box;
             width: 100%;
+            background: var(--dashboard-input);
+            color: var(--dashboard-text);
         }
 
         .form-group input:focus,
+        .form-group select:focus,
         .form-group textarea:focus {
             border-color: var(--primary, #4338ca);
         }
 
-        .form-group textarea {
-            resize: vertical;
-        }
-
-        /* --- Delete modal --- */
-        .confirm-icon {
-            width: 56px;
-            height: 56px;
-            margin: 0 auto 14px;
-            border-radius: 50%;
-            background: #fef2f2;
-            color: #dc2626;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .confirm-icon svg {
-            width: 24px;
-            height: 24px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 1.8;
-        }
-
-        .confirm-title {
-            margin: 0 0 8px;
-            font-size: 16px;
-            font-weight: 700;
-            color: #1f2937;
-        }
-
-        .confirm-text {
-            margin: 0;
-            font-size: 13px;
-            color: #6b7280;
-            line-height: 1.6;
-        }
-
-        @media (max-width: 560px) {
-            .detail-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* =========================
-                                   TOAST
-                                ========================= */
+        .form-group textarea { resize: vertical; }
 
         .toast-wrap {
             position: fixed;
@@ -946,8 +901,8 @@
             gap: 12px;
             min-width: 300px;
             max-width: 380px;
-            background: var(--surface, #ffffff);
-            border: 1px solid var(--border, #e5e7eb);
+            background: var(--dashboard-card);
+            border: 1px solid var(--dashboard-border);
             border-left: 4px solid #16a34a;
             border-radius: 10px;
             box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
@@ -956,113 +911,344 @@
             animation: toastIn .18s ease-out;
         }
 
-        .toast.toast--error {
-            border-left-color: #dc2626;
-        }
+        .toast.toast--error { border-left-color: #dc2626; }
 
         .toast-icon {
             width: 22px;
             height: 22px;
             border-radius: 50%;
-            background: #dcfce7;
-            color: #16a34a;
+            background: rgba(34, 197, 94, .14);
+            color: #4ade80;
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .toast.toast--error .toast-icon {
-            background: #fee2e2;
-            color: #dc2626;
+        .toast.toast--error .toast-icon { background: rgba(239, 68, 68, .14); color: #f87171; }
+        .toast-icon svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+        .toast-body { flex: 1; }
+        .toast-title { font-size: 13px; font-weight: 700; color: var(--dashboard-text); margin: 0 0 2px; }
+        .toast-text { font-size: 12.5px; color: var(--dashboard-text-secondary); margin: 0; line-height: 1.5; }
+        .toast-close { border: none; background: transparent; color: var(--dashboard-text-muted); font-size: 16px; line-height: 1; cursor: pointer; padding: 0; flex-shrink: 0; }
+        .toast-close:hover { color: var(--dashboard-text); }
+        .toast.toast--leaving { animation: toastOut .18s ease-in forwards; }
+
+        @keyframes toastIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(16px); } }
+
+        /* =========================================================
+           TAMBAHAN KHUSUS DATA WARGA
+           ========================================================= */
+
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
         }
 
-        .toast-icon svg {
-            width: 13px;
-            height: 13px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2.4;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
-        .toast-body {
-            flex: 1;
+        .stat-card {
+            background: var(--dashboard-card);
+            border: 1px solid var(--dashboard-border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--dashboard-shadow);
+            transition: background-color .25s ease, border-color .25s ease, color .25s ease, box-shadow .25s ease;
         }
 
-        .toast-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #1f2937;
-            margin: 0 0 2px;
-        }
-
-        .toast-text {
-            font-size: 12.5px;
-            color: #6b7280;
-            margin: 0;
-            line-height: 1.5;
-        }
-
-        .toast-close {
-            border: none;
-            background: transparent;
-            color: #9ca3af;
-            font-size: 16px;
-            line-height: 1;
-            cursor: pointer;
-            padding: 0;
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             flex-shrink: 0;
         }
 
-        .toast-close:hover {
-            color: #111827;
+        .stat-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
-        .toast.toast--leaving {
-            animation: toastOut .18s ease-in forwards;
+        .stat-icon--blue { background: rgba(59, 130, 246, .14); color: #60a5fa; }
+        .stat-icon--green { background: rgba(34, 197, 94, .14); color: #4ade80; }
+        .stat-icon--amber { background: rgba(245, 158, 11, .14); color: #fbbf24; }
+
+        .stat-info { display: flex; flex-direction: column; }
+
+        .stat-info .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--dashboard-text-secondary);
         }
 
-        @keyframes toastIn {
-            from {
-                opacity: 0;
-                transform: translateX(16px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .stat-info .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dashboard-text);
         }
 
-        @keyframes toastOut {
-            from {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .filter-pills { display: flex; gap: 8px; flex-wrap: wrap; }
 
-            to {
-                opacity: 0;
-                transform: translateX(16px);
-            }
+        .fpill {
+            border: 1px solid var(--dashboard-border);
+            background: transparent;
+            color: var(--dashboard-text-secondary);
+            padding: 8px 14px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .fpill.active {
+            background: #16a34a;
+            border-color: #16a34a;
+            color: #fff;
+        }
+
+        .kategori-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 7px;
+            font-size: 12.5px;
+            font-weight: 600;
+            background: rgba(67, 56, 202, .07);
+            color: #4338ca;
+            border: 1px solid #d9d6f7;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 9px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status-badge--pending {
+            background: #fef3e0;
+            color: #b45309;
+            border: 1px solid #f3d9a0;
+        }
+
+        .status-badge--approved {
+            background: #e9f9ee;
+            color: #15803d;
+            border: 1px solid #bfead0;
+        }
+
+        .icon-btn--primary { border-color: #4338ca; color: #4338ca; }
+        .icon-btn--primary:hover { background: #eef2ff; }
+
+        .icon-btn--danger { color: #f87171; }
+        .icon-btn--danger:hover { background: rgba(239, 68, 68, .12); border-color: rgba(239, 68, 68, .30); color: #f87171; }
+
+        .confirm-icon {
+            width: 52px;
+            height: 52px;
+            margin: 0 auto 12px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, .14);
+            color: #f87171;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .confirm-title { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: var(--dashboard-text); }
+        .confirm-text { margin: 0; font-size: 13px; color: var(--dashboard-text-secondary); line-height: 1.5; }
+
+        /* =========================================================
+           COMBOBOX (SEARCHABLE SELECT)
+           ========================================================= */
+
+        .combo { position: relative; }
+
+        .combo-input {
+            width: 100%;
+            border: 1px solid var(--dashboard-border);
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            box-sizing: border-box;
+            background: var(--dashboard-input);
+            color: var(--dashboard-text);
+        }
+
+        .combo-input:focus { border-color: var(--primary, #4338ca); }
+
+        .combo-list {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--dashboard-card);
+            border: 1px solid var(--dashboard-border);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, .12);
+            z-index: 30;
+        }
+
+        .combo-list.show { display: block; }
+        .combo-item { padding: 9px 12px; font-size: 13px; color: var(--dashboard-text); cursor: pointer; }
+        .combo-item:hover, .combo-item.is-active { background: var(--dashboard-table-hover); }
+        .combo-empty { padding: 10px; font-size: 12px; color: var(--dashboard-text-muted); text-align: center; }
+
+        @media (max-width: 640px) {
+            .hero { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .hero-actions { width: 100%; }
+            .stat-chip { flex: 1; }
+            .detail-grid, .form-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 480px) {
-            .toast-wrap {
-                left: 16px;
-                right: 16px;
-                top: 16px;
-            }
+            .toast-wrap { left: 16px; right: 16px; top: 16px; }
+            .toast { min-width: 0; max-width: none; width: 100%; }
+        }
 
-            .toast {
-                min-width: 0;
-                max-width: none;
-                width: 100%;
-            }
+        /* =========================================================
+           DARK THEME — warna semantik yang butuh treatment khusus,
+           memakai palet yang sama seperti di Dashboard.
+           ========================================================= */
+
+        [data-theme="dark"] .stat-icon--blue {
+            background: rgba(37, 99, 235, .18);
+            color: #93c5fd;
+        }
+
+        [data-theme="dark"] .stat-icon--green {
+            background: rgba(34, 197, 94, .16);
+            color: #4ade80;
+        }
+
+        [data-theme="dark"] .stat-icon--amber {
+            background: rgba(217, 119, 6, .18);
+            color: #fbbf24;
+        }
+
+        [data-theme="dark"] .detail-avatar {
+            background: rgba(99, 102, 241, .18);
+            color: #a5b4fc;
+        }
+
+        [data-theme="dark"] .saldo-text {
+            color: #4ade80;
+        }
+
+        [data-theme="dark"] .kategori-tag {
+            background: rgba(99, 102, 241, .16);
+            color: #a5b4fc;
+            border-color: rgba(99, 102, 241, .35);
+        }
+
+        [data-theme="dark"] .status-badge--pending {
+            background: rgba(245, 158, 11, .18);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, .35);
+        }
+
+        [data-theme="dark"] .status-badge--approved {
+            background: rgba(34, 197, 94, .16);
+            color: #4ade80;
+            border-color: rgba(34, 197, 94, .35);
+        }
+
+        [data-theme="dark"] .icon-btn--primary {
+            border-color: rgba(99, 102, 241, .35);
+            color: #a5b4fc;
+        }
+
+        [data-theme="dark"] .icon-btn--primary:hover {
+            background: rgba(99, 102, 241, .16);
+        }
+
+        [data-theme="dark"] .form-group input::placeholder,
+        [data-theme="dark"] .form-group textarea::placeholder,
+        [data-theme="dark"] .combo-input::placeholder,
+        [data-theme="dark"] .table-search input::placeholder {
+            color: rgba(255, 255, 255, .35);
+        }
+
+        [data-theme="dark"] .modal-overlay {
+            background: rgba(0, 0, 0, .65);
+        }
+
+        /* =====================================================
+           DARK MODE — FORCE (belt-and-suspenders), mengikuti
+           pola yang sama seperti di Dashboard.
+        ===================================================== */
+
+        [data-theme="dark"] .card,
+        [data-theme="dark"] .stat-card,
+        [data-theme="dark"] .modal-box,
+        [data-theme="dark"] .toast,
+        [data-theme="dark"] .combo-list {
+            background: #151d2f;
+            color: #f1f5f9;
+            border-color: #29364d;
+        }
+
+        [data-theme="dark"] .data-table,
+        [data-theme="dark"] .data-table tbody,
+        [data-theme="dark"] .data-table tr,
+        [data-theme="dark"] .data-table td {
+            background: #151d2f;
+            color: #f1f5f9;
+        }
+
+        [data-theme="dark"] .data-table th {
+            background: #111a2c;
+            color: #aab6c8;
+            border-color: #29364d;
+        }
+
+        [data-theme="dark"] .data-table td {
+            border-color: #29364d;
+        }
+
+        [data-theme="dark"] .data-table tbody tr:hover td {
+            background: #202b40;
         }
     </style>
 
-
+    <!-- SCRIPTS -->
     <script>
+        const DAFTAR_BANK_EWALLET = [
+            'Bank BCA', 'Bank Mandiri', 'Bank BRI', 'Bank BNI', 'Bank Syariah Indonesia',
+            'Bank CIMB Niaga', 'Bank Danamon', 'Bank Permata', 'Bank BTN', 'Bank Mega',
+            'Bank OCBC NISP', 'Bank Panin', 'Bank Maybank Indonesia', 'Bank BTPN',
+            'Bank Jago', 'SeaBank', 'Bank Neo Commerce', 'Bank DKI', 'Bank Jatim',
+            'Bank BJB', 'GoPay', 'OVO', 'DANA', 'ShopeePay', 'LinkAja', 'Jenius'
+        ];
+
         document.addEventListener('DOMContentLoaded', function() {
 
             @if (session('success'))
@@ -1072,37 +1258,36 @@
             const searchInput = document.getElementById('searchWarga');
             const table = document.getElementById('wargaTable');
 
-            if (!searchInput || !table) {
-                return;
+            function applyFilters() {
+                const keyword = (searchInput?.value || '').toLowerCase().trim();
+                const activePill = document.querySelector('.fpill.active');
+                const statusFilter = activePill ? activePill.dataset.filter : 'all';
+
+                table.querySelectorAll('tbody tr[data-status]').forEach(function(row) {
+                    const matchSearch = !keyword || row.textContent.toLowerCase().includes(keyword);
+                    const matchStatus = statusFilter === 'all' || row.dataset.status === statusFilter;
+                    row.style.display = (matchSearch && matchStatus) ? '' : 'none';
+                });
             }
 
-            searchInput.addEventListener('keyup', function() {
+            if (searchInput) {
+                searchInput.addEventListener('keyup', applyFilters);
+            }
 
-                const keyword = this.value.toLowerCase().trim();
-
-                const rows = table.querySelectorAll('tbody tr');
-
-                rows.forEach(function(row) {
-
-                    const text = row.textContent.toLowerCase();
-
-                    row.style.display =
-                        text.includes(keyword) ? '' : 'none';
-
+            document.querySelectorAll('.fpill').forEach(function(pill) {
+                pill.addEventListener('click', function() {
+                    document.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    applyFilters();
                 });
-
             });
 
-            // Tutup modal saat klik area gelap di luar box
             document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
                 overlay.addEventListener('click', function(e) {
-                    if (e.target === overlay) {
-                        overlay.classList.remove('active');
-                    }
+                    if (e.target === overlay) overlay.classList.remove('active');
                 });
             });
 
-            // Tutup modal dengan tombol Escape
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     document.querySelectorAll('.modal-overlay.active').forEach(function(overlay) {
@@ -1111,22 +1296,12 @@
                 }
             });
 
+            initComboBank('tambahBankInput', 'tambahBank', 'listBankTambah', 'comboBankTambah');
+            initComboBank('editBankInput', 'editBank', 'listBankEdit', 'comboBankEdit');
         });
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Helper: buka / tutup modal
-        |--------------------------------------------------------------------------
-        */
-
-        function bukaModal(id) {
-            document.getElementById(id).classList.add('active');
-        }
-
-        function tutupModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
+        function bukaModal(id) { document.getElementById(id).classList.add('active'); }
+        function tutupModal(id) { document.getElementById(id).classList.remove('active'); }
 
         function formatRupiah(angka) {
             return 'Rp ' + (Number(angka) || 0).toLocaleString('id-ID');
@@ -1136,23 +1311,94 @@
             if (!tgl) return '-';
             const d = new Date(tgl);
             if (isNaN(d)) return tgl;
-            return d.toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
+            return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function formatStatusRekening(status) {
+            return status === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi';
+        }
+
+        function initComboBank(inputId, hiddenId, listId, wrapId) {
+            const input = document.getElementById(inputId);
+            const hidden = document.getElementById(hiddenId);
+            const list = document.getElementById(listId);
+
+            if (!input || !hidden || !list) return;
+
+            let aktif = -1;
+
+            function escapeHtml(s) {
+                return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+            }
+
+            function sanitize(v) {
+                return v.replace(/[^a-zA-Z\s.\-]/g, '');
+            }
+
+            function render(keyword) {
+                const k = (keyword || '').toLowerCase().trim();
+                const hasil = DAFTAR_BANK_EWALLET.filter(b => b.toLowerCase().includes(k));
+                aktif = -1;
+
+                list.innerHTML = hasil.length ?
+                    hasil.map(b => `<div class="combo-item" data-value="${escapeHtml(b)}">${escapeHtml(b)}</div>`).join('') :
+                    '<div class="combo-empty">Tekan Enter untuk pakai nama ini</div>';
+            }
+
+            function pilih(value) {
+                hidden.value = value;
+                input.value = value;
+                list.classList.remove('show');
+            }
+
+            input.addEventListener('focus', function() {
+                render(this.value);
+                list.classList.add('show');
+            });
+
+            input.addEventListener('input', function() {
+                const bersih = sanitize(this.value);
+                if (bersih !== this.value) this.value = bersih;
+                hidden.value = this.value;
+                render(this.value);
+                list.classList.add('show');
+            });
+
+            input.addEventListener('blur', function() {
+                setTimeout(() => { hidden.value = sanitize(input.value.trim()); }, 150);
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    hidden.value = sanitize(this.value.trim());
+                    list.classList.remove('show');
+                } else if (e.key === 'Escape') {
+                    list.classList.remove('show');
+                }
+            });
+
+            list.addEventListener('mousedown', function(e) {
+                const item = e.target.closest('.combo-item');
+                if (!item) return;
+                e.preventDefault();
+                pilih(item.dataset.value);
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#' + wrapId)) list.classList.remove('show');
             });
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Toast notifikasi (pengganti alert() bawaan browser)
-        |--------------------------------------------------------------------------
-        */
+        function resetComboBank(inputId, hiddenId) {
+            const input = document.getElementById(inputId);
+            const hidden = document.getElementById(hiddenId);
+            if (input) input.value = '';
+            if (hidden) hidden.value = '';
+        }
 
         function showToast(title, text, type = 'success') {
-
             const wrap = document.getElementById('toastWrap');
-
             const toast = document.createElement('div');
             toast.className = 'toast' + (type === 'error' ? ' toast--error' : '');
 
@@ -1161,14 +1407,12 @@
                 '<path d="M20 6 9 17l-5-5"></path>';
 
             toast.innerHTML = `
-                <div class="toast-icon">
-                    <svg viewBox="0 0 24 24">${iconPath}</svg>
-                </div>
+                <div class="toast-icon"><svg viewBox="0 0 24 24">${iconPath}</svg></div>
                 <div class="toast-body">
                     <p class="toast-title">${title}</p>
                     <p class="toast-text">${text}</p>
                 </div>
-                <button class="toast-close" type="button" aria-label="Tutup">&times;</button>
+                <button class="toast-close" type="button">&times;</button>
             `;
 
             function hapusToast() {
@@ -1177,29 +1421,21 @@
             }
 
             toast.querySelector('.toast-close').addEventListener('click', hapusToast);
-
             wrap.appendChild(toast);
-
             setTimeout(hapusToast, 3500);
-
         }
 
-        /*
-    |--------------------------------------------------------------------------
-    | Tombol Tambah -> popup form tambah warga
-    |--------------------------------------------------------------------------
-    */
-
         function simpanTambahWarga(event) {
-
             event.preventDefault();
-
             const payload = {
                 nik: document.getElementById('tambahNik').value,
                 nama: document.getElementById('tambahNama').value,
                 no_hp: document.getElementById('tambahHp').value,
                 jumlah_anggota_keluarga: document.getElementById('tambahKeluarga').value,
                 alamat: document.getElementById('tambahAlamat').value,
+                nama_bank_ewallet: document.getElementById('tambahBank').value,
+                nomor_rekening: document.getElementById('tambahNoRekening').value,
+                nama_pemilik_rekening: document.getElementById('tambahPemilikRekening').value,
             };
 
             fetch(`{{ route('admin.warga.store') }}`, {
@@ -1214,16 +1450,14 @@
                 .then(async (res) => {
                     if (!res.ok) {
                         const err = await res.json().catch(() => ({}));
-                        const pesan = err.errors ?
-                            Object.values(err.errors).flat().join(' ') :
-                            (err.message || 'Gagal menyimpan data warga.');
-                        throw new Error(pesan);
+                        throw new Error(err.message || 'Gagal menyimpan data warga.');
                     }
                     return res.json();
                 })
                 .then(() => {
                     tutupModal('modalTambah');
                     document.getElementById('formTambahWarga').reset();
+                    resetComboBank('tambahBankInput', 'tambahBank');
                     showToast('Berhasil', 'Data warga baru telah ditambahkan.');
                     setTimeout(() => window.location.reload(), 800);
                 })
@@ -1234,60 +1468,45 @@
             return false;
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Tombol Detail (mata) -> popup card detail
-        |--------------------------------------------------------------------------
-        */
-
         function lihatWarga(warga) {
-
-            document.getElementById('detailAvatar').textContent =
-                (warga.nama || '-').trim().charAt(0).toUpperCase();
-
-            document.getElementById('detailNama').textContent = warga.nama || '-';
+            const nama = warga.nama || '-';
+            document.getElementById('detailAvatar').textContent = nama.trim().charAt(0).toUpperCase();
+            document.getElementById('detailNama').textContent = nama;
             document.getElementById('detailNik').textContent = warga.nik || '-';
             document.getElementById('detailHp').textContent = warga.no_hp || '-';
-            document.getElementById('detailKeluarga').textContent =
-                (warga.jumlah_anggota_keluarga ?? 0) + ' orang';
+            document.getElementById('detailKeluarga').textContent = (warga.jumlah_anggota_keluarga ?? 0) + ' orang';
             document.getElementById('detailSaldo').textContent = formatRupiah(warga.saldo);
             document.getElementById('detailTanggal').textContent = formatTanggal(warga.tanggal_daftar);
             document.getElementById('detailAlamat').textContent = warga.alamat || '-';
+            document.getElementById('detailBank').textContent = warga.nama_bank_ewallet || '-';
+            document.getElementById('detailNoRekening').textContent = warga.nomor_rekening || '-';
+            document.getElementById('detailPemilikRekening').textContent = warga.nama_pemilik_rekening || '-';
+            document.getElementById('detailStatusRekening').textContent = warga.nama_bank_ewallet ? formatStatusRekening(warga.status_rekening) : '-';
 
             bukaModal('modalDetail');
-
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Tombol Edit (pensil) -> popup form edit
-        |--------------------------------------------------------------------------
-        */
-
         function editWarga(warga) {
-
             document.getElementById('editId').value = warga.id_warga;
             document.getElementById('editNik').value = warga.nik || '';
             document.getElementById('editNama').value = warga.nama || '';
             document.getElementById('editHp').value = warga.no_hp || '';
             document.getElementById('editKeluarga').value = warga.jumlah_anggota_keluarga || 0;
             document.getElementById('editSaldo').value = warga.saldo || 0;
-            document.getElementById('editTanggal').value = warga.tanggal_daftar ?
-                warga.tanggal_daftar.substring(0, 10) : '';
+            document.getElementById('editTanggal').value = warga.tanggal_daftar ? warga.tanggal_daftar.substring(0, 10) : '';
             document.getElementById('editAlamat').value = warga.alamat || '';
+            document.getElementById('editBankInput').value = warga.nama_bank_ewallet || '';
+            document.getElementById('editBank').value = warga.nama_bank_ewallet || '';
+            document.getElementById('editNoRekening').value = warga.nomor_rekening || '';
+            document.getElementById('editPemilikRekening').value = warga.nama_pemilik_rekening || '';
+            document.getElementById('editStatusRekening').value = warga.status_rekening || 'unverified';
 
             bukaModal('modalEdit');
-
         }
 
         function simpanWarga(event) {
-
             event.preventDefault();
-
             const id = document.getElementById('editId').value;
-
             const payload = {
                 nik: document.getElementById('editNik').value,
                 nama: document.getElementById('editNama').value,
@@ -1296,6 +1515,10 @@
                 saldo: document.getElementById('editSaldo').value,
                 tanggal_daftar: document.getElementById('editTanggal').value,
                 alamat: document.getElementById('editAlamat').value,
+                nama_bank_ewallet: document.getElementById('editBank').value,
+                nomor_rekening: document.getElementById('editNoRekening').value,
+                nama_pemilik_rekening: document.getElementById('editPemilikRekening').value,
+                status_rekening: document.getElementById('editStatusRekening').value,
             };
 
             fetch(`/admin/pages/warga/${id}`, {
@@ -1326,31 +1549,17 @@
             return false;
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Tombol Hapus (tong sampah) -> popup konfirmasi hapus
-        |--------------------------------------------------------------------------
-        */
-
         let wargaAkanDihapus = null;
 
         function hapusWarga(warga) {
-
             wargaAkanDihapus = warga;
-
             document.getElementById('hapusNama').textContent = warga.nama || '-';
             document.getElementById('hapusNik').textContent = warga.nik || '-';
-
             bukaModal('modalHapus');
-
         }
 
         function konfirmasiHapus() {
-
-            if (!wargaAkanDihapus) {
-                return;
-            }
+            if (!wargaAkanDihapus) return;
 
             const id = wargaAkanDihapus.id_warga;
             const namaDihapus = wargaAkanDihapus.nama || 'Warga';
@@ -1380,5 +1589,4 @@
                 });
         }
     </script>
-
 @endsection

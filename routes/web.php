@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\KeuanganController;
 use App\Http\Controllers\Admin\BarangKeluarController;
 use App\Http\Controllers\Admin\KategoriHargaController;
 use App\Http\Controllers\Admin\LaporanController;
+use App\Http\Controllers\Admin\ArtikelEdukasiController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -46,6 +47,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Pengaturan Sistem & Sesi Perangkat Login
     Route::get('/pages/pengaturan', [HomeController::class, 'pengaturan'])->name('pengaturan');
+    Route::put('/pages/pengaturan/profil', [HomeController::class, 'updateProfil'])->name('pengaturan.profil.update');
 
     // Data Warga
     Route::prefix('pages/warga')->group(function () {
@@ -109,6 +111,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/', [DeviceManagementController::class, 'index'])->name('index');
         Route::delete('/{id}', [DeviceManagementController::class, 'logoutDevice'])->name('logout');
     });
+
+        Route::prefix('pages/artikel')->name('artikel.')->group(function () {
+            Route::get('/', [ArtikelEdukasiController::class,'index'])->name('index');
+            Route::post('/', [ArtikelEdukasiController::class,'store'])->name('store');
+            Route::put('/{id}', [ArtikelEdukasiController::class,'update'])->name('update');
+            Route::delete('/{id}', [ArtikelEdukasiController::class,'destroy'])->name('destroy');
+        });
 
     // Kategori & Harga Sampah
     Route::prefix('pages/kategori-harga')->name('kategori-harga.')->group(function () {

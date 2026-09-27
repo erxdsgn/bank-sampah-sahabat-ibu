@@ -29,10 +29,15 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama_produk' => 'required|string|max:255',
-            'harga'       => 'required|numeric|min:0',
-            'stok'        => 'required|integer|min:0',
+            'nama_produk' => 'required|string|max:255|regex:/^[a-zA-Z\s]+$/',
+            'harga'       => 'required|numeric|min:0|max:500000',
+            'stok'        => 'required|integer|min:0|max:500',
             'foto'        => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+        ], [
+            // Kustom pesan error agar lebih komunikatif (opsional)
+            'nama_produk.regex' => 'Nama produk hanya boleh berisi huruf dan spasi.',
+            'harga.max'         => 'Harga produk maksimal Rp 500.000.',
+            'stok.max'          => 'Stok produk maksimal 500 unit.',
         ]);
 
         // Simpan foto ke storage/app/public/products
@@ -75,10 +80,14 @@ class ProductController extends Controller
         $produk = Product::findOrFail($id);
 
         $request->validate([
-            'nama_produk' => 'required|string|max:255',
-            'harga'       => 'required|numeric|min:0',
-            'stok'        => 'required|integer|min:0',
+            'nama_produk' => 'required|string|max:255|regex:/^[a-zA-Z\s]+$/',
+            'harga'       => 'required|numeric|min:0|max:500000',
+            'stok'        => 'required|integer|min:0|max:500',
             'foto'        => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+        ], [
+            'nama_produk.regex' => 'Nama produk hanya boleh berisi huruf dan spasi.',
+            'harga.max'         => 'Harga produk maksimal Rp 500.000.',
+            'stok.max'          => 'Stok produk maksimal 500 unit.',
         ]);
 
         $data = [

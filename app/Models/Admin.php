@@ -21,6 +21,7 @@ class Admin extends Authenticatable
         'nama',
         'username',
         'password',
+        'alamat',
     ];
 
     // Sembunyikan ruangan sensitif semasa penukaran ke Array/JSON

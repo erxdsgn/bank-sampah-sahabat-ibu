@@ -8,8 +8,8 @@ export function renderFooter() {
     <footer class="d-footer">
       <div>© 2026 ·  by <span><b>Tim Kecebong</span></div>
       <div class="d-footer-meta">
-        <span>v4.1.2</span>
-        <span>preview build</span>
+        <span>v1.0</span>
+        <span>Bank Sampah Sahabat Ibu</span>
       </div>
     </footer>`;
 }

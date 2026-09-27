@@ -15,936 +15,1596 @@
             'selesai' => ['success', 'Disetujui'],
             'rejected' => ['danger', 'Ditolak'],
         ];
+
+        /**
+         * Memformat nilai kuantitas sesuai satuan kategori sampah.
+         *
+         * PENTING: mengikuti logika penyimpanan di BarangKeluarController —
+         * HANYA satuan "kg" yang dikonversi (nilai dasar disimpan dalam gram,
+         * dibagi 1000 saat ditampilkan). Satuan lain (gram, pcs, liter, dst.)
+         * disimpan APA ADANYA di kolom berat_gram, jadi ditampilkan tanpa
+         * konversi sama sekali.
+         *
+         * Catatan: menyesuaikan dengan kolom "satuan" pada kategori sampah.
+         * Ubah nama kolom di bawah ini jika berbeda pada skema database Anda.
+         */
+        $formatSatuan = function ($nilaiDasar, $satuanRaw) {
+            $satuan = strtolower(trim((string) ($satuanRaw ?: 'kg')));
+
+            if ($satuan === 'kg') {
+                return [number_format($nilaiDasar / 1000, 2, ',', '.'), 'Kg'];
+            }
+
+            if (in_array($satuan, ['gram', 'g'])) {
+                return [number_format($nilaiDasar, 0, ',', '.'), 'Gram'];
+            }
+
+            if (in_array($satuan, ['pcs', 'pc', 'buah', 'unit', 'lembar'])) {
+                return [number_format($nilaiDasar, 0, ',', '.'), 'Pcs'];
+            }
+
+            if (in_array($satuan, ['liter', 'l', 'ltr'])) {
+                return [number_format($nilaiDasar, 2, ',', '.'), 'Liter'];
+            }
+
+            // Satuan lain di luar daftar: tampilkan apa adanya, label mengikuti
+            // nilai kolom "satuan" aslinya (bukan dipaksa jadi "Kg").
+            return [number_format($nilaiDasar, 2, ',', '.'), $satuanRaw ? ucfirst($satuanRaw) : 'Kg'];
+        };
     @endphp
 
-    <section class="hero">
-        <div class="hero-text">
-            <span class="eyebrow">KONTEN & LAPORAN</span>
+    <div class="laporan-page">
 
-            <h1 class="hero-title">
-                Laporan <span class="accent">& Riwayat</span>
-            </h1>
+        {{-- =====================================================
+             HERO
+        ====================================================== --}}
+        <section class="hero">
+            <div class="hero-text">
+                <span class="eyebrow">KONTEN & LAPORAN</span>
 
-            <p class="hero-sub">
-                Pantau transaksi barang keluar, penyetoran warga,
-                dan aktivitas operasional Bank Sampah.
-            </p>
-        </div>
+                <h1 class="hero-title">
+                    Laporan <span class="accent">& Riwayat</span>
+                </h1>
 
-        <div class="hero-actions">
-            <button class="btn btn--primary" type="button" onclick="window.print()">
-                <svg viewBox="0 0 24 24">
-                    <path d="M6 9V4h12v5"></path>
-                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                    <path d="M6 14h12v7H6z"></path>
-                </svg>
-                Cetak Laporan
-            </button>
-        </div>
-    </section>
+                <p class="hero-sub">
+                    Pantau transaksi, penyetoran warga, dan aktivitas operasional Bank Sampah.
+                </p>
+            </div>
+
+            <div class="hero-actions">
+                <button class="btn btn--primary" type="button" onclick="window.print()">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M6 9V4h12v5"></path>
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                        <path d="M6 14h12v7H6z"></path>
+                    </svg>
+                    Cetak Laporan
+                </button>
+            </div>
+        </section>
 
 
-    <!-- SUMMARY -->
-    <section class="summary-grid">
+        {{-- =====================================================
+             SUMMARY
+        ====================================================== --}}
+        <section class="summary-grid">
 
-        <div class="summary-card">
-            <div class="summary-card-top">
-                <div>
-                    <div class="summary-label">Total Penjualan</div>
-                    <div class="summary-value">Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</div>
+            <div class="summary-card">
+                <div class="summary-card-top">
+                    <div>
+                        <div class="summary-label">Total Penjualan</div>
+
+                        <div class="summary-value">
+                            Rp {{ number_format($totalPenjualan, 0, ',', '.') }}
+                        </div>
+                    </div>
+
+                    <div class="summary-icon summary-icon--income">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 3v18"></path>
+                            <path d="M17 7c0-2-2.2-3-5-3s-5 1-5 3 2.2 3 5 3 5 1 5 3-2.2 3-5 3-5-1-5-3"></path>
+                        </svg>
+                    </div>
                 </div>
-                <div class="summary-icon summary-icon--income">
+
+                <div class="summary-info">
+                    Akumulasi hasil penjualan
+                </div>
+            </div>
+
+
+            <div class="summary-card">
+                <div class="summary-card-top">
+                    <div>
+                        <div class="summary-label">Total Volume Keluar</div>
+
+                        <div class="summary-value">
+                            {{ number_format($totalBeratKeluar, 2, ',', '.') }}
+                            <small>Kg</small>
+                        </div>
+                    </div>
+
+                    <div class="summary-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M3 6h18"></path>
+                            <path d="M5 6l1 14h12l1-14"></path>
+                            <path d="M9 10v6M15 10v6"></path>
+                            <path d="M9 6V3h6v3"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="summary-info">
+                    Sampah terjual / terdistribusi
+                </div>
+            </div>
+
+
+            <div class="summary-card">
+                <div class="summary-card-top">
+                    <div>
+                        <div class="summary-label">Total Transaksi</div>
+
+                        <div class="summary-value">
+                            {{ $totalTransaksiKeluar }}
+                        </div>
+                    </div>
+
+                    <div class="summary-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M8 6h13"></path>
+                            <path d="M8 12h13"></path>
+                            <path d="M8 18h13"></path>
+                            <path d="M3 6h.01"></path>
+                            <path d="M3 12h.01"></path>
+                            <path d="M3 18h.01"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="summary-info">
+                    Jumlah transaksi barang keluar
+                </div>
+            </div>
+
+        </section>
+
+
+        {{-- =====================================================
+             REPORT CARD
+        ====================================================== --}}
+        <section class="card report-card">
+
+            {{-- TAB --}}
+            <div class="tabs-header">
+
+                <button
+                    type="button"
+                    data-tab="penjualan"
+                    class="report-tab {{ $activeTab === 'penjualan' ? 'tab-active' : '' }}"
+                >
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4 4h16v16H4z"></path>
+                        <path d="M8 8h8M8 12h8M8 16h5"></path>
+                    </svg>
+
+                    Penjualan
+
+                    <span class="tab-count">
+                        {{ $riwayatPenjualan->total() }}
+                    </span>
+                </button>
+
+
+                <button
+                    type="button"
+                    data-tab="setoran"
+                    class="report-tab {{ $activeTab === 'setoran' ? 'tab-active' : '' }}"
+                >
                     <svg viewBox="0 0 24 24">
                         <path d="M12 3v18"></path>
-                        <path d="M17 7c0-2-2.2-3-5-3s-5 1-5 3 2.2 3 5 3 5 1 5 3-2.2 3-5 3-5-1-5-3"></path>
+                        <path d="M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H7"></path>
                     </svg>
-                </div>
+
+                    Penyetoran Warga
+
+                    <span class="tab-count">
+                        {{ $riwayatSetoran->total() }}
+                    </span>
+                </button>
+
             </div>
-            <div class="summary-info">Akumulasi hasil penjualan</div>
-        </div>
-
-        <div class="summary-card">
-            <div class="summary-card-top">
-                <div>
-                    <div class="summary-label">Total Volume Keluar</div>
-                    <div class="summary-value">
-                        {{ number_format($totalBeratKeluar, 2, ',', '.') }}
-                        <small>Kg</small>
-                    </div>
-                </div>
-                <div class="summary-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M3 6h18"></path>
-                        <path d="M5 6l1 14h12l1-14"></path>
-                        <path d="M9 10v6M15 10v6"></path>
-                        <path d="M9 6V3h6v3"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="summary-info">Sampah terjual / terdistribusi</div>
-        </div>
-
-        <div class="summary-card">
-            <div class="summary-card-top">
-                <div>
-                    <div class="summary-label">Total Transaksi</div>
-                    <div class="summary-value">{{ $totalTransaksiKeluar }}</div>
-                </div>
-                <div class="summary-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M8 6h13"></path>
-                        <path d="M8 12h13"></path>
-                        <path d="M8 18h13"></path>
-                        <path d="M3 6h.01"></path>
-                        <path d="M3 12h.01"></path>
-                        <path d="M3 18h.01"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="summary-info">Jumlah transaksi barang keluar</div>
-        </div>
-
-    </section>
 
 
-    <section class="card report-card">
+            {{-- =================================================
+                 TAB PENJUALAN
+            ================================================== --}}
+            <div
+                class="report-panel"
+                data-panel="penjualan"
+                @if ($activeTab !== 'penjualan') hidden @endif
+            >
 
-        <!-- TAB -->
-        <div class="tabs-header">
+                <div class="table-toolbar">
 
-            <button type="button" data-tab="penjualan"
-                class="report-tab {{ $activeTab === 'penjualan' ? 'tab-active' : '' }}">
-                <svg viewBox="0 0 24 24">
-                    <path d="M4 4h16v16H4z"></path>
-                    <path d="M8 8h8M8 12h8M8 16h5"></path>
-                </svg>
-                Penjualan
-                <span class="tab-count">{{ $riwayatPenjualan->total() }}</span>
-            </button>
+                    <div class="toolbar-left">
 
-            <button type="button" data-tab="setoran" class="report-tab {{ $activeTab === 'setoran' ? 'tab-active' : '' }}">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 3v18"></path>
-                    <path d="M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H7"></path>
-                </svg>
-                Penyetoran Warga
-                <span class="tab-count">{{ $riwayatSetoran->total() }}</span>
-            </button>
-
-        </div>
-
-
-        <!-- ========================================= -->
-        <!-- TAB PENJUALAN                              -->
-        <!-- ========================================= -->
-        <div class="report-panel" data-panel="penjualan" @if ($activeTab !== 'penjualan') hidden @endif>
-
-            <div class="table-toolbar">
-
-                <div class="toolbar-left">
-                    <div class="table-search">
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="11" cy="11" r="7"></circle>
-                            <path d="m21 21-4.3-4.3"></path>
-                        </svg>
-
-                        <input type="text" id="searchPenjualan" placeholder="Cari nama pembeli..." autocomplete="off">
-                    </div>
-
-                    @if (request('search_penjualan'))
-                        <a href="{{ route('admin.laporan.index', ['tab' => 'penjualan']) }}" class="btn btn--ghost">
+                        <div class="table-search">
                             <svg viewBox="0 0 24 24">
-                                <path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path>
-                                <path d="M21 3v5h-5"></path>
+                                <circle cx="11" cy="11" r="7"></circle>
+                                <path d="m21 21-4.3-4.3"></path>
                             </svg>
-                            Reset
-                        </a>
-                    @endif
-                </div>
 
-            </div>
-
-
-            <div class="table-responsive">
-
-                <table class="data-table">
-
-                    <thead>
-                        <tr>
-                            <th>Tanggal</th>
-                            <th>Pembeli / Pengepul</th>
-                            <th>Kategori Sampah</th>
-                            <th class="col-num">Berat</th>
-                            <th class="col-num">Harga / Gram</th>
-                            <th class="col-num">Total Nominal</th>
-                            <th>Petugas</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-
-                        @forelse($riwayatPenjualan as $item)
-                            <tr>
-
-                                <td class="nowrap">
-                                    {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d M Y') : '-' }}
-                                </td>
-
-                                <td>
-                                    <div class="party">
-                                        <span class="avatar">
-                                            {{ mb_strtoupper(mb_substr($item->pembeli ?: '-', 0, 1)) }}
-                                        </span>
-                                        <strong>{{ $item->pembeli ?: '-' }}</strong>
-                                    </div>
-                                </td>
-
-                                <td>
-                                    @if ($item->kategori->nama_kategori ?? null)
-                                        <strong>{{ $item->kategori->nama_kategori }}</strong>
-                                    @else
-                                        -
-                                    @endif
-                                </td>
-
-                                <td class="col-num nowrap">
-                                    <strong>{{ number_format($item->berat_gram / 1000, 2, ',', '.') }}</strong>
-                                    <span class="unit">Kg</span>
-                                </td>
-
-                                <td class="col-num nowrap">
-                                    Rp {{ number_format($item->harga_jual_per_gram, 0, ',', '.') }}
-                                </td>
-
-                                <td class="col-num nowrap">
-                                    <strong class="amount-in">Rp {{ number_format($item->total, 0, ',', '.') }}</strong>
-                                </td>
-
-                                <td>{{ $item->admin->nama ?? '-' }}</td>
-
-                            </tr>
-
-                        @empty
-
-                            <tr>
-                                <td colspan="7" style="text-align: center; padding: 40px;">
-                                    <div style="font-size: 30px; margin-bottom: 10px;">📋</div>
-                                    <strong>
-                                        {{ request('search_penjualan') ? 'Pembeli Tidak Ditemukan' : 'Belum Ada Data Penjualan' }}
-                                    </strong>
-                                    <p style="margin: 5px 0 0; color: #6b7280;">
-                                        {{ request('search_penjualan')
-                                            ? 'Coba gunakan nama pembeli lain atau reset pencarian.'
-                                            : 'Transaksi barang keluar akan muncul di sini.' }}
-                                    </p>
-                                </td>
-                            </tr>
-                        @endforelse
-
-                    </tbody>
-
-                </table>
-
-            </div>
+                            <input
+                                type="text"
+                                id="searchPenjualan"
+                                placeholder="Cari nama pembeli..."
+                                autocomplete="off"
+                            >
+                        </div>
 
 
-            <div class="table-footer">
+                        @if (request('search_penjualan'))
+                            <a
+                                href="{{ route('admin.laporan.index', ['tab' => 'penjualan']) }}"
+                                class="btn btn--ghost"
+                            >
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path>
+                                    <path d="M21 3v5h-5"></path>
+                                </svg>
+                                Reset
+                            </a>
+                        @endif
 
-                <div class="table-info">
-                    Riwayat penjualan
-                    <strong>{{ $riwayatPenjualan->total() }}</strong>
-                    transaksi
-                </div>
-
-                <div class="pagination-wrap">
-                    {{ $riwayatPenjualan->appends(array_merge(request()->except('penjualan_page', 'tab'), ['tab' => 'penjualan']))->links() }}
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- ========================================= -->
-        <!-- TAB SETORAN WARGA                         -->
-        <!-- ========================================= -->
-        <div class="report-panel" data-panel="setoran" @if ($activeTab !== 'setoran') hidden @endif>
-
-            <div class="table-toolbar">
-
-                <div class="toolbar-left">
-                    <div class="table-search">
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="11" cy="11" r="7"></circle>
-                            <path d="m21 21-4.3-4.3"></path>
-                        </svg>
-
-                        <input type="text" id="searchSetoran" placeholder="Cari nama warga atau NIK..."
-                            autocomplete="off">
                     </div>
 
-                    @if (request('search_setoran'))
-                        <a href="{{ route('admin.laporan.index', ['tab' => 'setoran']) }}" class="btn btn--ghost">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path>
-                                <path d="M21 3v5h-5"></path>
-                            </svg>
-                            Reset
-                        </a>
-                    @endif
+                </div>
+
+
+                <div class="table-responsive">
+
+                    <table class="data-table">
+
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Pembeli / Pengepul</th>
+                                <th>Kategori Sampah</th>
+                                <th class="col-num">Berat</th>
+                                <th class="col-num">Harga / Gram</th>
+                                <th class="col-num">Total Nominal</th>
+                                <th>Petugas</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @forelse($riwayatPenjualan as $item)
+
+                                @php
+                                    [$beratTampil, $satuanTampil] = $formatSatuan(
+                                        $item->berat_gram,
+                                        $item->kategori->satuan ?? null
+                                    );
+                                @endphp
+
+                                <tr>
+
+                                    <td class="nowrap">
+                                        {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}
+                                    </td>
+
+
+                                    <td>
+                                        <strong>
+                                            {{ $item->pembeli ?: '-' }}
+                                        </strong>
+                                    </td>
+
+
+                                    <td>
+                                        @if ($item->kategori->nama_kategori ?? null)
+                                            <strong>
+                                                {{ $item->kategori->nama_kategori }}
+                                            </strong>
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+
+
+                                    <td class="col-num nowrap">
+
+                                        <strong>
+                                            {{ $beratTampil }}
+                                        </strong>
+
+                                        <span class="unit">
+                                            {{ $satuanTampil }}
+                                        </span>
+
+                                    </td>
+
+
+                                    <td class="col-num nowrap">
+                                        Rp {{ number_format($item->harga_jual_per_gram, 0, ',', '.') }}
+                                    </td>
+
+
+                                    <td class="col-num nowrap">
+
+                                        <strong class="amount-in">
+                                            Rp {{ number_format($item->total, 0, ',', '.') }}
+                                        </strong>
+
+                                    </td>
+
+
+                                    <td>
+                                        {{ $item->admin->nama ?? '-' }}
+                                    </td>
+
+                                </tr>
+
+                            @empty
+
+                                <tr class="empty-row">
+                                    <td colspan="7">
+
+                                        <div class="empty-state">
+
+                                            <div class="empty-icon">
+                                                📋
+                                            </div>
+
+                                            <strong>
+                                                {{ request('search_penjualan')
+                                                    ? 'Pembeli Tidak Ditemukan'
+                                                    : 'Belum Ada Data Penjualan' }}
+                                            </strong>
+
+                                            <p>
+                                                {{ request('search_penjualan')
+                                                    ? 'Coba gunakan nama pembeli lain atau reset pencarian.'
+                                                    : 'Transaksi barang keluar akan muncul di sini.' }}
+                                            </p>
+
+                                        </div>
+
+                                    </td>
+                                </tr>
+
+                            @endforelse
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <div class="table-footer">
+
+                    <div class="table-info">
+                        Riwayat penjualan
+
+                        <strong>
+                            {{ $riwayatPenjualan->total() }}
+                        </strong>
+
+                        transaksi
+                    </div>
+
+
+                    <div class="pagination-wrap">
+                        {{ $riwayatPenjualan->appends(
+                            array_merge(
+                                request()->except('penjualan_page', 'tab'),
+                                ['tab' => 'penjualan']
+                            )
+                        )->links() }}
+                    </div>
+
                 </div>
 
             </div>
 
 
-            <div class="table-responsive">
+            {{-- =================================================
+                 TAB SETORAN WARGA
+            ================================================== --}}
+            <div
+                class="report-panel"
+                data-panel="setoran"
+                @if ($activeTab !== 'setoran') hidden @endif
+            >
 
-                <table class="data-table">
+                <div class="table-toolbar">
 
-                    <thead>
-                        <tr>
-                            <th>Tanggal Setor</th>
-                            <th>Warga</th>
-                            <th>Kategori Sampah</th>
-                            <th class="col-num">Total Berat</th>
-                            <th class="col-num">Total Nilai</th>
-                            <th>Status</th>
-                            <th>Catatan</th>
-                        </tr>
-                    </thead>
+                    <div class="toolbar-left">
 
-                    <tbody>
+                        <div class="table-search">
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="7"></circle>
+                                <path d="m21 21-4.3-4.3"></path>
+                            </svg>
 
-                        @forelse($riwayatSetoran as $setoran)
-                            @php
-                                $details = $setoran->details ?? collect();
+                            <input
+                                type="text"
+                                id="searchSetoran"
+                                placeholder="Cari nama warga atau NIK..."
+                                autocomplete="off"
+                            >
+                        </div>
 
-                                $namaKategori = $details
-                                    ->map(function ($detail) {
-                                        return optional($detail->kategori)->nama_lengkap ??
-                                            optional($detail->kategori)->nama_kategori;
-                                    })
-                                    ->filter()
-                                    ->unique()
-                                    ->implode(', ');
 
-                                [$badgeVariant, $badgeLabel] = $statusMap[$setoran->status] ?? [
-                                    'warning',
-                                    ucfirst((string) $setoran->status),
-                                ];
-                            @endphp
+                        @if (request('search_setoran'))
+                            <a
+                                href="{{ route('admin.laporan.index', ['tab' => 'setoran']) }}"
+                                class="btn btn--ghost"
+                            >
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path>
+                                    <path d="M21 3v5h-5"></path>
+                                </svg>
+                                Reset
+                            </a>
+                        @endif
 
+                    </div>
+
+                </div>
+
+
+                <div class="table-responsive">
+
+                    <table class="data-table">
+
+                        <thead>
                             <tr>
+                                <th>Tanggal Setor</th>
+                                <th>Warga</th>
+                                <th>Kategori Sampah</th>
+                                <th class="col-num">Total Berat</th>
+                                <th class="col-num">Total Nilai</th>
+                                <th>Status</th>
+                                <th>Catatan</th>
+                            </tr>
+                        </thead>
 
-                                <td class="nowrap">
-                                    {{ $setoran->tanggal_setoran ? \Carbon\Carbon::parse($setoran->tanggal_setoran)->translatedFormat('d M Y') : '-' }}
-                                </td>
+                        <tbody>
 
-                                <td>
-                                    <div class="party">
-                                        <span class="avatar">
-                                            {{ mb_strtoupper(mb_substr($setoran->warga->nama ?? '-', 0, 1)) }}
-                                        </span>
+                            @forelse($riwayatSetoran as $setoran)
+
+                                @php
+                                    $details = $setoran->details ?? collect();
+
+                                    $namaKategori = $details
+                                        ->map(function ($detail) {
+                                            return optional($detail->kategori)->nama_lengkap ??
+                                                optional($detail->kategori)->nama_kategori;
+                                        })
+                                        ->filter()
+                                        ->unique()
+                                        ->implode(', ');
+
+                                    [$badgeVariant, $badgeLabel] = $statusMap[$setoran->status] ?? [
+                                        'warning',
+                                        ucfirst((string) $setoran->status),
+                                    ];
+
+                                    // Kelompokkan total berat per satuan, karena satu setoran
+                                    // bisa berisi beberapa kategori dengan satuan berbeda
+                                    // (mis. 2 Kg plastik + 5 Pcs botol).
+                                    $rincianBerat = $details
+                                        ->groupBy(function ($detail) {
+                                            return strtolower(trim((string) (optional($detail->kategori)->satuan ?: 'kg')));
+                                        })
+                                        ->map(function ($group, $satuanKey) use ($formatSatuan) {
+                                            $totalDasar = $group->sum('berat_gram');
+                                            [$nilai, $label] = $formatSatuan($totalDasar, $satuanKey);
+                                            return $nilai . ' ' . $label;
+                                        })
+                                        ->values();
+
+                                    $totalBeratTampil = $rincianBerat->isNotEmpty()
+                                        ? $rincianBerat->implode(', ')
+                                        : number_format($setoran->total_berat / 1000, 2, ',', '.') . ' Kg';
+                                @endphp
+
+                                <tr>
+
+                                    <td class="nowrap">
+                                        {{ $setoran->tanggal_setoran
+                                            ? \Carbon\Carbon::parse($setoran->tanggal_setoran)->format('d/m/Y')
+                                            : '-' }}
+                                    </td>
+
+
+                                    <td>
+
                                         <span class="party-info">
-                                            <strong>{{ $setoran->warga->nama ?? '-' }}</strong>
-                                            <span class="mono">{{ $setoran->warga->nik ?? '-' }}</span>
+
+                                            <strong>
+                                                {{ $setoran->warga->nama ?? '-' }}
+                                            </strong>
+
+                                            <span class="mono">
+                                                {{ $setoran->warga->nik ?? '-' }}
+                                            </span>
+
                                         </span>
-                                    </div>
-                                </td>
 
-                                <td>
-                                    @if ($namaKategori)
-                                        <strong>{{ $namaKategori }}</strong>
-                                    @else
-                                        -
-                                    @endif
-                                </td>
+                                    </td>
 
-                                <td class="col-num nowrap">
-                                    <strong>{{ number_format($setoran->total_berat / 1000, 2, ',', '.') }}</strong>
-                                    <span class="unit">Kg</span>
-                                </td>
 
-                                <td class="col-num nowrap">
-                                    <strong>Rp {{ number_format($setoran->total_nilai, 0, ',', '.') }}</strong>
-                                </td>
+                                    <td>
 
-                                <td>
-                                    <span class="badge badge--{{ $badgeVariant }}">{{ $badgeLabel }}</span>
-                                </td>
+                                        @if ($namaKategori)
+                                            <strong>
+                                                {{ $namaKategori }}
+                                            </strong>
+                                        @else
+                                            -
+                                        @endif
 
-                                <td class="cell-note" title="{{ $setoran->catatan_admin }}">
-                                    {{ $setoran->catatan_admin ? \Illuminate\Support\Str::limit($setoran->catatan_admin, 60) : '-' }}
-                                </td>
+                                    </td>
 
-                            </tr>
 
-                        @empty
+                                    <td class="col-num">
+                                        {{ $totalBeratTampil }}
+                                    </td>
 
-                            <tr>
-                                <td colspan="7" style="text-align: center; padding: 40px;">
-                                    <div style="font-size: 30px; margin-bottom: 10px;">📋</div>
-                                    <strong>
-                                        {{ request('search_setoran') ? 'Setoran Tidak Ditemukan' : 'Belum Ada Data Setoran' }}
-                                    </strong>
-                                    <p style="margin: 5px 0 0; color: #6b7280;">
-                                        {{ request('search_setoran')
-                                            ? 'Coba gunakan nama warga atau NIK lain, atau reset pencarian.'
-                                            : 'Penyetoran sampah warga akan muncul di sini.' }}
-                                    </p>
-                                </td>
-                            </tr>
-                        @endforelse
 
-                    </tbody>
+                                    <td class="col-num nowrap">
 
-                </table>
+                                        <strong>
+                                            Rp {{ number_format($setoran->total_nilai, 0, ',', '.') }}
+                                        </strong>
+
+                                    </td>
+
+
+                                    <td>
+                                        <span class="badge badge--{{ $badgeVariant }}">
+                                            {{ $badgeLabel }}
+                                        </span>
+                                    </td>
+
+
+                                    <td
+                                        class="cell-note"
+                                        title="{{ $setoran->catatan_admin }}"
+                                    >
+                                        {{ $setoran->catatan_admin
+                                            ? \Illuminate\Support\Str::limit($setoran->catatan_admin, 60)
+                                            : '-' }}
+                                    </td>
+
+                                </tr>
+
+                            @empty
+
+                                <tr class="empty-row">
+                                    <td colspan="7">
+
+                                        <div class="empty-state">
+
+                                            <div class="empty-icon">
+                                                📋
+                                            </div>
+
+                                            <strong>
+                                                {{ request('search_setoran')
+                                                    ? 'Setoran Tidak Ditemukan'
+                                                    : 'Belum Ada Data Setoran' }}
+                                            </strong>
+
+                                            <p>
+                                                {{ request('search_setoran')
+                                                    ? 'Coba gunakan nama warga atau NIK lain, atau reset pencarian.'
+                                                    : 'Penyetoran sampah warga akan muncul di sini.' }}
+                                            </p>
+
+                                        </div>
+
+                                    </td>
+                                </tr>
+
+                            @endforelse
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <div class="table-footer">
+
+                    <div class="table-info">
+                        Riwayat penyetoran
+
+                        <strong>
+                            {{ $riwayatSetoran->total() }}
+                        </strong>
+
+                        transaksi
+                    </div>
+
+
+                    <div class="pagination-wrap">
+                        {{ $riwayatSetoran->appends(
+                            array_merge(
+                                request()->except('setoran_page', 'tab'),
+                                ['tab' => 'setoran']
+                            )
+                        )->links() }}
+                    </div>
+
+                </div>
 
             </div>
 
+        </section>
 
-            <div class="table-footer">
-
-                <div class="table-info">
-                    Riwayat penyetoran
-                    <strong>{{ $riwayatSetoran->total() }}</strong>
-                    transaksi
-                </div>
-
-                <div class="pagination-wrap">
-                    {{ $riwayatSetoran->appends(array_merge(request()->except('setoran_page', 'tab'), ['tab' => 'setoran']))->links() }}
-                </div>
-
-            </div>
-
-        </div>
-
-    </section>
+    </div>
 
 
     <style>
         /* =========================================================
-                                                                   TEMA - mengikuti halaman Keuangan
-                                                                   (kartu ringkasan, ikon, badge, warna, tabel)
-                                                                   ========================================================= */
+           LAPORAN & RIWAYAT
+           Dashboard Dark Theme
+        ========================================================= */
 
-        .report-tab,
-        .table-search input,
-        .btn {
+        .laporan-page {
+            --page-bg: #f5f7fb;
+            --surface: #ffffff;
+            --surface-secondary: #f8fafc;
+
+            --text: #1f2937;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+
+            --border: #e5e7eb;
+            --table-head: #f8fafc;
+            --table-row: #ffffff;
+            --table-hover: #fafafa;
+            --input-bg: #ffffff;
+            --empty: #f8fafc;
+
+            --shadow: 0 8px 25px rgba(15, 23, 42, .06);
+
+            --success-bg: #dcfce7;
+            --success-text: #15803d;
+
+            --warning-bg: #fef3c7;
+            --warning-text: #d97706;
+
+            --danger-bg: #fee2e2;
+            --danger-text: #b91c1c;
+
+            --primary-soft: #eef2ff;
+            --primary-text: var(--primary, #4338ca);
+
+            color: var(--text);
+        }
+
+
+        html[data-theme="dark"] .laporan-page {
+            --page-bg: #0b1220;
+            --surface: #151d2f;
+            --surface-secondary: #1b2438;
+
+            --text: #f1f5f9;
+            --text-secondary: #aab6c8;
+            --text-muted: #748198;
+
+            --border: #29364d;
+            --table-head: #111a2c;
+            --table-row: #151d2f;
+            --table-hover: #202b40;
+            --input-bg: #111a2c;
+            --empty: #111a2c;
+
+            --shadow: 0 8px 25px rgba(0, 0, 0, .25);
+
+            --success-bg: rgba(34, 197, 94, .14);
+            --success-text: #4ade80;
+
+            --warning-bg: rgba(245, 158, 11, .14);
+            --warning-text: #fbbf24;
+
+            --danger-bg: rgba(239, 68, 68, .14);
+            --danger-text: #f87171;
+
+            --primary-soft: rgba(99, 102, 241, .14);
+            --primary-text: #a5b4fc;
+        }
+
+
+        .laporan-page input,
+        .laporan-page select,
+        .laporan-page textarea {
+            color-scheme: light;
+        }
+
+
+        html[data-theme="dark"] .laporan-page input,
+        html[data-theme="dark"] .laporan-page select,
+        html[data-theme="dark"] .laporan-page textarea {
+            color-scheme: dark;
+        }
+
+
+        /* =========================================================
+           GENERAL
+        ========================================================= */
+
+        .laporan-page .report-tab,
+        .laporan-page .table-search input,
+        .laporan-page .btn {
             font-family: inherit;
         }
 
-        /* =========================
-                                                                   SUMMARY
-                                                                ========================= */
 
-        .summary-grid {
+        /* =========================================================
+           SUMMARY
+        ========================================================= */
+
+        .laporan-page .summary-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 16px;
             margin-bottom: 20px;
         }
 
-        .summary-card {
-            border: 1px solid var(--border, #e5e7eb);
-            background: var(--surface, #ffffff);
-            border-radius: 14px;
-            padding: 18px;
+
+        .laporan-page .summary-card {
             min-width: 0;
+            padding: 18px;
+
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+
+            box-shadow: var(--shadow);
+
+            transition:
+                border-color .15s ease,
+                transform .15s ease;
         }
 
-        .summary-card-top {
+
+        .laporan-page .summary-card:hover {
+            border-color: rgba(34, 197, 94, .35);
+        }
+
+
+        .laporan-page .summary-card-top {
             display: flex;
-            justify-content: space-between;
             align-items: flex-start;
+            justify-content: space-between;
             gap: 12px;
         }
 
-        .summary-label {
-            font-size: 13px;
-            color: #6b7280;
+
+        .laporan-page .summary-label {
             margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
         }
 
-        .summary-value {
+
+        .laporan-page .summary-value {
+            color: var(--text);
             font-size: 21px;
             font-weight: 800;
             line-height: 1.25;
-            color: #1f2937;
+            letter-spacing: -.2px;
         }
 
-        .summary-value small {
+
+        .laporan-page .summary-value small {
+            color: var(--text-secondary);
             font-size: 12px;
             font-weight: 600;
-            color: #6b7280;
         }
 
-        .summary-icon {
+
+        .laporan-page .summary-info {
+            margin-top: 12px;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+
+        .laporan-page .summary-icon {
             width: 40px;
             height: 40px;
             flex: 0 0 40px;
-            border-radius: 11px;
+
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #eef2ff;
-            color: var(--primary, #4338ca);
+
+            border-radius: 11px;
+
+            background: var(--primary-soft);
+            color: var(--primary-text);
         }
 
-        .summary-icon--income {
-            background: #dcfce7;
-            color: #16a34a;
+
+        .laporan-page .summary-icon--income {
+            background: var(--success-bg);
+            color: var(--success-text);
         }
 
-        .summary-icon--expense {
-            background: #fee2e2;
-            color: #dc2626;
+
+        .laporan-page .summary-icon--expense {
+            background: var(--danger-bg);
+            color: var(--danger-text);
         }
 
-        .summary-icon svg {
+
+        .laporan-page .summary-icon svg {
             width: 20px;
             height: 20px;
+
             fill: none;
             stroke: currentColor;
             stroke-width: 1.8;
         }
 
-        .summary-info {
-            margin-top: 12px;
-            font-size: 12px;
-            color: #6b7280;
-        }
 
-        @media (max-width: 800px) {
-            .summary-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+        /* =========================================================
+           CARD
+        ========================================================= */
 
-        /* =========================
-                                                                   CARD & TAB
-                                                                ========================= */
-
-        .card {
-            background: var(--surface, #ffffff);
-            border: 1px solid var(--border, #e5e7eb);
+        .laporan-page .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 14px;
             overflow: hidden;
+            box-shadow: var(--shadow);
         }
 
-        .report-card {
+
+        .laporan-page .report-card {
             margin-bottom: 20px;
         }
 
-        .report-card .report-panel {
+
+        .laporan-page .report-card .report-panel {
             display: block;
             width: 100%;
         }
 
-        .report-card .report-panel[hidden] {
+
+        .laporan-page .report-card .report-panel[hidden] {
             display: none !important;
         }
 
-        .tabs-header {
+
+        /* =========================================================
+           TABS
+        ========================================================= */
+
+        .laporan-page .tabs-header {
             display: flex;
             align-items: center;
             gap: 4px;
+
             padding: 0 24px;
-            border-bottom: 1px solid #edf0f2;
-            background: #fff;
+
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
         }
 
-        .report-tab {
+
+        .laporan-page .report-tab {
             position: relative;
+
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            border: none;
-            background: transparent;
-            color: #6b7280;
-            padding: 16px 8px 14px;
+
             margin-right: 18px;
+            padding: 16px 8px 14px;
+
+            border: none;
+            outline: none;
+
+            background: transparent;
+            color: var(--text-secondary);
+
             font-size: 13px;
             font-weight: 600;
+
             cursor: pointer;
-            transition: .15s ease;
+
+            transition:
+                color .15s ease,
+                background .15s ease;
         }
 
-        .report-tab svg {
+
+        .laporan-page .report-tab svg {
             width: 16px;
             height: 16px;
+
             fill: none;
             stroke: currentColor;
             stroke-width: 1.8;
         }
 
-        .report-tab:hover,
-        .report-tab.tab-active {
-            color: var(--primary, #4338ca);
+
+        .laporan-page .report-tab:hover,
+        .laporan-page .report-tab.tab-active {
+            color: var(--primary, #22c55e);
         }
 
-        .report-tab.tab-active::after {
+
+        .laporan-page .report-tab.tab-active::after {
             content: "";
+
             position: absolute;
             left: 0;
             right: 0;
             bottom: -1px;
+
             height: 2px;
-            background: var(--primary, #4338ca);
+
+            background: var(--primary, #22c55e);
             border-radius: 2px 2px 0 0;
         }
 
-        .tab-count {
+
+        .laporan-page .tab-count {
             min-width: 22px;
+
             padding: 1px 7px;
+
             border-radius: 999px;
-            background: #f1f5f9;
-            color: #64748b;
+
+            background: var(--surface-secondary);
+            color: var(--text-secondary);
+
             font-size: 11px;
             font-weight: 700;
             line-height: 1.6;
+
             text-align: center;
             font-variant-numeric: tabular-nums;
         }
 
-        .report-tab.tab-active .tab-count {
-            background: #eef2ff;
-            color: var(--primary, #4338ca);
+
+        .laporan-page .report-tab.tab-active .tab-count {
+            background: var(--primary-soft);
+            color: var(--primary-text);
         }
 
-        /* =========================
-                                                                   TABLE
-                                                                ========================= */
 
-        .table-toolbar {
+        /* =========================================================
+           TABLE TOOLBAR
+        ========================================================= */
+
+        .laporan-page .table-toolbar {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
             gap: 12px;
+
             padding: 16px 24px;
+
             flex-wrap: wrap;
         }
 
-        .toolbar-left {
+
+        .laporan-page .toolbar-left {
             display: flex;
             align-items: center;
             gap: 10px;
+
             flex-wrap: wrap;
         }
 
-        .toolbar-left .btn {
+
+        .laporan-page .toolbar-left .btn {
             height: 40px;
             padding: 0 16px;
             white-space: nowrap;
         }
 
-        .table-search {
+
+        .laporan-page .table-search {
+            position: relative;
             width: 360px;
             max-width: 100%;
-            position: relative;
         }
 
-        .table-search svg {
+
+        .laporan-page .table-search svg {
             position: absolute;
-            width: 18px;
-            height: 18px;
+
             left: 12px;
             top: 50%;
+
+            width: 18px;
+            height: 18px;
+
             transform: translateY(-50%);
+
             fill: none;
-            stroke: currentColor;
+            stroke: var(--text-muted);
             stroke-width: 1.8;
+
             pointer-events: none;
         }
 
-        .table-search form {
+
+        .laporan-page .table-search form {
             margin: 0;
         }
 
-        .table-search input {
+
+        .laporan-page .table-search input {
+            box-sizing: border-box;
+
             width: 100%;
             height: 40px;
+
             padding: 0 14px 0 40px;
-            border: 1px solid #dfe3e8;
+
+            background: var(--input-bg);
+            border: 1px solid var(--border);
             border-radius: 8px;
+
             outline: none;
-            box-sizing: border-box;
+
+            color: var(--text);
+            font-size: 13px;
+
+            transition:
+                border-color .15s ease,
+                box-shadow .15s ease;
         }
 
-        .table-search input:focus {
-            border-color: var(--primary);
+
+        .laporan-page .table-search input::placeholder {
+            color: var(--text-muted);
         }
 
-        .table-responsive {
+
+        .laporan-page .table-search input:focus {
+            border-color: var(--primary, #22c55e);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
+        }
+
+
+        /* =========================================================
+           BUTTON
+        ========================================================= */
+
+        .laporan-page .btn--ghost {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+
+        .laporan-page .btn--ghost:hover {
+            background: var(--table-hover);
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+
+        .laporan-page .btn--ghost svg {
+            width: 16px;
+            height: 16px;
+
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+        }
+
+
+        /* =========================================================
+           TABLE
+        ========================================================= */
+
+        .laporan-page .table-responsive {
             width: 100%;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .data-table {
+
+        .laporan-page .data-table {
             width: 100%;
-            border-collapse: collapse;
             min-width: 900px;
+
+            border-collapse: collapse;
         }
 
-        .data-table th {
-            background: #f8fafc;
-            color: #64748b;
+
+        .laporan-page .data-table th {
+            padding: 13px 16px;
+
+            background: var(--table-head);
+            color: var(--text-secondary);
+
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+
             font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
-            padding: 13px 16px;
+
             text-align: left;
-            border-top: 1px solid #e5e7eb;
-            border-bottom: 1px solid #e5e7eb;
             white-space: nowrap;
         }
 
-        .data-table td {
+
+        .laporan-page .data-table td {
             padding: 16px;
-            border-bottom: 1px solid #edf0f2;
+
+            background: var(--table-row);
+            color: var(--text);
+
+            border-bottom: 1px solid var(--border);
+
             font-size: 13px;
-            color: #374151;
             vertical-align: middle;
         }
 
-        .data-table tbody tr:hover {
-            background: #fafafa;
+
+        .laporan-page .data-table tbody tr {
+            transition: background .12s ease;
         }
 
-        .data-table .col-num {
+
+        .laporan-page .data-table tbody tr:hover {
+            background: var(--table-hover);
+        }
+
+
+        .laporan-page .data-table tbody tr:hover td {
+            background: var(--table-hover);
+        }
+
+
+        .laporan-page .data-table .col-num {
             text-align: right;
             font-variant-numeric: tabular-nums;
         }
 
-        .nowrap {
+
+        .laporan-page .nowrap {
             white-space: nowrap;
         }
 
-        .amount-in {
-            color: #16a34a;
+
+        .laporan-page .amount-in {
+            color: var(--success-text);
         }
 
-        .unit {
-            color: #9ca3af;
+
+        .laporan-page .unit {
+            color: var(--text-muted);
             font-size: 12px;
         }
 
-        .mono {
+
+        .laporan-page .mono {
+            color: var(--text-secondary);
+
             font-family: monospace;
             font-size: 12px;
-            color: #6b7280;
         }
 
-        .cell-note {
+
+        .laporan-page .cell-note {
             max-width: 260px;
-            color: #6b7280;
+            color: var(--text-secondary);
         }
 
-        /* nama pembeli / warga + inisial */
-        .party {
+
+        /* =========================================================
+           PARTY / AVATAR
+        ========================================================= */
+
+        .laporan-page .party {
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .party-info {
+
+        .laporan-page .party-info {
             display: flex;
             flex-direction: column;
             gap: 2px;
         }
 
-        .avatar {
+
+        .laporan-page .party strong {
+            color: var(--text);
+        }
+
+
+        .laporan-page .avatar {
             width: 32px;
             height: 32px;
             flex-shrink: 0;
+
             display: inline-flex;
             align-items: center;
             justify-content: center;
+
             border-radius: 50%;
-            background: #eef2ff;
-            color: var(--primary, #4338ca);
+
+            background: var(--primary-soft);
+            color: var(--primary-text);
+
             font-size: 12px;
             font-weight: 700;
         }
 
-        .badge {
+
+        /* =========================================================
+           BADGE
+        ========================================================= */
+
+        .laporan-page .badge {
             display: inline-block;
+
             padding: 6px 12px;
+
             border-radius: 20px;
+
             font-size: 11px;
             font-weight: 700;
+
             white-space: nowrap;
         }
 
-        .badge--warning {
-            background: #fef3c7;
-            color: #d97706;
+
+        .laporan-page .badge--warning {
+            background: var(--warning-bg);
+            color: var(--warning-text);
         }
 
-        .badge--success {
-            background: #dcfce7;
-            color: #15803d;
+
+        .laporan-page .badge--success {
+            background: var(--success-bg);
+            color: var(--success-text);
         }
 
-        .badge--danger {
-            background: #fee2e2;
-            color: #b91c1c;
+
+        .laporan-page .badge--danger {
+            background: var(--danger-bg);
+            color: var(--danger-text);
         }
 
-        .table-footer {
+
+        /* =========================================================
+           EMPTY STATE
+        ========================================================= */
+
+        .laporan-page .empty-row td {
+            padding: 0 !important;
+        }
+
+
+        .laporan-page .empty-state {
+            min-height: 190px;
+
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
-            flex-wrap: wrap;
+            justify-content: center;
+
+            padding: 40px 20px;
+
+            background: var(--empty);
+
+            text-align: center;
+        }
+
+
+        .laporan-page .empty-icon {
+            margin-bottom: 10px;
+
+            font-size: 30px;
+            line-height: 1;
+            opacity: .75;
+        }
+
+
+        .laporan-page .empty-state strong {
+            color: var(--text);
+            font-size: 14px;
+        }
+
+
+        .laporan-page .empty-state p {
+            margin: 6px 0 0;
+            max-width: 430px;
+
+            color: var(--text-secondary);
+
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+
+        /* =========================================================
+           FOOTER
+        ========================================================= */
+
+        .laporan-page .table-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
             gap: 12px;
+
             padding: 16px 24px;
+
+            flex-wrap: wrap;
         }
 
-        .table-info {
+
+        .laporan-page .table-info {
+            color: var(--text-secondary);
             font-size: 13px;
-            color: #6b7280;
         }
 
-        .table-info strong {
-            color: #1f2937;
+
+        .laporan-page .table-info strong {
+            color: var(--text);
             font-weight: 700;
         }
 
-        /* Pagination bawaan Laravel */
-        .pagination-wrap {
+
+        /* =========================================================
+           PAGINATION
+        ========================================================= */
+
+        .laporan-page .pagination-wrap {
             display: flex;
             align-items: center;
         }
 
-        .pagination-wrap nav {
+
+        .laporan-page .pagination-wrap nav {
             margin: 0;
         }
 
-        .pagination-wrap svg {
+
+        .laporan-page .pagination-wrap svg {
             width: 16px;
             height: 16px;
         }
 
-        .pagination-wrap .pagination {
+
+        .laporan-page .pagination-wrap .pagination {
             display: flex;
             align-items: center;
             gap: 4px;
+
             margin: 0;
             padding: 0;
+
             list-style: none;
         }
 
-        .pagination-wrap .pagination .page-link,
-        .pagination-wrap .pagination li>span {
+
+        .laporan-page .pagination-wrap .pagination .page-link,
+        .laporan-page .pagination-wrap .pagination li > span {
+            min-width: 34px;
+            height: 34px;
+
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 34px;
-            height: 34px;
+
             padding: 0 10px;
-            border: 1px solid #dfe3e8;
+
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 8px;
-            background: #fff;
-            color: #6b7280;
+
+            color: var(--text-secondary);
+
             font-family: inherit;
             font-size: 13px;
             font-weight: 600;
+
             text-decoration: none;
         }
 
-        .pagination-wrap .pagination .page-link:hover {
-            border-color: var(--primary, #4338ca);
-            color: var(--primary, #4338ca);
+
+        .laporan-page .pagination-wrap .pagination .page-link:hover {
+            border-color: var(--primary, #22c55e);
+            color: var(--primary, #22c55e);
+            background: var(--table-hover);
         }
 
-        .pagination-wrap .pagination .active .page-link,
-        .pagination-wrap .pagination .active>span {
-            background: var(--primary, #4338ca);
-            border-color: var(--primary, #4338ca);
+
+        .laporan-page .pagination-wrap .pagination .active .page-link,
+        .laporan-page .pagination-wrap .pagination .active > span {
+            background: var(--primary, #22c55e);
+            border-color: var(--primary, #22c55e);
             color: #fff;
         }
 
-        .pagination-wrap .pagination .disabled .page-link,
-        .pagination-wrap .pagination .disabled>span {
-            background: #f8fafc;
-            color: #cbd5e1;
+
+        .laporan-page .pagination-wrap .pagination .disabled .page-link,
+        .laporan-page .pagination-wrap .pagination .disabled > span {
+            background: var(--surface-secondary);
+            color: var(--text-muted);
+            border-color: var(--border);
         }
 
-        @media (max-width: 640px) {
-            .tabs-header {
-                padding: 0 16px;
-                overflow-x: auto;
+
+        /* =========================================================
+           RESPONSIVE
+        ========================================================= */
+
+        @media (max-width: 900px) {
+
+            .laporan-page .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
-            .report-tab {
+        }
+
+
+        @media (max-width: 640px) {
+
+            .laporan-page .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+
+            .laporan-page .tabs-header {
+                padding: 0 16px;
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+
+
+            .laporan-page .tabs-header::-webkit-scrollbar {
+                display: none;
+            }
+
+
+            .laporan-page .report-tab {
+                flex-shrink: 0;
                 white-space: nowrap;
                 margin-right: 10px;
             }
 
-            .table-toolbar {
+
+            .laporan-page .table-toolbar {
                 padding: 14px 16px;
             }
 
-            .toolbar-left {
+
+            .laporan-page .toolbar-left {
                 width: 100%;
             }
 
-            .table-search {
+
+            .laporan-page .table-search {
                 width: 100%;
             }
 
-            .table-footer {
-                padding: 14px 16px;
+
+            .laporan-page .toolbar-left .btn {
+                width: auto;
+            }
+
+
+            .laporan-page .table-footer {
                 justify-content: center;
+                padding: 14px 16px;
             }
+
+
+            .laporan-page .table-info {
+                width: 100%;
+                text-align: center;
+            }
+
+
+            .laporan-page .pagination-wrap {
+                max-width: 100%;
+                overflow-x: auto;
+                padding-bottom: 2px;
+            }
+
         }
 
-        /* =========================
-                                                                   PRINT
-                                                                ========================= */
+
+        /* =========================================================
+           PRINT
+        ========================================================= */
 
         @media print {
 
+            .laporan-page {
+                --surface: #ffffff;
+                --surface-secondary: #f8fafc;
+                --text: #1f2937;
+                --text-secondary: #6b7280;
+                --text-muted: #9ca3af;
+                --border: #e5e7eb;
+                --table-head: #f8fafc;
+                --table-row: #ffffff;
+                --table-hover: #fafafa;
+                --empty: #f8fafc;
+            }
+
+
             .hero-actions,
-            .table-toolbar,
-            .tabs-header,
-            .pagination-wrap {
+            .laporan-page .table-toolbar,
+            .laporan-page .tabs-header,
+            .laporan-page .pagination-wrap {
                 display: none !important;
             }
+
 
             .hero {
                 margin-bottom: 20px;
             }
 
-            .summary-grid {
+
+            .laporan-page .summary-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
 
-            .card,
-            .summary-card {
+
+            .laporan-page .card,
+            .laporan-page .summary-card {
                 box-shadow: none !important;
             }
 
-            .data-table {
+
+            .laporan-page .data-table {
                 min-width: 100%;
             }
 
-            .data-table th,
-            .data-table td {
+
+            .laporan-page .data-table th,
+            .laporan-page .data-table td {
                 padding: 8px 10px;
                 font-size: 11px;
             }
 
-            .data-table th,
-            .badge,
-            .summary-icon {
+
+            .laporan-page .data-table th,
+            .laporan-page .badge,
+            .laporan-page .summary-icon {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
 
-            .avatar {
+
+            .laporan-page .avatar {
                 display: none;
             }
+
         }
     </style>
 
@@ -956,8 +1616,8 @@
                TAB LAPORAN
             ===================================== */
 
-            const tabs = document.querySelectorAll('.report-tab[data-tab]');
-            const panels = document.querySelectorAll('.report-panel[data-panel]');
+            const tabs = document.querySelectorAll('.laporan-page .report-tab[data-tab]');
+            const panels = document.querySelectorAll('.laporan-page .report-panel[data-panel]');
 
             tabs.forEach(function(tab) {
 
@@ -997,7 +1657,7 @@
 
                     const panel =
                         document.querySelector(
-                            '[data-panel="penjualan"]'
+                            '.laporan-page [data-panel="penjualan"]'
                         );
 
                     if (!panel) return;
@@ -1039,7 +1699,7 @@
 
                     const panel =
                         document.querySelector(
-                            '[data-panel="setoran"]'
+                            '.laporan-page [data-panel="setoran"]'
                         );
 
                     if (!panel) return;

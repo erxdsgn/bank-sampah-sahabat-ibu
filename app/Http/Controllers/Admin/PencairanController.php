@@ -20,7 +20,15 @@ class PencairanController extends Controller
             ->orderByDesc('id_pencairan')
             ->get();
 
-        $warga = Warga::orderBy('nama')->get(['id_warga', 'nik', 'nama', 'saldo']);
+        $warga = Warga::orderBy('nama')->get([
+            'id_warga',
+            'nik',
+            'nama',
+            'saldo',
+            'nama_bank_ewallet',
+            'nomor_rekening',
+            'status_rekening',
+        ]);
 
         return view('admin.pages.pencairan', compact('pencairan', 'warga'));
     }

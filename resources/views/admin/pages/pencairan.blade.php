@@ -9,14 +9,8 @@
     <section class="hero">
         <div class="hero-text">
             <span class="eyebrow">TRANSAKSI SAMPAH</span>
-
-            <h1 class="hero-title">
-                Pencairan <span class="accent">Saldo</span>
-            </h1>
-
-            <p class="hero-sub">
-                Kelola permohonan penarikan saldo tabungan warga.
-            </p>
+            <h1 class="hero-title">Pencairan <span class="accent">Saldo</span></h1>
+            <p class="hero-sub">Kelola permohonan penarikan saldo tabungan warga.</p>
         </div>
 
         <div class="hero-actions">
@@ -29,18 +23,15 @@
         </div>
     </section>
 
-
     <section class="card">
-
         <!-- SEARCH -->
         <div class="table-toolbar">
-
             <div class="table-search">
                 <svg viewBox="0 0 24 24">
                     <circle cx="11" cy="11" r="7"></circle>
                     <path d="m21 21-4.3-4.3"></path>
                 </svg>
-                <input type="text" id="searchPencairan" placeholder="Cari NIK, nama, nomor HP, atau alamat..."
+                <input type="text" id="searchPencairan" placeholder="Cari ID, NIK, nama, nomor HP, atau alamat..."
                     autocomplete="off">
             </div>
 
@@ -51,34 +42,54 @@
                 </svg>
                 Refresh
             </button>
-
         </div>
-
 
         <!-- TABLE -->
         <div class="table-responsive">
             <table class="data-table" id="pencairanTable">
                 <thead>
                     <tr>
-                        <th>No</th>
-                        <th>NIK</th>
-                        <th>Nama</th>
-                        <th>No. HP</th>
-                        <th>Alamat</th>
+                        <th>ID</th>
+                        <th>Tanggal</th>
+                        <th>Warga</th>
+                        <th>Kontak</th>
+                        <th>Rekening / Metode</th>
                         <th>Nominal</th>
                         <th>Status</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
-
                 <tbody>
-                    @forelse($pencairan as $index => $item)
+                    @forelse($pencairan as $item)
                         <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td><span class="mono">{{ $item->warga->nik ?? '-' }}</span></td>
-                            <td><strong>{{ $item->warga->nama ?? 'Anonim' }}</strong></td>
-                            <td>{{ $item->warga->no_hp ?? '-' }}</td>
-                            <td>{{ $item->warga->alamat ?? '-' }}</td>
+                            <td><span class="mono">#{{ $item->id_pencairan }}</span></td>
+                            <td>
+                                <span class="mono">
+                                    {{ $item->tanggal_pencairan ? \Carbon\Carbon::parse($item->tanggal_pencairan)->format('d/m/Y') : '-' }}
+                                </span>
+                            </td>
+                            <td>
+                                <strong>{{ $item->warga->nama ?? 'Anonim' }}</strong>
+                                <div class="mono">NIK: {{ $item->warga->nik ?? '-' }}</div>
+                            </td>
+                            <td>
+                                <div>{{ $item->warga->no_hp ?? '-' }}</div>
+                                <div class="muted-text" style="font-size: 11px;" title="{{ $item->warga->alamat ?? '-' }}">
+                                    {{ \Illuminate\Support\Str::limit($item->warga->alamat ?? '-', 22) }}
+                                </div>
+                            </td>
+                            <td>
+                                @if ($item->warga && $item->warga->nama_bank_ewallet)
+                                    <div><strong>{{ $item->warga->nama_bank_ewallet }}</strong></div>
+                                    <div class="mono rekening-number">{{ $item->warga->nomor_rekening ?? '-' }}</div>
+                                    <span
+                                        class="badge-status {{ $item->warga->status_rekening === 'verified' ? 'badge-verified' : 'badge-unverified' }}">
+                                        {{ $item->warga->status_rekening === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi' }}
+                                    </span>
+                                @else
+                                    <span class="muted-text">Tunai / Lainnya</span>
+                                @endif
+                            </td>
                             <td>
                                 <strong class="saldo">
                                     Rp {{ number_format($item->jumlah ?? 0, 0, ',', '.') }}
@@ -95,8 +106,17 @@
                             </td>
                             <td>
                                 <div class="table-actions">
-                                    <button class="icon-btn" title="Proses Pencairan" type="button"
-                                        onclick='prosesPencairan(@json($item))'
+                                    <button class="icon-btn" title="Lihat Invoice Ringkas" type="button"
+                                        onclick='bukaInvoiceCard(@json($item))'>
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </button>
+
+                                    <button class="icon-btn"
+                                        title="{{ $item->status === 'menunggu' ? 'Ubah Status Pencairan' : 'Status sudah dikunci' }}"
+                                        type="button" onclick='prosesPencairan(@json($item))'
                                         {{ $item->status !== 'menunggu' ? 'disabled' : '' }}>
                                         <svg viewBox="0 0 24 24">
                                             <path d="M12 20h9"></path>
@@ -108,12 +128,10 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" style="text-align: center; padding: 40px;">
-                                <div style="font-size: 30px; margin-bottom: 10px;">📋</div>
+                            <td colspan="8" class="empty-table">
+                                <div class="empty-icon">📋</div>
                                 <strong>Belum Ada Permohonan Pencairan</strong>
-                                <p style="margin: 5px 0 0; color: #6b7280;">
-                                    Belum ada warga yang mengajukan pencairan saldo.
-                                </p>
+                                <p>Belum ada warga yang mengajukan pencairan saldo.</p>
                             </td>
                         </tr>
                     @endforelse
@@ -121,25 +139,91 @@
             </table>
         </div>
 
-
-        <!-- FOOTER -->
         <div class="table-footer">
             <div class="table-info">
                 Total permohonan: <strong>{{ $pencairan->count() }}</strong>
             </div>
         </div>
-
     </section>
-
 
     <!-- TOAST -->
     <div class="toast-wrap" id="toastWrap"></div>
 
+    <!-- MODAL INVOICE CARD -->
+    <div class="modal-overlay" id="modalInvoice">
+        <div class="modal-box invoice-modal-box">
+            <div class="modal-head">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                    Nota Pencairan Saldo
+                </h3>
+                <button class="modal-close" type="button" onclick="tutupModal('modalInvoice')">&times;</button>
+            </div>
 
-    <!-- MODAL: TAMBAH PENCAIRAN -->
+            <div class="modal-body">
+                <div class="invoice-paper">
+                    <div class="inv-top">
+                        <div>
+                            <span class="inv-company-name">Bank Sampah Sahabat Ibu</span>
+                            <span class="inv-company-addr">Tegal Besar, Kaliwates, Jember</span>
+                        </div>
+                        <div class="inv-title-group">
+                            <span class="mono inv-number" id="invId">#INV-000</span>
+                            <span class="mono inv-text-muted" id="invTanggal">-</span>
+                        </div>
+                    </div>
+
+                    <div class="inv-divider"></div>
+
+                    <div class="inv-grid-compact">
+                        <div>
+                            <span class="inv-label">Warga Penerima</span>
+                            <strong class="inv-text-dark" id="invNama" style="display: block;">-</strong>
+                            <span class="mono inv-text-muted" id="invNik"
+                                style="display: block; margin-top: 2px;">-</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="inv-label">Status Transaksi</span>
+                            <div id="invBadgeStatus" style="margin-top: 2px;">-</div>
+                        </div>
+                    </div>
+
+                    <div class="inv-compact-box">
+                        <div class="inv-compact-col">
+                            <span class="inv-label">Tujuan Pencairan</span>
+                            <div class="inv-text-dark" id="invBankInfo">-</div>
+                            <div class="mono inv-text-muted" id="invRekening">-</div>
+                        </div>
+                        <div class="inv-compact-col inv-compact-right">
+                            <span class="inv-label">Jumlah Dicairkan</span>
+                            <div class="inv-total-amount" id="invNominal">Rp 0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-foot">
+                <!-- Tombol Kirim WhatsApp Ditambahkan Di Sini -->
+                <button class="btn btn--whatsapp" id="btnKirimWa" type="button" onclick="kirimInvoiceWhatsApp()">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path
+                            d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                        </path>
+                    </svg>
+                    Kirim WA
+                </button>
+                <button class="btn btn--primary" type="button" onclick="tutupModal('modalInvoice')">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TAMBAH PENCAIRAN -->
     <div class="modal-overlay" id="modalTambah">
         <div class="modal-box">
-
             <div class="modal-head">
                 <h3 class="modal-title">
                     <svg viewBox="0 0 24 24">
@@ -152,12 +236,9 @@
 
             <form id="formTambahPencairan" onsubmit="return simpanTambah(event)">
                 <div class="modal-body">
-
                     <div class="form-grid">
-
                         <div class="form-group form-group--full">
                             <label for="cariWarga">Nama Warga</label>
-
                             <div class="combo" id="comboWarga">
                                 <input type="text" id="cariWarga" class="combo-input"
                                     placeholder="Ketik nama atau NIK warga..." autocomplete="off">
@@ -167,16 +248,24 @@
                             <select id="tambahWarga" class="combo-hidden" tabindex="-1" aria-hidden="true">
                                 <option value="">-- Pilih Warga --</option>
                                 @foreach ($warga as $w)
-                                    <option value="{{ $w->id_warga }}" data-saldo="{{ $w->saldo ?? 0 }}">
+                                    <option value="{{ $w->id_warga }}" data-saldo="{{ $w->saldo ?? 0 }}"
+                                        data-bank="{{ $w->nama_bank_ewallet ?? '' }}"
+                                        data-rekening="{{ $w->nomor_rekening ?? '' }}"
+                                        data-status-rekening="{{ $w->status_rekening ?? '' }}">
                                         {{ $w->nama }} (NIK: {{ $w->nik }})
                                     </option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <div class="form-group form-group--full">
+                        <div class="form-group">
                             <span class="detail-label">Saldo Tersedia</span>
                             <span class="detail-value saldo" id="tambahSaldoInfo">-</span>
+                        </div>
+
+                        <div class="form-group">
+                            <span class="detail-label">Rekening / E-Wallet</span>
+                            <span class="detail-value" id="tambahRekeningInfo">-</span>
                         </div>
 
                         <div class="form-group">
@@ -185,17 +274,19 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="tambahMetode">Metode Transfer</label>
-                            <input type="text" id="tambahMetode" placeholder="Tunai / Transfer Bank" required>
+                            <label for="tambahMetode">Metode Pencairan</label>
+                            <select id="tambahMetode" required>
+                                <option value="">-- Pilih Metode --</option>
+                                <option value="tunai">Tunai</option>
+                                <option value="transfer">Transfer Bank</option>
+                            </select>
                         </div>
 
                         <div class="form-group form-group--full">
                             <label for="tambahTanggal">Tanggal Pencairan</label>
                             <input type="date" id="tambahTanggal" required>
                         </div>
-
                     </div>
-
                 </div>
 
                 <div class="modal-foot">
@@ -203,15 +294,12 @@
                     <button class="btn btn--primary" type="submit">Simpan Permohonan</button>
                 </div>
             </form>
-
         </div>
     </div>
 
-
-    <!-- MODAL: PROSES PENCAIRAN -->
+    <!-- MODAL PROSES PENCAIRAN -->
     <div class="modal-overlay" id="modalProses">
         <div class="modal-box">
-
             <div class="modal-head">
                 <h3 class="modal-title">
                     <svg viewBox="0 0 24 24">
@@ -225,11 +313,8 @@
 
             <form id="formProses" onsubmit="return simpanProses(event)">
                 <div class="modal-body">
-
                     <input type="hidden" id="editId">
-
                     <div class="form-grid">
-
                         <div class="form-group form-group--full">
                             <label>Nama Warga</label>
                             <input type="text" id="editNama" disabled>
@@ -240,6 +325,21 @@
                             <input type="text" id="editNominal" disabled>
                         </div>
 
+                        <div class="form-group">
+                            <label>Bank / E-Wallet Tujuan</label>
+                            <input type="text" id="editBank" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label>No. Rekening / No. HP</label>
+                            <input type="text" id="editNoRekening" disabled>
+                        </div>
+
+                        <div class="form-group form-group--full">
+                            <label>Status Rekening</label>
+                            <input type="text" id="editStatusRekening" disabled>
+                        </div>
+
                         <div class="form-group form-group--full">
                             <label for="editStatus">Status Pencairan</label>
                             <select id="editStatus">
@@ -248,9 +348,7 @@
                                 <option value="ditolak">Ditolak</option>
                             </select>
                         </div>
-
                     </div>
-
                 </div>
 
                 <div class="modal-foot">
@@ -258,28 +356,59 @@
                     <button class="btn btn--primary" type="submit">Simpan Perubahan</button>
                 </div>
             </form>
-
         </div>
     </div>
 
-
     <style>
+        :root {
+            --pencairan-page: #f5f7fb;
+            --pencairan-surface: #ffffff;
+            --pencairan-surface-secondary: #f8fafc;
+            --pencairan-text: #1f2937;
+            --pencairan-text-secondary: #6b7280;
+            --pencairan-text-muted: #9ca3af;
+            --pencairan-border: #e5e7eb;
+            --pencairan-table-head: #f8fafc;
+            --pencairan-table-hover: #fafafa;
+            --pencairan-input: #ffffff;
+            --pencairan-shadow: 0 8px 25px rgba(15, 23, 42, .06);
+        }
+
+        [data-theme="dark"] {
+            --pencairan-page: #0b1220;
+            --pencairan-surface: #151d2f;
+            --pencairan-surface-secondary: #1b2438;
+            --pencairan-text: #f1f5f9;
+            --pencairan-text-secondary: #aab6c8;
+            --pencairan-text-muted: #748198;
+            --pencairan-border: #29364d;
+            --pencairan-table-head: #111a2c;
+            --pencairan-table-hover: #202b40;
+            --pencairan-input: #111a2c;
+            --pencairan-shadow: 0 8px 25px rgba(0, 0, 0, .25);
+        }
+
         .card {
-            background: var(--surface, #ffffff);
-            border: 1px solid var(--border, #e5e7eb);
+            background: var(--pencairan-surface);
+            border: 1px solid var(--pencairan-border);
             border-radius: 14px;
             overflow: hidden;
+            box-shadow: var(--pencairan-shadow);
         }
 
         .table-toolbar {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            gap: 16px;
             padding: 16px 24px;
         }
 
         .table-search {
             width: 400px;
+            max-width: 100%;
             position: relative;
+            color: var(--pencairan-text-muted);
         }
 
         .table-search svg {
@@ -292,20 +421,31 @@
             fill: none;
             stroke: currentColor;
             stroke-width: 1.8;
+            pointer-events: none;
         }
 
         .table-search input {
             width: 100%;
             height: 40px;
             padding: 0 14px 0 40px;
-            border: 1px solid #dfe3e8;
+            border: 1px solid var(--pencairan-border);
             border-radius: 8px;
             outline: none;
             box-sizing: border-box;
+            background: var(--pencairan-input);
+            color: var(--pencairan-text);
+            font-family: inherit;
+            font-size: 13px;
+            transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+        }
+
+        .table-search input::placeholder {
+            color: var(--pencairan-text-muted);
         }
 
         .table-search input:focus {
-            border-color: var(--primary);
+            border-color: var(--primary, #16a34a);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
         }
 
         .table-responsive {
@@ -316,41 +456,81 @@
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1100px;
+            table-layout: auto;
         }
 
         .data-table th {
-            background: #f8fafc;
-            color: #64748b;
-            font-size: 12px;
+            background: var(--pencairan-table-head);
+            color: var(--pencairan-text-secondary);
+            font-size: 11.5px;
             font-weight: 700;
             text-transform: uppercase;
-            padding: 13px 16px;
+            padding: 12px 12px;
             text-align: left;
-            border-top: 1px solid #e5e7eb;
-            border-bottom: 1px solid #e5e7eb;
+            border-top: 1px solid var(--pencairan-border);
+            border-bottom: 1px solid var(--pencairan-border);
             white-space: nowrap;
         }
 
         .data-table td {
-            padding: 16px;
-            border-bottom: 1px solid #edf0f2;
-            font-size: 13px;
-            color: #374151;
+            padding: 12px 12px;
+            border-bottom: 1px solid var(--pencairan-border);
+            font-size: 12.5px;
+            color: var(--pencairan-text);
             vertical-align: middle;
+            background: var(--pencairan-surface);
+            transition: background .15s ease, color .15s ease;
         }
 
-        .data-table tbody tr:hover {
-            background: #fafafa;
+        .data-table tbody tr:hover td {
+            background: var(--pencairan-table-hover);
+        }
+
+        .data-table strong {
+            color: var(--pencairan-text);
         }
 
         .mono {
             font-family: monospace;
-            font-size: 12px;
+            font-size: 11.5px;
+            color: var(--pencairan-text-secondary);
+        }
+
+        .rekening-number {
+            margin-top: 2px;
+        }
+
+        .muted-text {
+            color: var(--pencairan-text-muted);
         }
 
         .saldo {
+            color: #22c55e !important;
             white-space: nowrap;
+        }
+
+        .badge-status {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .02em;
+            white-space: nowrap;
+        }
+
+        .badge-verified {
+            background: rgba(34, 197, 94, .13);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, .20);
+        }
+
+        .badge-unverified {
+            background: rgba(245, 158, 11, .13);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, .20);
         }
 
         .table-actions {
@@ -359,31 +539,36 @@
         }
 
         .icon-btn {
-            width: 34px;
-            height: 34px;
-            border: 1px solid #e1e5e9;
-            background: #fff;
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--pencairan-border);
+            background: var(--pencairan-surface-secondary);
+            color: var(--pencairan-text-secondary);
             border-radius: 7px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            transition: background .2s ease, border-color .2s ease, color .2s ease, transform .15s ease;
         }
 
         .icon-btn svg {
-            width: 16px;
-            height: 16px;
+            width: 15px;
+            height: 15px;
             fill: none;
             stroke: currentColor;
             stroke-width: 1.8;
         }
 
-        .icon-btn:hover {
-            background: #f3f4f6;
+        .icon-btn:hover:not(:disabled) {
+            background: rgba(34, 197, 94, .10);
+            border-color: rgba(34, 197, 94, .30);
+            color: #22c55e;
+            transform: translateY(-1px);
         }
 
         .icon-btn:disabled {
-            opacity: .4;
+            opacity: .35;
             cursor: not-allowed;
         }
 
@@ -391,42 +576,78 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 24px;
+            padding: 14px 24px;
+            background: var(--pencairan-surface);
         }
 
         .table-info {
             font-size: 13px;
-            color: #6b7280;
+            color: var(--pencairan-text-secondary);
+        }
+
+        .table-info strong {
+            color: var(--pencairan-text);
         }
 
         .badge {
-            padding: 6px 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 10px;
             border-radius: 20px;
             font-size: 11px;
             font-weight: 700;
+            white-space: nowrap;
         }
 
         .badge--warning {
-            background: #fef3c7;
-            color: #d97706;
+            background: rgba(245, 158, 11, .13);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, .20);
         }
 
         .badge--success {
-            background: #dcfce7;
-            color: #15803d;
+            background: rgba(34, 197, 94, .13);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, .20);
         }
 
         .badge--danger {
-            background: #fee2e2;
-            color: #b91c1c;
+            background: rgba(239, 68, 68, .13);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, .20);
         }
 
-        /* MODAL */
+        .empty-table {
+            text-align: center;
+            padding: 50px 40px !important;
+            background: var(--pencairan-surface) !important;
+        }
+
+        .empty-icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+            opacity: .8;
+        }
+
+        .empty-table strong {
+            display: block;
+            color: var(--pencairan-text);
+            font-size: 14px;
+        }
+
+        .empty-table p {
+            margin: 5px 0 0;
+            color: var(--pencairan-text-secondary);
+            font-size: 13px;
+        }
+
         .modal-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.5);
+            background: rgba(2, 6, 23, .68);
+            backdrop-filter: blur(3px);
             align-items: center;
             justify-content: center;
             padding: 20px;
@@ -442,77 +663,201 @@
             max-width: 560px;
             max-height: 90vh;
             overflow-y: auto;
-            background: var(--surface, #ffffff);
-            border: 1px solid var(--border, #e5e7eb);
+            background: var(--pencairan-surface);
+            border: 1px solid var(--pencairan-border);
             border-radius: 14px;
-            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, .30);
+            color: var(--pencairan-text);
         }
 
         .modal-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 20px 24px;
-            border-bottom: 1px solid #edf0f2;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--pencairan-border);
+            background: var(--pencairan-surface);
         }
 
         .modal-title {
             margin: 0;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
-            color: #1f2937;
+            color: var(--pencairan-text);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .modal-title svg {
-            width: 18px;
-            height: 18px;
+            width: 17px;
+            height: 17px;
             fill: none;
-            stroke: currentColor;
+            stroke: #22c55e;
             stroke-width: 1.8;
         }
 
         .modal-close {
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             border: none;
             background: transparent;
-            border-radius: 7px;
-            font-size: 20px;
+            border-radius: 6px;
+            font-size: 18px;
             line-height: 1;
-            color: #6b7280;
+            color: var(--pencairan-text-muted);
             cursor: pointer;
+            transition: background .2s ease, color .2s ease;
         }
 
         .modal-close:hover {
-            background: #f3f4f6;
-            color: #111827;
+            background: var(--pencairan-table-hover);
+            color: var(--pencairan-text);
         }
 
         .modal-body {
-            padding: 22px 24px;
+            padding: 18px 22px;
+            background: var(--pencairan-surface);
         }
 
         .modal-foot {
             display: flex;
             justify-content: flex-end;
             gap: 10px;
-            padding: 16px 24px;
-            border-top: 1px solid #edf0f2;
+            padding: 14px 22px;
+            border-top: 1px solid var(--pencairan-border);
+            background: var(--pencairan-surface);
+        }
+
+        .invoice-modal-box {
+            max-width: 480px;
+        }
+
+        .invoice-paper {
+            background: var(--pencairan-surface-secondary);
+            border: 1px solid var(--pencairan-border);
+            border-radius: 10px;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .inv-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .inv-company-name {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--pencairan-text);
+            display: block;
+        }
+
+        .inv-company-addr {
+            font-size: 11px;
+            color: var(--pencairan-text-muted);
+            display: block;
+        }
+
+        .inv-title-group {
+            text-align: right;
+        }
+
+        .inv-number {
+            font-weight: 700;
+            color: #22c55e;
+            font-size: 12.5px;
+            display: block;
+        }
+
+        .inv-divider {
+            height: 1px;
+            background: var(--pencairan-border);
+            margin: 12px 0;
+        }
+
+        .inv-grid-compact {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .inv-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--pencairan-text-muted);
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .inv-text-dark {
+            color: var(--pencairan-text);
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+
+        .inv-compact-box {
+            margin-top: 12px;
+            background: var(--pencairan-surface);
+            border: 1px solid var(--pencairan-border);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .inv-compact-col {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .inv-compact-right {
+            text-align: right;
+        }
+
+        .inv-total-amount {
+            font-size: 15px;
+            font-weight: 800;
+            color: #22c55e;
+        }
+
+        /* Styling tambahan untuk tombol WhatsApp */
+        .btn--whatsapp {
+            background-color: #25d366;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn--whatsapp:hover {
+            background-color: #22bf5b;
         }
 
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px 18px;
+            gap: 14px;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
         }
 
         .form-group--full {
@@ -522,29 +867,43 @@
         .form-group label {
             font-size: 12px;
             font-weight: 700;
-            color: #374151;
+            color: var(--pencairan-text-secondary);
         }
 
         .form-group input,
         .form-group select {
-            border: 1px solid #dfe3e8;
+            border: 1px solid var(--pencairan-border);
             border-radius: 8px;
-            padding: 9px 12px;
+            padding: 8px 12px;
             font-size: 13px;
             font-family: inherit;
             outline: none;
             box-sizing: border-box;
             width: 100%;
+            background: var(--pencairan-input);
+            color: var(--pencairan-text);
+            transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+
+        .form-group input::placeholder {
+            color: var(--pencairan-text-muted);
         }
 
         .form-group input:focus,
         .form-group select:focus {
-            border-color: var(--primary, #4338ca);
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
         }
 
         .form-group input:disabled {
-            background: #f3f4f6;
-            color: #6b7280;
+            background: var(--pencairan-surface-secondary);
+            color: var(--pencairan-text-secondary);
+            cursor: not-allowed;
+        }
+
+        .form-group select option {
+            background: var(--pencairan-surface);
+            color: var(--pencairan-text);
         }
 
         .detail-label {
@@ -552,16 +911,16 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .03em;
-            color: #9ca3af;
+            color: var(--pencairan-text-muted);
             display: block;
         }
 
         .detail-value {
-            font-size: 14px;
-            color: #1f2937;
+            font-size: 13.5px;
+            color: var(--pencairan-text);
+            font-weight: 600;
         }
 
-        /* COMBOBOX WARGA (SEARCHABLE SELECT) */
         .combo {
             position: relative;
         }
@@ -572,17 +931,25 @@
 
         .combo-input {
             width: 100%;
-            border: 1px solid #dfe3e8;
+            border: 1px solid var(--pencairan-border);
             border-radius: 8px;
-            padding: 9px 12px;
+            padding: 8px 12px;
             font-size: 13px;
             font-family: inherit;
             outline: none;
             box-sizing: border-box;
+            background: var(--pencairan-input);
+            color: var(--pencairan-text);
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .combo-input::placeholder {
+            color: var(--pencairan-text-muted);
         }
 
         .combo-input:focus {
-            border-color: var(--primary, #4338ca);
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
         }
 
         .combo-list {
@@ -591,12 +958,12 @@
             top: calc(100% + 4px);
             left: 0;
             right: 0;
-            max-height: 220px;
+            max-height: 200px;
             overflow-y: auto;
-            background: #fff;
-            border: 1px solid #e5e7eb;
+            background: var(--pencairan-surface);
+            border: 1px solid var(--pencairan-border);
             border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(15, 23, 42, .12);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, .22);
             z-index: 20;
         }
 
@@ -605,25 +972,26 @@
         }
 
         .combo-item {
-            padding: 9px 12px;
+            padding: 8px 12px;
             font-size: 13px;
-            color: #374151;
+            color: var(--pencairan-text);
             cursor: pointer;
+            transition: background .15s ease, color .15s ease;
         }
 
         .combo-item:hover,
         .combo-item.is-active {
-            background: #f3f4f6;
+            background: var(--pencairan-table-hover);
+            color: #22c55e;
         }
 
         .combo-empty {
-            padding: 12px;
-            font-size: 12.5px;
-            color: #9ca3af;
+            padding: 10px;
+            font-size: 12px;
+            color: var(--pencairan-text-muted);
             text-align: center;
         }
 
-        /* TOAST */
         .toast-wrap {
             position: fixed;
             top: 20px;
@@ -641,25 +1009,25 @@
             gap: 12px;
             min-width: 300px;
             max-width: 380px;
-            background: var(--surface, #ffffff);
-            border: 1px solid var(--border, #e5e7eb);
-            border-left: 4px solid #16a34a;
+            background: var(--pencairan-surface);
+            border: 1px solid var(--pencairan-border);
+            border-left: 4px solid #22c55e;
             border-radius: 10px;
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, .25);
             padding: 14px 16px;
             pointer-events: auto;
         }
 
         .toast.toast--error {
-            border-left-color: #dc2626;
+            border-left-color: #ef4444;
         }
 
         .toast-icon {
             width: 22px;
             height: 22px;
             border-radius: 50%;
-            background: #dcfce7;
-            color: #16a34a;
+            background: rgba(34, 197, 94, .13);
+            color: #22c55e;
             flex-shrink: 0;
             display: flex;
             align-items: center;
@@ -667,8 +1035,8 @@
         }
 
         .toast.toast--error .toast-icon {
-            background: #fee2e2;
-            color: #dc2626;
+            background: rgba(239, 68, 68, .13);
+            color: #ef4444;
         }
 
         .toast-icon svg {
@@ -686,13 +1054,13 @@
         .toast-title {
             font-size: 13px;
             font-weight: 700;
-            color: #1f2937;
+            color: var(--pencairan-text);
             margin: 0 0 2px;
         }
 
         .toast-text {
             font-size: 12.5px;
-            color: #6b7280;
+            color: var(--pencairan-text-secondary);
             margin: 0;
             line-height: 1.5;
         }
@@ -700,7 +1068,7 @@
         .toast-close {
             border: none;
             background: transparent;
-            color: #9ca3af;
+            color: var(--pencairan-text-muted);
             font-size: 16px;
             line-height: 1;
             cursor: pointer;
@@ -708,17 +1076,42 @@
             flex-shrink: 0;
         }
 
-        @media (max-width: 560px) {
-            .form-grid {
-                grid-template-columns: 1fr;
+        .toast-close:hover {
+            color: var(--pencairan-text);
+        }
+
+        @media (max-width: 760px) {
+            .table-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .table-search {
+                width: 100%;
+            }
+
+            .table-toolbar .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .toast {
+                min-width: 0;
+                width: calc(100vw - 40px);
+            }
+
+            .toast-wrap {
+                left: 20px;
+                right: 20px;
             }
         }
     </style>
 
-
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        // Variabel penampung data item saat modal invoice dibuka
+        let activeInvoiceItem = null;
 
+        document.addEventListener('DOMContentLoaded', function() {
             @if (session('success'))
                 showToast('Berhasil', @json(session('success')));
             @endif
@@ -730,8 +1123,8 @@
                 searchInput.addEventListener('keyup', function() {
                     const keyword = this.value.toLowerCase().trim();
                     table.querySelectorAll('tbody tr').forEach(function(row) {
-                        const text = row.textContent.toLowerCase();
-                        row.style.display = text.includes(keyword) ? '' : 'none';
+                        row.style.display = row.textContent.toLowerCase().includes(keyword) ? '' :
+                            'none';
                     });
                 });
             }
@@ -751,84 +1144,76 @@
             });
 
             initComboWarga();
-
         });
 
+        function formatStatusRekening(status) {
+            return status === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi';
+        }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Combobox warga (select + pencarian nama / NIK)
-        |--------------------------------------------------------------------------
-        */
         function initComboWarga() {
             const select = document.getElementById('tambahWarga');
             const input = document.getElementById('cariWarga');
             const list = document.getElementById('listWarga');
             const info = document.getElementById('tambahSaldoInfo');
+            const rekeningInfo = document.getElementById('tambahRekeningInfo');
+
             if (!select || !input || !list) return;
 
             const data = Array.from(select.options)
-                .filter(function(o) {
-                    return o.value !== '';
-                })
-                .map(function(o) {
-                    return {
-                        value: o.value,
-                        label: o.textContent.replace(/\s+/g, ' ').trim(),
-                        saldo: Number(o.dataset.saldo || 0)
-                    };
-                });
+                .filter(o => o.value !== '')
+                .map(o => ({
+                    value: o.value,
+                    label: o.textContent.replace(/\s+/g, ' ').trim(),
+                    saldo: Number(o.dataset.saldo || 0),
+                    bank: o.dataset.bank || '',
+                    rekening: o.dataset.rekening || '',
+                    statusRekening: o.dataset.statusRekening || ''
+                }));
 
             let aktif = -1;
 
             function escapeHtml(s) {
-                return String(s).replace(/[&<>"']/g, function(c) {
-                    return {
-                        '&': '&amp;',
-                        '<': '&lt;',
-                        '>': '&gt;',
-                        '"': '&quot;',
-                        "'": '&#39;'
-                    } [c];
-                });
+                return String(s).replace(/[&<>"']/g, c => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                } [c]));
             }
 
             function render(keyword) {
                 const k = (keyword || '').toLowerCase().trim();
-                const hasil = data.filter(function(d) {
-                    return d.label.toLowerCase().includes(k);
-                });
-
+                const hasil = data.filter(d => d.label.toLowerCase().includes(k));
                 aktif = -1;
 
                 list.innerHTML = hasil.length ?
-                    hasil.map(function(d) {
-                        return '<div class="combo-item" data-value="' + d.value + '">' +
-                            escapeHtml(d.label) + '</div>';
-                    }).join('') :
-                    '<div class="combo-empty">Warga tidak ditemukan</div>';
+                    hasil.map(d => `<div class="combo-item" data-value="${d.value}">${escapeHtml(d.label)}</div>`).join(
+                        '') :
+                    `<div class="combo-empty">Warga tidak ditemukan</div>`;
             }
 
             function pilih(value) {
-                const d = data.find(function(x) {
-                    return x.value === String(value);
-                });
+                const d = data.find(x => x.value === String(value));
                 if (!d) return;
 
                 select.value = d.value;
                 input.value = d.label;
                 info.textContent = formatRupiah(d.saldo);
+
+                if (rekeningInfo) {
+                    rekeningInfo.textContent = d.bank ?
+                        `${d.bank} - ${d.rekening || '-'}` :
+                        'Tunai / Lainnya';
+                }
                 list.classList.remove('show');
             }
 
             function sorot(arah) {
                 const items = list.querySelectorAll('.combo-item');
                 if (!items.length) return;
-
                 aktif = (aktif + arah + items.length) % items.length;
-                items.forEach(function(el, i) {
-                    el.classList.toggle('is-active', i === aktif);
-                });
+                items.forEach((el, i) => el.classList.toggle('is-active', i === aktif));
                 items[aktif].scrollIntoView({
                     block: 'nearest'
                 });
@@ -842,6 +1227,7 @@
             input.addEventListener('input', function() {
                 select.value = '';
                 info.textContent = '-';
+                if (rekeningInfo) rekeningInfo.textContent = '-';
                 render(this.value);
                 list.classList.add('show');
             });
@@ -885,11 +1271,13 @@
             const input = document.getElementById('cariWarga');
             const list = document.getElementById('listWarga');
             const info = document.getElementById('tambahSaldoInfo');
+            const rekeningInfo = document.getElementById('tambahRekeningInfo');
 
             if (select) select.value = '';
             if (input) input.value = '';
             if (list) list.classList.remove('show');
             if (info) info.textContent = '-';
+            if (rekeningInfo) rekeningInfo.textContent = '-';
         }
 
         function bukaModal(id) {
@@ -927,24 +1315,15 @@
                 <button class="toast-close" type="button" aria-label="Tutup">&times;</button>
             `;
 
-            function hapusToast() {
-                toast.remove();
-            }
-
-            toast.querySelector('.toast-close').addEventListener('click', hapusToast);
+            toast.querySelector('.toast-close').addEventListener('click', () => toast.remove());
             wrap.appendChild(toast);
-            setTimeout(hapusToast, 3500);
+            setTimeout(() => toast.remove(), 3500);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Tambah permohonan pencairan
-        |--------------------------------------------------------------------------
-        */
         function simpanTambah(event) {
             event.preventDefault();
-
-            const idWarga = document.getElementById('tambahWarga').value;
+            const selectWarga = document.getElementById('tambahWarga');
+            const idWarga = selectWarga.value;
 
             if (!idWarga) {
                 showToast('Gagal menyimpan', 'Silakan pilih warga terlebih dahulu.', 'error');
@@ -952,9 +1331,19 @@
                 return false;
             }
 
+            const selectedOption = selectWarga.options[selectWarga.selectedIndex];
+            const saldoTersedia = Number(selectedOption.dataset.saldo || 0);
+            const jumlahDitarik = Number(document.getElementById('tambahJumlah').value);
+
+            if (jumlahDitarik > saldoTersedia) {
+                showToast('Gagal menyimpan', 'Jumlah penarikan melebihi saldo tersedia warga!', 'error');
+                document.getElementById('tambahJumlah').focus();
+                return false;
+            }
+
             const payload = {
                 id_warga: idWarga,
-                jumlah: document.getElementById('tambahJumlah').value,
+                jumlah: jumlahDitarik,
                 metode_transfer: document.getElementById('tambahMetode').value,
                 tanggal_pencairan: document.getElementById('tambahTanggal').value,
             };
@@ -980,23 +1369,120 @@
                     showToast('Berhasil', 'Permohonan pencairan telah dibuat.');
                     setTimeout(() => window.location.reload(), 800);
                 })
-                .catch((err) => {
-                    showToast('Gagal menyimpan', err.message, 'error');
-                });
+                .catch((err) => showToast('Gagal menyimpan', err.message, 'error'));
 
             return false;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Proses pencairan
-        |--------------------------------------------------------------------------
-        */
+        function bukaInvoiceCard(item) {
+            activeInvoiceItem = item; // Simpan data item saat ini untuk kebutuhan WA
+
+            document.getElementById('invId').textContent = `#INV-${item.id_pencairan}`;
+            document.getElementById('invTanggal').textContent = item.tanggal_pencairan ? new Date(item.tanggal_pencairan)
+                .toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                }) : '-';
+
+            const namaWarga = item.warga?.nama || 'Anonim';
+            document.getElementById('invNama').textContent = namaWarga;
+            document.getElementById('invNik').textContent = `(NIK: ${item.warga?.nik || '-'})`;
+
+            const bankInfo = document.getElementById('invBankInfo');
+            const rekInfo = document.getElementById('invRekening');
+
+            if (item.warga && item.warga.nama_bank_ewallet) {
+                bankInfo.textContent = item.warga.nama_bank_ewallet;
+                rekInfo.textContent = item.warga.nomor_rekening || '-';
+            } else {
+                bankInfo.textContent = 'Tunai / Langsung';
+                rekInfo.textContent = '-';
+            }
+
+            document.getElementById('invNominal').textContent = formatRupiah(item.jumlah);
+
+            const badgeStatus = document.getElementById('invBadgeStatus');
+            if (item.status === 'menunggu') {
+                badgeStatus.innerHTML = '<span class="badge badge--warning">Menunggu</span>';
+            } else if (item.status === 'selesai') {
+                badgeStatus.innerHTML = '<span class="badge badge--success">Selesai</span>';
+            } else {
+                badgeStatus.innerHTML = '<span class="badge badge--danger">Ditolak</span>';
+            }
+
+            bukaModal('modalInvoice');
+        }
+
+        // Fungsi untuk mengirim pesan WhatsApp berisi detail invoice pencairan
+        function kirimInvoiceWhatsApp() {
+            if (!activeInvoiceItem) {
+                showToast('Gagal', 'Data invoice tidak ditemukan.', 'error');
+                return;
+            }
+
+            const noHp = activeInvoiceItem.warga?.no_hp;
+            if (!noHp) {
+                showToast('Gagal', 'Nomor HP warga tidak tersedia.', 'error');
+                return;
+            }
+
+            let formattedPhone = noHp.replace(/\D/g, '');
+            if (formattedPhone.startsWith('0')) {
+                formattedPhone = '62' + formattedPhone.slice(1);
+            }
+
+            const namaWarga = activeInvoiceItem.warga?.nama || 'Warga';
+            const idInv = `#INV-${activeInvoiceItem.id_pencairan}`;
+            const nominal = formatRupiah(activeInvoiceItem.jumlah);
+            const status = activeInvoiceItem.status.toUpperCase();
+            const metodePencairan = activeInvoiceItem.warga?.nama_bank_ewallet ? activeInvoiceItem.warga.nama_bank_ewallet :
+                'Tunai';
+
+            const tanggal = activeInvoiceItem.tanggal_pencairan ? new Date(activeInvoiceItem.tanggal_pencairan)
+                .toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                }) : '-';
+
+            // Menggunakan Unicode Escape Sequence untuk mencegah error encoding emoji
+            const emojiPin = '\u{1F4CC}';
+            const emojiCalendar = '\u{1F4C5}';
+            const emojiMoneyBag = '\u{1F4B0}';
+            const emojiCash = '\u{1F4B5}';
+            const emojiSparkles = '\u{2728}';
+            const emojiSeedling = '\u{1F331}';
+
+            const pesan = `*NOTIFIKASI PENCAIRAN SALDO*
+*BANK SAMPAH SAHABAT IBU*
+---------------------------------------
+Halo *${namaWarga}*,
+
+Permohonan pencairan saldo tabungan sampah Anda telah kami proses dengan rincian berikut:
+
+${emojiPin} *No. Invoice* : ${idInv}
+${emojiCalendar} *Tanggal*    : ${tanggal}
+${emojiCash} *Metode*     : ${metodePencairan}
+${emojiMoneyBag} *Jumlah*     : *${nominal}*
+${emojiSparkles} *Status*     : *${status}*
+---------------------------------------
+Terima kasih telah aktif menabung dan menjaga kebersihan lingkungan bersama kami! ${emojiSeedling}
+
+
+_Pesan otomatis oleh Sistem Bank Sampah Sahabat Ibu_`;
+            const urlWa = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(pesan)}`;
+            window.open(urlWa, '_blank');
+        }
+
         function prosesPencairan(item) {
             document.getElementById('editId').value = item.id_pencairan;
-            document.getElementById('editNama').value =
-                (item.warga?.nama || 'Anonim') + ' (NIK: ' + (item.warga?.nik || '-') + ')';
+            document.getElementById('editNama').value = `${item.warga?.nama || 'Anonim'} (NIK: ${item.warga?.nik || '-'})`;
             document.getElementById('editNominal').value = formatRupiah(item.jumlah);
+            document.getElementById('editBank').value = item.warga?.nama_bank_ewallet || '-';
+            document.getElementById('editNoRekening').value = item.warga?.nomor_rekening || '-';
+            document.getElementById('editStatusRekening').value = item.warga?.nama_bank_ewallet ? formatStatusRekening(item
+                .warga?.status_rekening) : '-';
             document.getElementById('editStatus').value = item.status;
 
             bukaModal('modalProses');
@@ -1004,11 +1490,9 @@
 
         function simpanProses(event) {
             event.preventDefault();
-
             const id = document.getElementById('editId').value;
             const status = document.getElementById('editStatus').value;
-
-            const baseUrl = "{{ route('admin.pencairan.index') }}"; // -> /admin/pages/pencairan
+            const baseUrl = "{{ route('admin.pencairan.index') }}";
 
             fetch(`${baseUrl}/${id}`, {
                     method: 'PUT',
@@ -1030,12 +1514,10 @@
                 })
                 .then(() => {
                     tutupModal('modalProses');
-                    showToast('Berhasil disimpan', 'Status pencairan berhasil diperbarui menjadi: ' + status);
+                    showToast('Berhasil disimpan', 'Status pencairan berhasil diperbarui.');
                     setTimeout(() => window.location.reload(), 800);
                 })
-                .catch((err) => {
-                    showToast('Gagal menyimpan', err.message, 'error');
-                });
+                .catch((err) => showToast('Gagal menyimpan', err.message, 'error'));
 
             return false;
         }

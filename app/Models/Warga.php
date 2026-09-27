@@ -9,6 +9,7 @@ class Warga extends Model
     protected $table = 'warga';
     protected $primaryKey = 'id_warga';
     public $timestamps = false;
+
     protected $fillable = [
         'nik',
         'nama',
@@ -17,6 +18,16 @@ class Warga extends Model
         'jumlah_anggota_keluarga',
         'saldo',
         'tanggal_daftar',
+        'nama_bank_ewallet',
+        'nomor_rekening',
+        'nama_pemilik_rekening',
+        'status_rekening',
+    ];
+
+    protected $casts = [
+        'saldo' => 'decimal:2',
+        'tanggal_daftar' => 'datetime',
+        'jumlah_anggota_keluarga' => 'integer',
     ];
 
     public function pencairan()
