@@ -72,13 +72,14 @@ class BarangKeluarController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'pembeli'           => 'required|string|max:255',
+            'pembeli'           => 'required|string|regex:/^[a-zA-Z\s]+$/|max:50',
             'id_kategori'       => 'required|exists:kategori_sampah,id_kategori',
             'tanggal_transaksi' => 'required|date',
-            'kuantitas'         => 'required|numeric|min:0.01',
-            'harga_satuan'      => 'required|numeric|min:0',
+            'kuantitas'         => 'required|numeric|min:1',
+            'harga_satuan'      => 'required|numeric|min:1',
+        ], [
+            'pembeli.regex' => 'Nama pembeli hanya boleh berisi huruf dan spasi.',
         ]);
-
         $kategori = KategoriSampah::findOrFail($validated['id_kategori']);
         $satuan   = strtolower($kategori->satuan ?? 'kg');
 
@@ -160,9 +161,11 @@ class BarangKeluarController extends Controller
         $validated = $request->validate([
             'id_kategori'         => 'required|exists:kategori_sampah,id_kategori',
             'tanggal'             => 'required|date',
-            'berat_gram'          => 'required|numeric|min:0.01',
-            'harga_jual_per_gram' => 'required|numeric|min:0',
-            'pembeli'             => 'required|string|max:255',
+            'berat_gram'          => 'required|numeric|min:1',
+            'harga_jual_per_gram' => 'required|numeric|min:1',
+            'pembeli'             => 'required|string|regex:/^[a-zA-Z\s]+$/|max:50',
+        ], [
+            'pembeli.regex' => 'Nama pembeli hanya boleh berisi huruf dan spasi.',
         ]);
 
         $kategori = KategoriSampah::findOrFail($validated['id_kategori']);

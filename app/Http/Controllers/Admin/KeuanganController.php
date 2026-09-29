@@ -130,9 +130,9 @@ class KeuanganController extends Controller
         $validated = $request->validate([
             'jenis'      => ['required', Rule::in(['Pemasukan', 'Pengeluaran', 'pemasukan', 'pengeluaran'])],
             'tanggal'    => ['required', 'date'],
-            'kategori'   => ['required', 'string', 'max:255'],
-            'keterangan' => ['nullable', 'string'],
-            'jumlah'     => ['required', 'numeric', 'min:0'],
+            'kategori'   => ['required', 'string', 'max:100'],
+            'keterangan' => ['required', 'string'],
+            'jumlah'     => ['required', 'numeric', 'min:1', 'max:49999999'],
         ]);
 
         return [

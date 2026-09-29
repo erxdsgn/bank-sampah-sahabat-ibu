@@ -165,9 +165,11 @@
                                                     </svg>
                                                 @endif
                                             </span>
-                                            <strong title="{{ $item->nama_bank_ewallet }}">{{ $item->nama_bank_ewallet }}</strong>
+                                            <strong
+                                                title="{{ $item->nama_bank_ewallet }}">{{ $item->nama_bank_ewallet }}</strong>
                                         </div>
-                                        <span class="mono text-subtle bank-number" title="{{ $item->nomor_rekening ?? '-' }}">
+                                        <span class="mono text-subtle bank-number"
+                                            title="{{ $item->nomor_rekening ?? '-' }}">
                                             {{ $item->nomor_rekening ?? '-' }}
                                         </span>
                                     </div>
@@ -537,8 +539,8 @@
     <!-- STYLES -->
     <style>
         /* =========================================================
-                       VARIABEL TEMA (Light / Dark)
-                       ========================================================= */
+                           VARIABEL TEMA (Light / Dark)
+                           ========================================================= */
         :root {
             --dashboard-page: #f5f7fb;
             --dashboard-card: #ffffff;
@@ -576,8 +578,8 @@
         }
 
         /* =========================================================
-                       TEMA BERSAMA
-                       ========================================================= */
+                           TEMA BERSAMA
+                           ========================================================= */
 
         .card {
             background: var(--dashboard-card);
@@ -741,7 +743,7 @@
             max-width: 100%;
         }
 
-        .bank-main > strong {
+        .bank-main>strong {
             display: block;
             max-width: 150px;
             overflow: hidden;
@@ -911,7 +913,7 @@
             }
         }
 
-        .modal-box > form {
+        .modal-box>form {
             display: flex;
             flex-direction: column;
             flex: 1;
@@ -1252,8 +1254,8 @@
         }
 
         /* =========================================================
-                       TAMBAHAN KHUSUS DATA WARGA
-                       ========================================================= */
+                           TAMBAHAN KHUSUS DATA WARGA
+                           ========================================================= */
 
         .hero-actions {
             display: flex;
@@ -1468,8 +1470,8 @@
         }
 
         /* =========================================================
-                       COMBOBOX (SEARCHABLE SELECT)
-                       ========================================================= */
+                           COMBOBOX (SEARCHABLE SELECT)
+                           ========================================================= */
 
         .combo {
             position: relative;
@@ -1612,8 +1614,8 @@
         }
 
         /* =========================================================
-                       DARK THEME — WARNA SEMANTIK & FORCE
-                       ========================================================= */
+                           DARK THEME — WARNA SEMANTIK & FORCE
+                           ========================================================= */
 
         [data-theme="dark"] .stat-icon--blue {
             background: rgba(37, 99, 235, .18);
@@ -2230,11 +2232,19 @@
                     body: JSON.stringify(payload)
                 })
                 .then(async (res) => {
+                    const data = await res.json().catch(() => ({}));
                     if (!res.ok) {
-                        const err = await res.json().catch(() => ({}));
-                        throw new Error(err.message || 'Gagal menyimpan data.');
+                        // Tangkap pesan error validasi dari Laravel (jika ada errors bagikan pesan pertamanya)
+                        let errorMsg = data.message || 'Gagal memperbarui data warga.';
+                        if (data.errors) {
+                            const firstKey = Object.keys(data.errors)[0];
+                            if (firstKey && data.errors[firstKey][0]) {
+                                errorMsg = data.errors[firstKey][0];
+                            }
+                        }
+                        throw new Error(errorMsg);
                     }
-                    return res.json();
+                    return data;
                 })
                 .then(() => {
                     tutupModal('modalEdit');
@@ -2242,7 +2252,7 @@
                     setTimeout(() => window.location.reload(), 800);
                 })
                 .catch((err) => {
-                    showToast('Gagal menyimpan', err.message, 'error');
+                    showToast('Gagal Menyimpan', err.message, 'error');
                 });
 
             return false;

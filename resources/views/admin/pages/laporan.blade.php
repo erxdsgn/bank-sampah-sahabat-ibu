@@ -1,4 +1,4 @@
-    @extends('admin.layouts.app')
+@extends('admin.layouts.app')
 
     @section('title', 'Laporan & Riwayat')
     @section('active', 'laporan')
@@ -54,6 +54,30 @@
             };
 
             $urutanSatuan = ['kg' => 1, 'gram' => 2, 'pcs' => 3, 'unit' => 4, 'set' => 5, 'liter' => 6];
+
+            $perPagePenjualan = (int) request('penjualan_per_page', 10);
+            $perPageSetoran = (int) request('setoran_per_page', 10);
+
+            /**
+             * Menghitung nomor halaman yang ditampilkan, dengan "…" untuk yang dilompati.
+             * Logikanya sama persis dengan tombol paginasi JS di halaman lain
+             * (selalu tampilkan halaman pertama, terakhir, dan sekitar halaman aktif).
+             */
+            $paginationWindow = function ($paginator) {
+                $current = $paginator->currentPage();
+                $last = $paginator->lastPage();
+                $items = [];
+
+                for ($i = 1; $i <= $last; $i++) {
+                    if ($i === 1 || $i === $last || ($i >= $current - 1 && $i <= $current + 1)) {
+                        $items[] = $i;
+                    } elseif ($i === $current - 2 || $i === $current + 2) {
+                        $items[] = null; // ditampilkan sebagai "…"
+                    }
+                }
+
+                return $items;
+            };
 
             $volumeItems = collect($rincianVolume ?? [])
                 ->groupBy(fn($total, $satuan) => $normSatuan($satuan))
@@ -211,6 +235,7 @@
 
                             <form class="table-search" method="GET" action="{{ route('admin.laporan.index') }}">
                                 <input type="hidden" name="tab" value="penjualan">
+                                <input type="hidden" name="penjualan_per_page" value="{{ $perPagePenjualan }}">
 
                                 <svg viewBox="0 0 24 24">
                                     <circle cx="11" cy="11" r="7"></circle>
@@ -224,7 +249,7 @@
                             </form>
 
                             @if (request('search_penjualan'))
-                                <a href="{{ route('admin.laporan.index', ['tab' => 'penjualan']) }}" class="btn btn--ghost">
+                                <a href="{{ route('admin.laporan.index', ['tab' => 'penjualan', 'penjualan_per_page' => $perPagePenjualan]) }}" class="btn btn--ghost">
                                     <svg viewBox="0 0 24 24">
                                         <path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path>
                                         <path d="M21 3v5h-5"></path>
@@ -337,10 +362,50 @@
                             transaksi
                         </div>
 
-                        <div class="pagination-wrap">
-                            {{ $riwayatPenjualan->appends(
-                                array_merge(request()->except('penjualan_page', 'tab'), ['tab' => 'penjualan'])
-                            )->links() }}
+                        <div class="table-pagination-controls">
+                            <div class="per-page">
+                                <label for="cari_perPagePenjualan">Baris per halaman:</label>
+                                <div class="combo combo--up combo--arrow" id="combo_perPagePenjualan">
+                                    <input type="text" id="cari_perPagePenjualan" class="combo-input" readonly
+                                        autocomplete="off" aria-label="Baris per halaman penjualan">
+                                    <div class="combo-list" id="list_perPagePenjualan"></div>
+                                </div>
+                                <select id="perPagePenjualan" class="combo-hidden" tabindex="-1" aria-hidden="true"
+                                    data-nav-param="penjualan_per_page" data-nav-page-param="penjualan_page">
+                                    <option value="10" {{ $perPagePenjualan == 10 ? 'selected' : '' }}>10</option>
+                                    <option value="25" {{ $perPagePenjualan == 25 ? 'selected' : '' }}>25</option>
+                                    <option value="50" {{ $perPagePenjualan == 50 ? 'selected' : '' }}>50</option>
+                                    <option value="100" {{ $perPagePenjualan == 100 ? 'selected' : '' }}>100</option>
+                                </select>
+                            </div>
+
+                            @php
+                                $riwayatPenjualan->appends(
+                                    array_merge(request()->except('penjualan_page', 'tab'), ['tab' => 'penjualan'])
+                                );
+                                $halamanPenjualan = $paginationWindow($riwayatPenjualan);
+                            @endphp
+
+                            <div class="pagination-wrap">
+                                <div class="pagination-buttons">
+                                    <a href="{{ $riwayatPenjualan->previousPageUrl() ?? '#' }}"
+                                        class="btn btn--ghost {{ $riwayatPenjualan->onFirstPage() ? 'is-disabled' : '' }}"
+                                        @if ($riwayatPenjualan->onFirstPage()) aria-disabled="true" tabindex="-1" @endif>‹</a>
+
+                                    @foreach ($halamanPenjualan as $item)
+                                        @if (is_null($item))
+                                            <span class="pagination-dots">…</span>
+                                        @else
+                                            <a href="{{ $riwayatPenjualan->url($item) }}"
+                                                class="btn {{ $item == $riwayatPenjualan->currentPage() ? 'btn--primary' : 'btn--ghost' }}">{{ $item }}</a>
+                                        @endif
+                                    @endforeach
+
+                                    <a href="{{ $riwayatPenjualan->nextPageUrl() ?? '#' }}"
+                                        class="btn btn--ghost {{ !$riwayatPenjualan->hasMorePages() ? 'is-disabled' : '' }}"
+                                        @if (!$riwayatPenjualan->hasMorePages()) aria-disabled="true" tabindex="-1" @endif>›</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -355,6 +420,7 @@
 
                             <form class="table-search" method="GET" action="{{ route('admin.laporan.index') }}">
                                 <input type="hidden" name="tab" value="setoran">
+                                <input type="hidden" name="setoran_per_page" value="{{ $perPageSetoran }}">
 
                                 <svg viewBox="0 0 24 24">
                                     <circle cx="11" cy="11" r="7"></circle>
@@ -368,7 +434,7 @@
                             </form>
 
                             @if (request('search_setoran'))
-                                <a href="{{ route('admin.laporan.index', ['tab' => 'setoran']) }}" class="btn btn--ghost">
+                                <a href="{{ route('admin.laporan.index', ['tab' => 'setoran', 'setoran_per_page' => $perPageSetoran]) }}" class="btn btn--ghost">
                                     <svg viewBox="0 0 24 24">
                                         <path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path>
                                         <path d="M21 3v5h-5"></path>
@@ -501,10 +567,50 @@
                             transaksi
                         </div>
 
-                        <div class="pagination-wrap">
-                            {{ $riwayatSetoran->appends(
-                                array_merge(request()->except('setoran_page', 'tab'), ['tab' => 'setoran'])
-                            )->links() }}
+                        <div class="table-pagination-controls">
+                            <div class="per-page">
+                                <label for="cari_perPageSetoran">Baris per halaman:</label>
+                                <div class="combo combo--up combo--arrow" id="combo_perPageSetoran">
+                                    <input type="text" id="cari_perPageSetoran" class="combo-input" readonly
+                                        autocomplete="off" aria-label="Baris per halaman penyetoran">
+                                    <div class="combo-list" id="list_perPageSetoran"></div>
+                                </div>
+                                <select id="perPageSetoran" class="combo-hidden" tabindex="-1" aria-hidden="true"
+                                    data-nav-param="setoran_per_page" data-nav-page-param="setoran_page">
+                                    <option value="10" {{ $perPageSetoran == 10 ? 'selected' : '' }}>10</option>
+                                    <option value="25" {{ $perPageSetoran == 25 ? 'selected' : '' }}>25</option>
+                                    <option value="50" {{ $perPageSetoran == 50 ? 'selected' : '' }}>50</option>
+                                    <option value="100" {{ $perPageSetoran == 100 ? 'selected' : '' }}>100</option>
+                                </select>
+                            </div>
+
+                            @php
+                                $riwayatSetoran->appends(
+                                    array_merge(request()->except('setoran_page', 'tab'), ['tab' => 'setoran'])
+                                );
+                                $halamanSetoran = $paginationWindow($riwayatSetoran);
+                            @endphp
+
+                            <div class="pagination-wrap">
+                                <div class="pagination-buttons">
+                                    <a href="{{ $riwayatSetoran->previousPageUrl() ?? '#' }}"
+                                        class="btn btn--ghost {{ $riwayatSetoran->onFirstPage() ? 'is-disabled' : '' }}"
+                                        @if ($riwayatSetoran->onFirstPage()) aria-disabled="true" tabindex="-1" @endif>‹</a>
+
+                                    @foreach ($halamanSetoran as $item)
+                                        @if (is_null($item))
+                                            <span class="pagination-dots">…</span>
+                                        @else
+                                            <a href="{{ $riwayatSetoran->url($item) }}"
+                                                class="btn {{ $item == $riwayatSetoran->currentPage() ? 'btn--primary' : 'btn--ghost' }}">{{ $item }}</a>
+                                        @endif
+                                    @endforeach
+
+                                    <a href="{{ $riwayatSetoran->nextPageUrl() ?? '#' }}"
+                                        class="btn btn--ghost {{ !$riwayatSetoran->hasMorePages() ? 'is-disabled' : '' }}"
+                                        @if (!$riwayatSetoran->hasMorePages()) aria-disabled="true" tabindex="-1" @endif>›</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1065,6 +1171,113 @@
                 flex-wrap: wrap;
             }
 
+            .laporan-page .table-pagination-controls {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                flex-wrap: wrap;
+            }
+
+            .laporan-page .per-page {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .laporan-page .per-page label {
+                font-size: 13px;
+                color: var(--text-secondary);
+                white-space: nowrap;
+            }
+
+            .laporan-page .per-page .combo {
+                width: 84px;
+            }
+
+            /* COMBOBOX (pengganti <select> bawaan, pilihan tetap) */
+            .laporan-page .combo {
+                position: relative;
+            }
+
+            .laporan-page .combo-hidden {
+                display: none !important;
+            }
+
+            .laporan-page .combo-input {
+                width: 100%;
+                height: 36px;
+                box-sizing: border-box;
+                padding: 0 12px;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                background: var(--input-bg);
+                color: var(--text);
+                font-family: inherit;
+                font-size: 13px;
+                font-weight: 600;
+                outline: none;
+                transition: border-color .2s ease, box-shadow .2s ease;
+            }
+
+            .laporan-page .combo-input:focus {
+                border-color: var(--primary, #22c55e);
+                box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
+            }
+
+            .laporan-page .combo--arrow .combo-input {
+                cursor: pointer;
+                padding-right: 30px;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 9px center;
+                background-size: 14px;
+            }
+
+            .laporan-page .combo-list {
+                display: none;
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: calc(100% + 4px);
+                min-width: 84px;
+                max-height: 200px;
+                overflow-y: auto;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, .22);
+                z-index: 30;
+                scrollbar-width: thin;
+                scrollbar-color: var(--border) transparent;
+            }
+
+            .laporan-page .combo-list.show {
+                display: block;
+            }
+
+            .laporan-page .combo-list::-webkit-scrollbar { width: 6px; }
+            .laporan-page .combo-list::-webkit-scrollbar-track { background: transparent; }
+            .laporan-page .combo-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+            .laporan-page .combo-list::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+            .laporan-page .combo-item {
+                padding: 9px 12px;
+                font-size: 13px;
+                color: var(--text);
+                cursor: pointer;
+                transition: background .1s ease, color .1s ease;
+            }
+
+            .laporan-page .combo-item.is-selected {
+                font-weight: 700;
+            }
+
+            .laporan-page .combo-item:hover,
+            .laporan-page .combo-item.is-active {
+                background: var(--table-hover);
+                color: var(--primary, #22c55e);
+            }
+
             .laporan-page .table-info {
                 color: var(--text-secondary);
                 font-size: 13px;
@@ -1075,66 +1288,41 @@
                 font-weight: 700;
             }
 
-            /* PAGINATION */
+            /* PAGINATION (tombol dibuat manual di Blade, gaya sama persis dengan halaman lain) */
             .laporan-page .pagination-wrap {
                 display: flex;
                 align-items: center;
             }
 
-            .laporan-page .pagination-wrap nav {
-                margin: 0;
-            }
-
-            .laporan-page .pagination-wrap svg {
-                width: 16px;
-                height: 16px;
-            }
-
-            .laporan-page .pagination-wrap .pagination {
+            .laporan-page .pagination-buttons {
                 display: flex;
                 align-items: center;
                 gap: 4px;
-                margin: 0;
-                padding: 0;
-                list-style: none;
             }
 
-            .laporan-page .pagination-wrap .pagination .page-link,
-            .laporan-page .pagination-wrap .pagination li > span {
+            .laporan-page .pagination-buttons .btn {
                 min-width: 34px;
                 height: 34px;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
                 padding: 0 10px;
-                background: var(--surface);
-                border: 1px solid var(--border);
                 border-radius: 8px;
-                color: var(--text-secondary);
                 font-family: inherit;
                 font-size: 13px;
                 font-weight: 600;
                 text-decoration: none;
+                box-sizing: border-box;
             }
 
-            .laporan-page .pagination-wrap .pagination .page-link:hover {
-                border-color: var(--primary, #22c55e);
-                color: var(--primary, #22c55e);
-                background: var(--table-hover);
+            .laporan-page .pagination-buttons .btn.is-disabled {
+                pointer-events: none;
+                opacity: .5;
             }
 
-            .laporan-page .pagination-wrap .pagination .active .page-link,
-            .laporan-page .pagination-wrap .pagination .active > span {
-                background: var(--primary, #22c55e);
-                border-color: var(--primary, #22c55e);
-                color: #fff;
-            }
-
-            .laporan-page .pagination-wrap .pagination .disabled .page-link,
-            .laporan-page .pagination-wrap .pagination .disabled > span {
-                background: var(--surface-secondary);
-                color: var(--text-muted);
-                border-color: var(--border);
+            .laporan-page .pagination-dots {
+                padding: 0 4px;
+                color: var(--text-secondary);
             }
 
             /* RESPONSIVE */
@@ -1198,6 +1386,11 @@
                     overflow-x: auto;
                     padding-bottom: 2px;
                 }
+
+                .laporan-page .table-pagination-controls {
+                    width: 100%;
+                    justify-content: center;
+                }
             }
 
             /* PRINT */
@@ -1242,7 +1435,8 @@
                 .hero-actions,
                 .tabs-header,
                 .laporan-page .table-toolbar,
-                .laporan-page .table-footer {
+                .laporan-page .table-footer,
+                .laporan-page .table-pagination-controls {
                     display: none !important;
                 }
 
@@ -1351,6 +1545,117 @@
 
                 bindLiveSearch('searchPenjualan', 'penjualan');
                 bindLiveSearch('searchSetoran', 'setoran');
+
+
+                /* ================= COMBOBOX "BARIS PER HALAMAN" ================= */
+                /* Menggantikan <select> bawaan browser; pilihan tetap, tanpa teks bebas. */
+
+                function initComboSelect(selectId) {
+                    const select = document.getElementById(selectId);
+                    const input = document.getElementById('cari_' + selectId);
+                    const list = document.getElementById('list_' + selectId);
+                    if (!select || !input || !list) return;
+
+                    input.readOnly = true;
+                    let aktif = -1;
+
+                    const teks = o => o.textContent.replace(/\s+/g, ' ').trim();
+                    const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+                    function sync() {
+                        const o = select.options[select.selectedIndex];
+                        input.value = o ? teks(o) : '';
+                    }
+
+                    function buka() {
+                        list.innerHTML = Array.from(select.options).map(o =>
+                            `<div class="combo-item${o.value === select.value ? ' is-selected' : ''}" data-value="${esc(o.value)}">${esc(teks(o))}</div>`
+                        ).join('');
+                        aktif = -1;
+                        list.classList.add('show');
+                        const terpilih = list.querySelector('.is-selected');
+                        if (terpilih) terpilih.scrollIntoView({ block: 'nearest' });
+                    }
+
+                    function tutup() {
+                        list.classList.remove('show');
+                    }
+
+                    function pilih(value) {
+                        const berubah = select.value !== String(value);
+                        select.value = value;
+                        sync();
+                        tutup();
+                        if (berubah) select.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+
+                    function sorot(arah) {
+                        const items = list.querySelectorAll('.combo-item');
+                        if (!items.length) return;
+                        aktif = (aktif + arah + items.length) % items.length;
+                        items.forEach((el, i) => el.classList.toggle('is-active', i === aktif));
+                        items[aktif].scrollIntoView({ block: 'nearest' });
+                    }
+
+                    input.addEventListener('focus', buka);
+                    input.addEventListener('click', () => { if (!list.classList.contains('show')) buka(); });
+                    input.addEventListener('blur', tutup);
+
+                    input.addEventListener('keydown', function(e) {
+                        const items = list.querySelectorAll('.combo-item');
+                        if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            if (!list.classList.contains('show')) buka();
+                            sorot(1);
+                        } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            sorot(-1);
+                        } else if (e.key === 'Enter') {
+                            if (list.classList.contains('show') && aktif > -1 && items[aktif]) {
+                                e.preventDefault();
+                                pilih(items[aktif].dataset.value);
+                            }
+                        } else if (e.key === 'Escape' && list.classList.contains('show')) {
+                            e.stopPropagation();
+                            tutup();
+                        }
+                    });
+
+                    list.addEventListener('mouseover', function(e) {
+                        const item = e.target.closest('.combo-item');
+                        if (!item) return;
+                        list.querySelectorAll('.combo-item').forEach((el, i) => {
+                            el.classList.toggle('is-active', el === item);
+                            if (el === item) aktif = i;
+                        });
+                    });
+
+                    list.addEventListener('mousedown', function(e) {
+                        e.preventDefault();
+                        const item = e.target.closest('.combo-item');
+                        if (item) pilih(item.dataset.value);
+                    });
+
+                    sync();
+                }
+
+                /* Ubah pilihan -> muat ulang halaman dengan query string baru (server yang memaginasi) */
+                function bindPerPageNavigation(selectId) {
+                    const select = document.getElementById(selectId);
+                    if (!select) return;
+
+                    select.addEventListener('change', function() {
+                        const url = new URL(window.location);
+                        url.searchParams.set(this.dataset.navParam, this.value);
+                        url.searchParams.delete(this.dataset.navPageParam);
+                        window.location.href = url.toString();
+                    });
+                }
+
+                initComboSelect('perPagePenjualan');
+                initComboSelect('perPageSetoran');
+                bindPerPageNavigation('perPagePenjualan');
+                bindPerPageNavigation('perPageSetoran');
 
             });
         </script>

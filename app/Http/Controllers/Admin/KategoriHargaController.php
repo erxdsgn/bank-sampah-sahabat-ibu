@@ -74,7 +74,7 @@ class KategoriHargaController extends Controller
                     'required',
                     'numeric',
                     'min:0',
-                    'max:9999999999',
+                    'max:999999',
                 ],
 
                 'tanggal_berlaku' => [
@@ -299,7 +299,7 @@ class KategoriHargaController extends Controller
                     'required',
                     'numeric',
                     'min:0',
-                    'max:9999999999',
+                    'max:999999',
                 ],
 
                 'tanggal_berlaku' => [

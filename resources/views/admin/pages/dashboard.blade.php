@@ -8,7 +8,7 @@
 
     @php
         // Riwayat setoran: terbaru di atas
-        $riwayat = collect($riwayatSetoran)->sortByDesc('id_setoran')->take(10)->values();
+        $riwayat = collect($riwayatSetoran)->sortByDesc('id_setoran')->values();
 
         $opsi = collect($opsiSatuan);
     @endphp
@@ -271,12 +271,12 @@
         <div class="card-head">
             <div>
                 <h2 class="card-title">Riwayat Setoran</h2>
-                <p class="card-sub">10 transaksi setoran terbaru</p>
+                <p class="card-sub">Seluruh transaksi setoran yang tercatat</p>
             </div>
         </div>
 
         <div class="table-responsive">
-            <table class="data-table">
+            <table class="data-table" id="riwayatTable">
 
                 <thead>
                     <tr>
@@ -289,10 +289,10 @@
                     </tr>
                 </thead>
 
-                <tbody>
+                <tbody id="riwayatTableBody">
                     @forelse($riwayat as $index => $setoran)
-                        <tr>
-                            <td>{{ $index + 1 }}</td>
+                        <tr data-row-riwayat>
+                            <td class="riwayat-no"></td>
 
                             <td>{{ \Carbon\Carbon::parse($setoran->tanggal_setoran)->format('d/m/Y') }}</td>
 
@@ -318,6 +318,31 @@
                 </tbody>
 
             </table>
+        </div>
+
+        <div class="table-footer">
+
+            <div class="table-info" id="riwayatInfoPagination">Menampilkan data...</div>
+
+            <div class="table-pagination-controls">
+                <div class="per-page">
+                    <label for="cari_perPageRiwayat">Baris per halaman:</label>
+                    <div class="combo combo--up combo--arrow" id="combo_perPageRiwayat">
+                        <input type="text" id="cari_perPageRiwayat" class="combo-input" readonly
+                            autocomplete="off" aria-label="Baris per halaman riwayat setoran">
+                        <div class="combo-list" id="list_perPageRiwayat"></div>
+                    </div>
+                    <select id="perPageRiwayat" class="combo-hidden" tabindex="-1" aria-hidden="true">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+
+                <div class="pagination-buttons" id="paginationButtonsRiwayat"></div>
+            </div>
+
         </div>
 
     </section>
@@ -725,6 +750,73 @@
             transition: background-color .25s ease, border-color .25s ease, color .25s ease;
         }
 
+        /* ===== TABLE FOOTER & PAGINASI (sama seperti halaman lain) ===== */
+        .table-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 16px 22px;
+            border-top: 1px solid var(--dashboard-border);
+        }
+
+        .table-info {
+            font-size: 13px;
+            color: var(--dashboard-text-secondary);
+        }
+
+        .table-info strong {
+            color: var(--dashboard-text);
+        }
+
+        .table-pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .per-page {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .per-page label {
+            font-size: 13px;
+            color: var(--dashboard-text-secondary);
+        }
+
+        .per-page .combo {
+            width: 84px;
+        }
+
+        .per-page .combo-input {
+            height: 32px;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .pagination-buttons .btn {
+            padding: 6px 12px;
+            min-width: 32px;
+        }
+
+        .pagination-buttons .btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .pagination-dots {
+            padding: 0 4px;
+            color: var(--dashboard-text-secondary);
+        }
+
         /* ===== TABLE ===== */
         .table-responsive {
             width: 100%;
@@ -942,6 +1034,71 @@
             initComboSelect('satuanTotalSampah');
             initComboSelect('satuanBulanan');
             initComboSelect('satuanJenis');
+
+            /* ================= PAGINASI RIWAYAT SETORAN ================= */
+
+            let riwayatPage = 1;
+
+            function renderRiwayatTable() {
+                const rows = Array.from(document.querySelectorAll('#riwayatTableBody tr[data-row-riwayat]'));
+                const perPageSelect = document.getElementById('perPageRiwayat');
+                const paginationContainer = document.getElementById('paginationButtonsRiwayat');
+                const tableInfo = document.getElementById('riwayatInfoPagination');
+
+                if (!rows.length || !perPageSelect || !paginationContainer) return;
+
+                const perPage = parseInt(perPageSelect.value, 10) || 10;
+                const totalPages = Math.ceil(rows.length / perPage) || 1;
+                riwayatPage = Math.min(Math.max(riwayatPage, 1), totalPages);
+
+                rows.forEach(r => r.style.display = 'none');
+
+                const start = (riwayatPage - 1) * perPage;
+                const end = start + perPage;
+                rows.slice(start, end).forEach((r, i) => {
+                    r.style.display = '';
+                    const selNo = r.querySelector('.riwayat-no');
+                    if (selNo) selNo.textContent = start + i + 1;
+                });
+
+                if (tableInfo) {
+                    tableInfo.innerHTML = `Menampilkan <strong>${start + 1}</strong> - <strong>${Math.min(end, rows.length)}</strong> dari <strong>${rows.length}</strong> transaksi`;
+                }
+
+                let html = `<button class="btn btn--ghost" type="button" data-page="${riwayatPage - 1}" ${riwayatPage === 1 ? 'disabled' : ''}>‹</button>`;
+
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= riwayatPage - 1 && i <= riwayatPage + 1)) {
+                        html += `<button class="btn ${i === riwayatPage ? 'btn--primary' : 'btn--ghost'}" type="button" data-page="${i}">${i}</button>`;
+                    } else if (i === riwayatPage - 2 || i === riwayatPage + 2) {
+                        html += '<span class="pagination-dots">…</span>';
+                    }
+                }
+
+                html += `<button class="btn btn--ghost" type="button" data-page="${riwayatPage + 1}" ${riwayatPage === totalPages ? 'disabled' : ''}>›</button>`;
+                paginationContainer.innerHTML = html;
+            }
+
+            const paginationButtonsRiwayat = document.getElementById('paginationButtonsRiwayat');
+            if (paginationButtonsRiwayat) {
+                paginationButtonsRiwayat.addEventListener('click', function (e) {
+                    const btn = e.target.closest('button[data-page]');
+                    if (!btn || btn.disabled) return;
+                    riwayatPage = parseInt(btn.dataset.page, 10);
+                    renderRiwayatTable();
+                });
+            }
+
+            const perPageRiwayat = document.getElementById('perPageRiwayat');
+            if (perPageRiwayat) {
+                perPageRiwayat.addEventListener('change', function () {
+                    riwayatPage = 1;
+                    renderRiwayatTable();
+                });
+            }
+
+            initComboSelect('perPageRiwayat');
+            renderRiwayatTable();
 
             /* ================= DATA DARI CONTROLLER ================= */
             const opsiSatuan = @json($opsiSatuan);

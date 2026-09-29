@@ -276,7 +276,7 @@ class HomeController extends Controller
         $request->validate([
             'nama'     => ['required', 'string', 'max:100'],
             'username' => ['required', 'string', 'max:50', 'unique:admin,username,' . $admin->id_admin . ',id_admin'],
-            'alamat'   => ['nullable', 'string', 'max:255'],
+            'alamat'   => ['nullable', 'string', 'max:100'],
             'password' => ['nullable', 'string', 'min:6'],
         ]);
 

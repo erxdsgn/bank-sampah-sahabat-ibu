@@ -51,11 +51,11 @@ class ArtikelEdukasiController extends Controller
         $this->normalisasiTanggalPublish($request);
 
         $validated = $request->validate([
-            'judul'           => 'required|string|max:255',
+            'judul'           => 'required|string|max:80',
             'jenis'           => 'required|in:edukasi,artikel,acara',
             'konten'          => 'required|string',
-            'gambar'          => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'tanggal_publish' => 'nullable|date',
+            'gambar'          => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'tanggal_publish' => 'required|date',
         ]);
 
         if ($request->hasFile('gambar')) {
@@ -96,11 +96,11 @@ class ArtikelEdukasiController extends Controller
         $this->normalisasiTanggalPublish($request);
 
         $validated = $request->validate([
-            'judul'           => 'required|string|max:255',
+            'judul'           => 'required|string|max:80',
             'jenis'           => 'required|in:edukasi,artikel,acara',
             'konten'          => 'required|string',
-            'gambar'          => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'tanggal_publish' => 'nullable|date',
+            'gambar'          => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'tanggal_publish' => 'required|date',
         ]);
 
         if ($request->hasFile('gambar')) {
