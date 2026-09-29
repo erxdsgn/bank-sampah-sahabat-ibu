@@ -380,8 +380,8 @@
             --input-bg: #ffffff;
             --input-readonly: #f8fafc;
 
-            --primary-safe: #16a34a;
-            --primary-safe-hover: #15803d;
+            --primary-safe: var(--primary);
+            --primary-safe-hover: color-mix(in oklab, var(--primary) 88%, #000);
 
             --primary-soft: #eef2ff;
             --primary-soft-text: #4338ca;
@@ -392,6 +392,8 @@
             --danger-bg: #fee2e2;
             --danger-text: #dc2626;
             --danger-border: #fecaca;
+            --danger-bg-hover: rgba(239, 68, 68, .12);
+            --danger-border-hover: rgba(239, 68, 68, .30);
 
             --shadow: 0 8px 25px rgba(15, 23, 42, .06);
 
@@ -415,8 +417,7 @@
             --input-bg: #111a2c;
             --input-readonly: #111a2c;
 
-            --primary-safe: #22c55e;
-            --primary-safe-hover: #16a34a;
+            /* --primary-safe & --primary-safe-hover otomatis mengikuti --primary */
 
             --primary-soft: rgba(99, 102, 241, .14);
             --primary-soft-text: #a5b4fc;
@@ -427,6 +428,8 @@
             --danger-bg: rgba(239, 68, 68, .14);
             --danger-text: #f87171;
             --danger-border: rgba(239, 68, 68, .28);
+            --danger-bg-hover: rgba(239, 68, 68, .20);
+            --danger-border-hover: rgba(239, 68, 68, .38);
 
             --shadow: 0 8px 25px rgba(0, 0, 0, .25);
         }
@@ -810,9 +813,9 @@
 
         .profil-page .btn--danger-soft:hover {
 
-            background: rgba(239, 68, 68, .20);
+            background: var(--danger-bg-hover);
 
-            border-color: rgba(239, 68, 68, .38);
+            border-color: var(--danger-border-hover);
         }
 
 

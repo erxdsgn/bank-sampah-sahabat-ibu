@@ -17,13 +17,56 @@ use Jenssegers\Agent\Agent;
 class HomeController extends Controller
 {
     /**
+     * kg & gram digabung menjadi satu grup "kg".
+     */
+    private function grupSatuan(?string $satuan): string
+    {
+        $satuan = strtolower(trim((string) $satuan));
+
+        if ($satuan === 'gram') {
+            return 'kg';
+        }
+
+        return $satuan !== '' ? $satuan : 'lainnya';
+    }
+
+    private function labelSatuan(string $grup): string
+    {
+        return [
+            'kg'    => 'Kg',
+            'pcs'   => 'Pcs',
+            'liter' => 'Liter',
+            'unit'  => 'Unit',
+            'set'   => 'Set',
+        ][$grup] ?? ucfirst($grup);
+    }
+
+    /**
+     * Nilai mentah (kolom berat_gram) -> nilai tampil.
+     * Berat: gram -> Kg. Satuan lain: apa adanya.
+     */
+    private function konversi(float $nilai, string $grup): float
+    {
+        return $grup === 'kg' ? $nilai / 1000 : $nilai;
+    }
+
+    private function formatJumlah(float $nilai, string $grup): string
+    {
+        $tampil = $this->konversi($nilai, $grup);
+
+        $angka = $grup === 'kg'
+            ? number_format($tampil, 2, ',', '.')
+            : rtrim(rtrim(number_format($tampil, 2, ',', '.'), '0'), ',');
+
+        return $angka . ' ' . $this->labelSatuan($grup);
+    }
+
+    /**
      * Dashboard Admin
      */
     public function index(): View
     {
-        // Perhitungan Saldo Kas — pakai sumber yang SAMA dengan halaman Keuangan
-        // (kas manual + setoran + pencairan saldo + penjualan ke pengepul),
-        // supaya angkanya tidak pernah menyimpang dari admin.pages.keuangan.
+        // Saldo Kas — sumber sama dengan halaman Keuangan
         $transaksiKeuangan = RingkasanKeuangan::transaksi();
 
         $totalPemasukan   = (float) $transaksiKeuangan->where('jenis', 'Pemasukan')->sum('jumlah');
@@ -33,61 +76,147 @@ class HomeController extends Controller
         // Stat ringkasan
         $jumlahWarga            = DB::table('warga')->count();
         $jumlahSetoran          = DB::table('penyetoran')->count();
-        $totalBeratSampah       = DB::table('penyetoran')->sum('total_berat');
         $totalSaldoWarga        = DB::table('warga')->sum('saldo');
         $totalPencairanSaldo    = DB::table('pencairan_saldo')->sum('jumlah');
         $totalPenjualanPengepul = DB::table('barang_keluar')->sum('total');
         $jumlahKategoriSampah   = DB::table('kategori_sampah')->count();
 
+        // Urutkan grup satuan: kg dulu, sisanya alfabetis
+        $urutGrup = fn($rows, $grup) => $grup === 'kg' ? '0' : $grup;
+
+        // ---------------------------------------------------------
+        // Total sampah disetor, per satuan
+        // ---------------------------------------------------------
+        $totalPerGrup = DB::table('detail_setoran')
+            ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
+            ->select('kategori_sampah.satuan', DB::raw('SUM(detail_setoran.berat_gram) as total'))
+            ->groupBy('kategori_sampah.satuan')
+            ->get()
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
+            ->sortBy($urutGrup);
+
+        $totalJumlahSampah = $totalPerGrup
+            ->map(fn($rows, $grup) => $this->formatJumlah((float) $rows->sum('total'), $grup))
+            ->values();
+
+        // Data mentah nilai per satuan untuk kartu dropdown interaktif
+        $totalJumlahSampahPerSatuan = $totalPerGrup
+            ->map(fn($rows, $grup) => $this->konversi((float) $rows->sum('total'), $grup))
+            ->all();
+
+        // Opsi satuan untuk pilihan di grafik
+        $opsiSatuan = $totalPerGrup
+            ->keys()
+            ->map(fn($grup) => ['key' => $grup, 'label' => $this->labelSatuan($grup)])
+            ->values();
+        // ---------------------------------------------------------
         // Riwayat Setoran
+        // ---------------------------------------------------------
         $riwayatSetoran = DB::table('penyetoran')
             ->leftJoin('warga', 'penyetoran.id_warga', '=', 'warga.id_warga')
             ->select(
                 'penyetoran.id_setoran',
                 'penyetoran.tanggal_setoran',
                 'penyetoran.status',
-                'penyetoran.total_berat',
                 'penyetoran.total_nilai',
                 'warga.nama'
             )
             ->orderBy('penyetoran.tanggal_setoran', 'desc')
+            ->orderBy('penyetoran.id_setoran', 'desc')
             ->limit(10)
             ->get();
 
-        // Grafik Setoran Bulanan
-        $setoranPerBulan = DB::table('penyetoran')
+        $detailPerSetoran = DB::table('detail_setoran')
+            ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
+            ->whereIn('detail_setoran.id_setoran', $riwayatSetoran->pluck('id_setoran'))
             ->select(
-                DB::raw('MONTH(tanggal_setoran) as bulan'),
-                DB::raw('SUM(total_berat) as total_berat')
+                'detail_setoran.id_setoran',
+                'kategori_sampah.satuan',
+                DB::raw('SUM(detail_setoran.berat_gram) as total')
             )
-            ->whereYear('tanggal_setoran', now()->year)
-            ->groupBy(DB::raw('MONTH(tanggal_setoran)'))
-            ->orderBy(DB::raw('MONTH(tanggal_setoran)'))
-            ->get();
+            ->groupBy('detail_setoran.id_setoran', 'kategori_sampah.satuan')
+            ->get()
+            ->groupBy('id_setoran');
 
-        // Statistik Kategori Sampah
+        $riwayatSetoran->transform(function ($setoran) use ($detailPerSetoran, $urutGrup) {
+            $setoran->jumlah_text = ($detailPerSetoran[$setoran->id_setoran] ?? collect())
+                ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
+                ->sortBy($urutGrup)
+                ->map(fn($rows, $grup) => $this->formatJumlah((float) $rows->sum('total'), $grup))
+                ->implode(', ') ?: '-';
+
+            return $setoran;
+        });
+
+        // ---------------------------------------------------------
+        // Grafik bulanan: [grup => [{bulan, total}, ...]]
+        // ---------------------------------------------------------
+        $setoranPerBulan = DB::table('detail_setoran')
+            ->join('penyetoran', 'detail_setoran.id_setoran', '=', 'penyetoran.id_setoran')
+            ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
+            ->whereYear('penyetoran.tanggal_setoran', now()->year)
+            ->select(
+                'kategori_sampah.satuan',
+                DB::raw('MONTH(penyetoran.tanggal_setoran) as bulan'),
+                DB::raw('SUM(detail_setoran.berat_gram) as total')
+            )
+            ->groupBy('kategori_sampah.satuan', DB::raw('MONTH(penyetoran.tanggal_setoran)'))
+            ->get()
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
+            ->map(
+                fn($rows, $grup) => $rows
+                    ->groupBy('bulan')
+                    ->map(fn($r, $bulan) => [
+                        'bulan' => (int) $bulan,
+                        'total' => $this->konversi((float) $r->sum('total'), $grup),
+                    ])
+                    ->values()
+            )
+            ->all();
+
+        // ---------------------------------------------------------
+        // Statistik jenis sampah: [grup => [{nama, total}, ...]]
+        // ---------------------------------------------------------
         $statistikJenisSampah = DB::table('detail_setoran')
             ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
             ->select(
+                'kategori_sampah.id_kategori',
                 'kategori_sampah.nama_kategori',
-                DB::raw('SUM(detail_setoran.berat_gram) as total_berat')
+                'kategori_sampah.satuan',
+                DB::raw('SUM(detail_setoran.berat_gram) as total')
             )
-            ->groupBy('kategori_sampah.id_kategori', 'kategori_sampah.nama_kategori')
-            ->orderByDesc('total_berat')
-            ->get();
+            ->groupBy(
+                'kategori_sampah.id_kategori',
+                'kategori_sampah.nama_kategori',
+                'kategori_sampah.satuan'
+            )
+            ->get()
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
+            ->map(
+                fn($rows, $grup) => $rows
+                    ->map(fn($r) => [
+                        'nama'  => $r->nama_kategori,
+                        'total' => $this->konversi((float) $r->total, $grup),
+                    ])
+                    ->sortByDesc('total')
+                    ->values()
+            )
+            ->all();
 
         return view('admin.pages.dashboard', compact(
             'saldoKas',
             'jumlahWarga',
             'jumlahSetoran',
-            'totalBeratSampah',
+            'totalJumlahSampah',
+            'totalJumlahSampahPerSatuan',
             'totalSaldoWarga',
             'totalPencairanSaldo',
             'totalPenjualanPengepul',
             'jumlahKategoriSampah',
             'riwayatSetoran',
             'setoranPerBulan',
-            'statistikJenisSampah'
+            'statistikJenisSampah',
+            'opsiSatuan'
         ));
     }
 
@@ -166,7 +295,6 @@ class HomeController extends Controller
 
         return back()->with('success', 'Profil admin berhasil diperbarui.');
     }
-
 
     /**
      * Form Kontak

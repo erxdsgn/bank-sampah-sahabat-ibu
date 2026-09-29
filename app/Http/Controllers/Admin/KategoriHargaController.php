@@ -65,6 +65,8 @@ class KategoriHargaController extends Controller
                         'kg',
                         'pcs',
                         'liter',
+                        'unit',
+                        'set',
                     ]),
                 ],
 
@@ -88,7 +90,7 @@ class KategoriHargaController extends Controller
                     'Nama kategori sudah ada, gunakan nama lain.',
 
                 'satuan.in' =>
-                    'Satuan harus salah satu dari: gram, kg, pcs, atau liter.',
+                    'Satuan harus salah satu dari: gram, kg, pcs, liter, unit, atau set.',
 
                 'harga_satuan.numeric' =>
                     'Harga hanya boleh berupa angka.',
@@ -176,6 +178,8 @@ class KategoriHargaController extends Controller
                         'kg',
                         'pcs',
                         'liter',
+                        'unit',
+                        'set',
                     ]),
                 ],
             ],
@@ -187,7 +191,7 @@ class KategoriHargaController extends Controller
                     'Nama kategori sudah digunakan.',
 
                 'satuan.in' =>
-                    'Satuan harus salah satu dari: gram, kg, pcs, atau liter.',
+                    'Satuan harus salah satu dari: gram, kg, pcs, liter, unit, atau set.',
             ]
         );
 

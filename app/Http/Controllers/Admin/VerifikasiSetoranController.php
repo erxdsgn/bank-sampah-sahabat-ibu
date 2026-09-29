@@ -24,6 +24,8 @@ class VerifikasiSetoranController extends Controller
         'kg',
         'pcs',
         'liter',
+        'unit',
+        'set',
     ];
 
     /**
@@ -38,10 +40,6 @@ class VerifikasiSetoranController extends Controller
             ->orderByDesc('id_setoran')
             ->get();
 
-        /*
-         * Detail dipisahkan berdasarkan id_setoran
-         * agar mudah digunakan di Blade.
-         */
         $detailMap = DB::table('detail_setoran')
             ->whereIn(
                 'id_setoran',
@@ -50,12 +48,6 @@ class VerifikasiSetoranController extends Controller
             ->get()
             ->groupBy('id_setoran');
 
-        /*
-         * Ambil semua kategori beserta:
-         * - induk
-         * - harga terbaru
-         * - satuan
-         */
         $kategoriSampah = KategoriSampah::with([
             'induk',
             'hargaTerbaru',
@@ -65,9 +57,6 @@ class VerifikasiSetoranController extends Controller
             ->sortBy('nama_lengkap')
             ->values();
 
-        /*
-         * Data warga untuk modal tambah setoran.
-         */
         $wargaList = Warga::orderBy(
             'nama',
             'asc'
@@ -122,18 +111,12 @@ class VerifikasiSetoranController extends Controller
             ], 422);
         }
 
-        /*
-         * Setoran hanya boleh diproses sekali.
-         */
         if ($setoran->status !== 'pending') {
             return response()->json([
                 'message' => 'Setoran ini sudah diproses sebelumnya.',
             ], 409);
         }
 
-        /*
-         * Form sekarang mendukung satu kategori untuk satu setoran.
-         */
         $jumlahDetail = DB::table('detail_setoran')
             ->where('id_setoran', $setoran->getKey())
             ->count();
@@ -144,9 +127,6 @@ class VerifikasiSetoranController extends Controller
             ], 422);
         }
 
-        /*
-         * Ambil kategori + harga terbaru.
-         */
         $kategori = KategoriSampah::with('hargaTerbaru')->find($request->id_kategori);
 
         if (! $kategori) {
@@ -155,36 +135,22 @@ class VerifikasiSetoranController extends Controller
             ], 422);
         }
 
-        /*
-         * Kategori harus memiliki harga.
-         */
         if (! $kategori->hargaTerbaru) {
             return response()->json([
                 'message' => 'Kategori ini belum memiliki harga aktif. Atur harga terlebih dahulu di halaman Kategori & Harga Sampah.',
             ], 422);
         }
 
-        /*
-         * SATUAN DIAMBIL DARI KATEGORI.
-         */
         $satuan = strtolower(trim($kategori->satuan ?? ''));
 
         if (! in_array($satuan, self::SATUAN_VALID, true)) {
             return response()->json([
-                'message' => 'Satuan kategori tidak valid. Gunakan gram, kg, pcs, atau liter.',
+                'message' => 'Satuan kategori tidak valid. Gunakan gram, kg, pcs, liter, unit, atau set.',
             ], 422);
         }
 
         $jumlah = (float) $request->jumlah;
-
-        /*
-         * HARGA DIAMBIL DARI DATABASE.
-         */
         $hargaSatuan = (float) $kategori->hargaTerbaru->harga_satuan;
-
-        /*
-         * TOTAL: jumlah × harga_satuan
-         */
         $totalNilai = round($jumlah * $hargaSatuan, 2);
 
         DB::transaction(
@@ -196,9 +162,6 @@ class VerifikasiSetoranController extends Controller
                 $hargaSatuan,
                 $totalNilai
             ) {
-                /*
-                 * Update setoran.
-                 */
                 $setoran->forceFill([
                     'id_admin'    => Auth::id(),
                     'total_berat' => $satuan === 'gram' ? $jumlah : null,
@@ -206,9 +169,6 @@ class VerifikasiSetoranController extends Controller
                     'status'      => 'approved',
                 ])->save();
 
-                /*
-                 * Simpan detail + saldo.
-                 */
                 $this->simpanDetailDanSaldo(
                     $setoran,
                     $kategori,
@@ -317,16 +277,16 @@ class VerifikasiSetoranController extends Controller
                 ],
             ],
             [
-                'id_warga.required'                => 'Warga wajib dipilih.',
-                'id_warga.exists'                  => 'Data warga tidak ditemukan.',
-                'id_kategori.required'             => 'Kategori sampah wajib dipilih.',
-                'id_kategori.exists'               => 'Kategori sampah tidak ditemukan.',
-                'jumlah.required'                  => 'Jumlah wajib diisi.',
-                'jumlah.numeric'                   => 'Jumlah harus berupa angka.',
-                'jumlah.min'                       => 'Jumlah minimal 0,01.',
-                'tanggal_setoran.required'         => 'Tanggal setoran wajib diisi.',
+                'id_warga.required'             => 'Warga wajib dipilih.',
+                'id_warga.exists'               => 'Data warga tidak ditemukan.',
+                'id_kategori.required'          => 'Kategori sampah wajib dipilih.',
+                'id_kategori.exists'            => 'Kategori sampah tidak ditemukan.',
+                'jumlah.required'               => 'Jumlah wajib diisi.',
+                'jumlah.numeric'                => 'Jumlah harus berupa angka.',
+                'jumlah.min'                    => 'Jumlah minimal 0,01.',
+                'tanggal_setoran.required'      => 'Tanggal setoran wajib diisi.',
                 'tanggal_setoran.before_or_equal' => 'Tanggal setoran tidak boleh melebihi hari ini.',
-                'catatan_admin.regex'              => 'Catatan hanya boleh berisi huruf, angka, spasi, titik, koma, tanda tanya, tanda seru, dan tanda hubung.',
+                'catatan_admin.regex'           => 'Catatan hanya boleh berisi huruf, angka, spasi, titik, koma, tanda tanya, tanda seru, dan tanda hubung.',
             ]
         );
 
@@ -336,9 +296,6 @@ class VerifikasiSetoranController extends Controller
             ], 422);
         }
 
-        /*
-         * Ambil kategori + harga terbaru.
-         */
         $kategori = KategoriSampah::with('hargaTerbaru')->find($request->id_kategori);
 
         if (! $kategori) {
@@ -347,36 +304,22 @@ class VerifikasiSetoranController extends Controller
             ], 422);
         }
 
-        /*
-         * Harga wajib tersedia.
-         */
         if (! $kategori->hargaTerbaru) {
             return response()->json([
                 'message' => 'Kategori ini belum memiliki harga aktif.',
             ], 422);
         }
 
-        /*
-         * SATUAN DARI KATEGORI.
-         */
         $satuan = strtolower(trim($kategori->satuan ?? ''));
 
         if (! in_array($satuan, self::SATUAN_VALID, true)) {
             return response()->json([
-                'message' => 'Satuan kategori tidak valid. Gunakan gram, kg, pcs, atau liter.',
+                'message' => 'Satuan kategori tidak valid. Gunakan gram, kg, pcs, liter, unit, atau set.',
             ], 422);
         }
 
         $jumlah = (float) $request->jumlah;
-
-        /*
-         * HARGA DARI DATABASE.
-         */
         $hargaSatuan = (float) $kategori->hargaTerbaru->harga_satuan;
-
-        /*
-         * HITUNG TOTAL.
-         */
         $totalNilai = round($jumlah * $hargaSatuan, 2);
 
         DB::transaction(
@@ -388,9 +331,6 @@ class VerifikasiSetoranController extends Controller
                 $hargaSatuan,
                 $totalNilai
             ) {
-                /*
-                 * Buat setoran.
-                 */
                 $setoran = new Setoran();
 
                 $setoran->forceFill([
@@ -403,9 +343,6 @@ class VerifikasiSetoranController extends Controller
                     'catatan_admin'   => $request->catatan_admin,
                 ])->save();
 
-                /*
-                 * Simpan detail + saldo.
-                 */
                 $this->simpanDetailDanSaldo(
                     $setoran,
                     $kategori,
@@ -435,9 +372,6 @@ class VerifikasiSetoranController extends Controller
     ): void {
         $idSetoran = $setoran->getKey();
 
-        /*
-         * Data utama detail setoran.
-         */
         $data = [
             'id_kategori' => $kategori->id_kategori,
             'jumlah'      => $jumlah,
@@ -446,37 +380,28 @@ class VerifikasiSetoranController extends Controller
             'updated_at'  => now(),
         ];
 
-        /*
-         * Kolom legacy harga_per_gram.
-         */
         if (Schema::hasColumn('detail_setoran', 'harga_per_gram')) {
             $data['harga_per_gram'] = $hargaSatuan;
         }
 
-        /*
-         * Kolom legacy berat_gram.
-         * Konversi nilai berat_gram berdasarkan satuan agar tidak bernilai NULL.
-         */
         if (Schema::hasColumn('detail_setoran', 'berat_gram')) {
             switch ($satuan) {
                 case 'kg':
-                    $data['berat_gram'] = $jumlah * 1000; // Konversi kg ke gram
+                    $data['berat_gram'] = $jumlah * 1000;
                     break;
                 case 'gram':
                     $data['berat_gram'] = $jumlah;
                     break;
                 case 'liter':
                 case 'pcs':
+                case 'unit':
+                case 'set':
                 default:
-                    // Untuk satuan selain kg/gram, isi nilai jumlah langsung agar tidak NULL
                     $data['berat_gram'] = $jumlah;
                     break;
             }
         }
 
-        /*
-         * Cek apakah detail sudah ada.
-         */
         $detailLama = DB::table('detail_setoran')
             ->where('id_setoran', $idSetoran)
             ->first();
@@ -492,14 +417,8 @@ class VerifikasiSetoranController extends Controller
             DB::table('detail_setoran')->insert($data);
         }
 
-        /*
-         * Tambahkan saldo warga.
-         */
         $setoran->warga()->increment('saldo', $totalNilai);
 
-        /*
-         * Simpan mutasi saldo.
-         */
         $dataMutasi = [
             'id_warga'     => $setoran->id_warga,
             'id_setoran'   => $idSetoran,

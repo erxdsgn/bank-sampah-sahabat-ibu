@@ -3,8 +3,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title') · {{ config('app.name', 'Adminator') }}</title>
 
+    {{-- Set tema sebelum render (mencegah flash) --}}
     <script>
         !function () {
             try {
@@ -23,10 +25,16 @@
 
     {{-- File CSS dari public/assets/admin/css/ --}}
     <link href="{{ asset('assets/admin/css/style.css') }}" rel="stylesheet">
+
+    {{-- Slot tambahan untuk CSS per halaman --}}
+    @stack('styles')
 </head>
 <body>
 <div class="auth-shell">
     @yield('content')
 </div>
+
+{{-- Slot tambahan untuk JS per halaman --}}
+@stack('scripts')
 </body>
 </html>

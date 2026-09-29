@@ -63,7 +63,6 @@
                         @php
                             $satuanKat = strtolower($item->kategori->satuan ?? 'kg');
                             $isKg = ($satuanKat === 'kg');
-                            // Jika kg, nilai di database (berat_gram) dibagi 1000. Jika pcs/lainnya, tampilkan apa adanya.
                             $kuantitasTampil = $isKg ? (($item->berat_gram ?? 0) / 1000) : ($item->berat_gram ?? 0);
                             $formattedKuantitas = $isKg
                                 ? number_format($kuantitasTampil, 2, ',', '.')
@@ -71,7 +70,7 @@
 
                             $hargaSatuanTampil = $isKg ? (($item->harga_jual_per_gram ?? 0) * 1000) : ($item->harga_jual_per_gram ?? 0);
                         @endphp
-                        <tr>
+                        <tr data-row-penjualan>
                             <td>{{ $index + 1 }}</td>
                             <td>{{ \Carbon\Carbon::parse($item->tanggal ?? $item->created_at)->format('d/m/Y') }}</td>
                             <td><strong>{{ $item->pembeli ?? 'Umum' }}</strong></td>
@@ -95,12 +94,34 @@
                     @endforelse
                 </tbody>
             </table>
+
+            <div class="empty-table" id="penjualanKosongCari" style="display: none;">
+                <div class="empty-icon">🔍</div>
+                <strong>Data Tidak Ditemukan</strong>
+                <p>Tidak ada transaksi yang cocok dengan pencarian ini.</p>
+            </div>
         </div>
 
         <div class="table-footer">
-            <div class="table-info">
-                Total transaksi:
-                <strong>{{ is_countable($barangKeluar) ? count($barangKeluar) : $barangKeluar->count() }}</strong>
+            <div class="table-info" id="tableInfoPagination">Menampilkan data...</div>
+
+            <div class="table-pagination-controls">
+                <div class="per-page">
+                    <label for="cari_perPageSelect">Transaksi per halaman:</label>
+                    <div class="combo combo--up combo--arrow" id="combo_perPageSelect">
+                        <input type="text" id="cari_perPageSelect" class="combo-input" placeholder=""
+                            autocomplete="off">
+                        <div class="combo-list" id="list_perPageSelect"></div>
+                    </div>
+                    <select id="perPageSelect" class="combo-hidden" tabindex="-1" aria-hidden="true">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+
+                <div class="pagination-buttons" id="paginationButtons"></div>
             </div>
         </div>
     </section>
@@ -174,7 +195,7 @@
                         </div>
 
                         <!-- TOTAL HARGA (KALKULASI) -->
-                        <div class="form-group form-group--full">
+                        <div class="form-group form-group--full total-box">
                             <span class="detail-label">Total Penerimaan Penjualan</span>
                             <span class="detail-value saldo" id="totalHargaDisplay">Rp 0</span>
                         </div>
@@ -375,12 +396,14 @@
             width: 100%;
             max-width: 560px;
             max-height: 90vh;
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
             background: var(--penjualan-surface);
             border: 1px solid var(--penjualan-border);
             border-radius: 14px;
             box-shadow: 0 20px 45px rgba(0, 0, 0, .30);
             color: var(--penjualan-text);
+            overflow: hidden;
         }
 
         .modal-head {
@@ -390,6 +413,7 @@
             padding: 20px 24px;
             border-bottom: 1px solid var(--penjualan-border);
             background: var(--penjualan-surface);
+            flex-shrink: 0;
         }
 
         .modal-title {
@@ -420,11 +444,34 @@
             line-height: 1;
             color: var(--penjualan-text-muted);
             cursor: pointer;
+            transition: background .2s ease, color .2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--penjualan-surface-secondary);
+            color: var(--penjualan-text);
         }
 
         .modal-body {
             padding: 22px 24px;
             background: var(--penjualan-surface);
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* CUSTOM SCROLLBAR UNTUK MODAL UTAMA AGAR LEBIH RAPI */
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .modal-body::-webkit-scrollbar-thumb {
+            background: var(--penjualan-border);
+            border-radius: 4px;
+        }
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: var(--penjualan-text-muted);
         }
 
         .modal-foot {
@@ -434,6 +481,7 @@
             padding: 16px 24px;
             border-top: 1px solid var(--penjualan-border);
             background: var(--penjualan-surface);
+            flex-shrink: 0;
         }
 
         .form-grid {
@@ -479,6 +527,13 @@
             box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
         }
 
+        .total-box {
+            background: var(--penjualan-surface-secondary);
+            border: 1px dashed var(--penjualan-border);
+            padding: 14px 16px;
+            border-radius: 10px;
+        }
+
         .detail-label {
             font-size: 11px;
             font-weight: 700;
@@ -486,14 +541,16 @@
             letter-spacing: .03em;
             color: var(--penjualan-text-muted);
             display: block;
+            margin-bottom: 4px;
         }
 
         .detail-value {
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: 700;
             color: var(--penjualan-text);
         }
 
-        /* COMBOBOX STYLES */
+        /* COMBOBOX STYLES & CUSTOM SCROLLBAR */
         .combo {
             position: relative;
         }
@@ -539,11 +596,30 @@
             display: block;
         }
 
+        /* Custom Scrollbar minimalis untuk dropdown kategori sampah */
+        .combo-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .combo-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .combo-list::-webkit-scrollbar-thumb {
+            background: var(--penjualan-border);
+            border-radius: 4px;
+        }
+
+        .combo-list::-webkit-scrollbar-thumb:hover {
+            background: var(--penjualan-text-muted);
+        }
+
         .combo-item {
-            padding: 9px 12px;
+            padding: 10px 14px;
             font-size: 13px;
             color: var(--penjualan-text);
             cursor: pointer;
+            transition: background 0.1s ease, color 0.1s ease;
         }
 
         .combo-item:hover,
@@ -557,6 +633,92 @@
             font-size: 12.5px;
             color: var(--penjualan-text-muted);
             text-align: center;
+        }
+
+        /* FOOTER & PAGINATION */
+        .table-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 24px;
+            flex-wrap: wrap;
+            background: var(--penjualan-surface);
+        }
+
+        .table-info {
+            font-size: 13px;
+            color: var(--penjualan-text-secondary);
+        }
+
+        .table-info strong {
+            color: var(--penjualan-text);
+        }
+
+        .table-pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .per-page {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .per-page label {
+            font-size: 13px;
+            color: var(--penjualan-text-secondary);
+        }
+
+        .per-page .combo {
+            width: 84px;
+        }
+
+        .per-page .combo-input {
+            padding-top: 6px;
+            padding-bottom: 6px;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .pagination-buttons .btn {
+            padding: 6px 12px;
+            min-width: 32px;
+        }
+
+        .pagination-buttons .btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .pagination-dots {
+            padding: 0 4px;
+            color: var(--penjualan-text-secondary);
+        }
+
+        .combo-list {
+            min-width: 84px;
+        }
+
+        .combo--up .combo-list {
+            top: auto;
+            bottom: calc(100% + 4px);
+        }
+
+        .combo--arrow .combo-input {
+            cursor: pointer;
+            padding-right: 30px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 9px center;
+            background-size: 14px;
         }
 
         .toast-wrap {
@@ -650,18 +812,89 @@
             const inputTanggal = document.getElementById('tambahTanggal');
             if (inputTanggal) inputTanggal.value = today;
 
-            /* FILTER TABEL PENJUALAN */
+            /* FILTER & PAGINASI TABEL PENJUALAN */
             const searchInput = document.getElementById('searchPenjualan');
             const table = document.getElementById('penjualanTable');
-            if (searchInput && table) {
-                searchInput.addEventListener('keyup', function() {
-                    const keyword = this.value.toLowerCase().trim();
-                    table.querySelectorAll('tbody tr').forEach(function(row) {
-                        row.style.display = row.textContent.toLowerCase().includes(keyword) ? '' :
-                            'none';
-                    });
+            const perPageSelect = document.getElementById('perPageSelect');
+            const paginationContainer = document.getElementById('paginationButtons');
+            const tableInfo = document.getElementById('tableInfoPagination');
+            const kosongCari = document.getElementById('penjualanKosongCari');
+
+            let currentPage = 1;
+
+            const rows = table ? Array.from(table.querySelectorAll('tbody tr[data-row-penjualan]')) : [];
+
+            function render() {
+                if (!table) return;
+
+                const keyword = searchInput ? searchInput.value.toLowerCase().trim() : '';
+                const filtered = rows.filter(r => r.textContent.toLowerCase().includes(keyword));
+
+                if (kosongCari) {
+                    kosongCari.style.display = (rows.length > 0 && filtered.length === 0) ? '' : 'none';
+                }
+
+                const perPage = parseInt(perPageSelect ? perPageSelect.value : 10, 10);
+                const totalPages = Math.ceil(filtered.length / perPage) || 1;
+                currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+
+                rows.forEach(r => r.style.display = 'none');
+
+                const start = (currentPage - 1) * perPage;
+                const end = start + perPage;
+                filtered.slice(start, end).forEach(r => r.style.display = '');
+
+                if (tableInfo) {
+                    tableInfo.innerHTML = filtered.length === 0 ?
+                        'Tidak ada data yang ditampilkan' :
+                        `Menampilkan transaksi <strong>${start + 1}</strong> - <strong>${Math.min(end, filtered.length)}</strong> dari <strong>${filtered.length}</strong>`;
+                }
+
+                if (!paginationContainer) return;
+
+                let html =
+                    `<button class="btn btn--ghost" type="button" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                        html +=
+                            `<button class="btn ${i === currentPage ? 'btn--primary' : 'btn--ghost'}" type="button" data-page="${i}">${i}</button>`;
+                    } else if (i === currentPage - 2 || i === currentPage + 2) {
+                        html += '<span class="pagination-dots">…</span>';
+                    }
+                }
+
+                html +=
+                    `<button class="btn btn--ghost" type="button" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`;
+                paginationContainer.innerHTML = html;
+            }
+
+            if (paginationContainer) {
+                paginationContainer.addEventListener('click', function(e) {
+                    const btn = e.target.closest('button[data-page]');
+                    if (!btn || btn.disabled) return;
+                    currentPage = parseInt(btn.dataset.page, 10);
+                    render();
                 });
             }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    currentPage = 1;
+                    render();
+                });
+            }
+
+            if (perPageSelect) {
+                perPageSelect.addEventListener('change', function() {
+                    currentPage = 1;
+                    render();
+                });
+            }
+
+            initPerPageCombo();
+
+            render();
 
             /* INISIALISASI COMBOBOX KATEGORI */
             initGenericCombo('comboKategori', 'tambahKategori', 'cariKategori', 'listKategori', onSelectKategori);
@@ -673,6 +906,95 @@
             if (elKuantitas) elKuantitas.addEventListener('input', hitungTotal);
             if (elHarga) elHarga.addEventListener('input', hitungTotal);
         });
+
+        /* COMBOBOX JUMLAH PER HALAMAN (pilihan tetap, tanpa teks bebas) */
+        function initPerPageCombo() {
+            const select = document.getElementById('perPageSelect');
+            const input = document.getElementById('cari_perPageSelect');
+            const list = document.getElementById('list_perPageSelect');
+            if (!select || !input || !list) return;
+
+            input.readOnly = true;
+            let aktif = -1;
+
+            const teks = o => o.textContent.replace(/\s+/g, ' ').trim();
+
+            function sync() {
+                const o = select.options[select.selectedIndex];
+                input.value = o ? teks(o) : '';
+            }
+
+            function buka() {
+                list.innerHTML = Array.from(select.options).map(o =>
+                    `<div class="combo-item${o.value === select.value ? ' is-selected' : ''}" data-value="${o.value}">${teks(o)}</div>`
+                ).join('');
+                aktif = -1;
+                list.classList.add('show');
+                const terpilih = list.querySelector('.is-selected');
+                if (terpilih) terpilih.scrollIntoView({ block: 'nearest' });
+            }
+
+            function tutup() {
+                list.classList.remove('show');
+                sync();
+            }
+
+            function pilih(value) {
+                const berubah = select.value !== String(value);
+                select.value = value;
+                tutup();
+                if (berubah) select.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            function sorot(arah) {
+                const items = list.querySelectorAll('.combo-item');
+                if (!items.length) return;
+                aktif = (aktif + arah + items.length) % items.length;
+                items.forEach((el, i) => el.classList.toggle('is-active', i === aktif));
+                items[aktif].scrollIntoView({ block: 'nearest' });
+            }
+
+            input.addEventListener('focus', buka);
+            input.addEventListener('click', () => { if (!list.classList.contains('show')) buka(); });
+            input.addEventListener('blur', tutup);
+
+            input.addEventListener('keydown', function(e) {
+                const items = list.querySelectorAll('.combo-item');
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (!list.classList.contains('show')) buka();
+                    sorot(1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    sorot(-1);
+                } else if (e.key === 'Enter') {
+                    if (list.classList.contains('show') && aktif > -1 && items[aktif]) {
+                        e.preventDefault();
+                        pilih(items[aktif].dataset.value);
+                    }
+                } else if (e.key === 'Escape' && list.classList.contains('show')) {
+                    e.stopPropagation();
+                    tutup();
+                }
+            });
+
+            list.addEventListener('mouseover', function(e) {
+                const item = e.target.closest('.combo-item');
+                if (!item) return;
+                list.querySelectorAll('.combo-item').forEach((el, i) => {
+                    el.classList.toggle('is-active', el === item);
+                    if (el === item) aktif = i;
+                });
+            });
+
+            list.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                const item = e.target.closest('.combo-item');
+                if (item) pilih(item.dataset.value);
+            });
+
+            sync();
+        }
 
         /* REUSABLE SEARCHABLE COMBOBOX */
         function initGenericCombo(wrapId, selectId, inputId, listId, onSelectCallback) {
@@ -710,8 +1032,7 @@
                 aktif = -1;
 
                 list.innerHTML = hasil.length ?
-                    hasil.map(d => `<div class="combo-item" data-value="${d.value}">${escapeHtml(d.label)}</div>`).join(
-                        '') :
+                    hasil.map((d, index) => `<div class="combo-item" data-index="${index}" data-value="${d.value}">${escapeHtml(d.label)}</div>`).join('') :
                     `<div class="combo-empty">Data tidak ditemukan</div>`;
             }
 
@@ -753,6 +1074,8 @@
             });
 
             input.addEventListener('keydown', function(e) {
+                const items = list.querySelectorAll('.combo-item');
+
                 if (e.key === 'ArrowDown') {
                     e.preventDefault();
                     if (!list.classList.contains('show')) {
@@ -764,7 +1087,6 @@
                     e.preventDefault();
                     sorot(-1);
                 } else if (e.key === 'Enter') {
-                    const items = list.querySelectorAll('.combo-item');
                     if (list.classList.contains('show') && aktif > -1 && items[aktif]) {
                         e.preventDefault();
                         pilih(items[aktif].dataset.value);
@@ -772,6 +1094,21 @@
                 } else if (e.key === 'Escape') {
                     list.classList.remove('show');
                 }
+            });
+
+            list.addEventListener('mouseover', function(e) {
+                const item = e.target.closest('.combo-item');
+                if (!item) return;
+
+                const items = list.querySelectorAll('.combo-item');
+                items.forEach((el, i) => {
+                    if (el === item) {
+                        aktif = i;
+                        el.classList.add('is-active');
+                    } else {
+                        el.classList.remove('is-active');
+                    }
+                });
             });
 
             list.addEventListener('mousedown', function(e) {
@@ -922,7 +1259,7 @@
                     body: JSON.stringify(payload)
                 })
                 .then(async (res) => {
-                    if (!res.ok) {
+                    if (!res.xml && !res.ok) {
                         const err = await res.json().catch(() => ({}));
                         throw new Error(err.message || 'Gagal menyimpan transaksi.');
                     }

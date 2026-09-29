@@ -11,12 +11,6 @@ use Illuminate\Support\Facades\Auth;
 
 class KeuanganController extends Controller
 {
-    /**
-     * Tampilkan halaman keuangan berikut ringkasan & riwayat transaksi.
-     *
-     * Transaksi digabung dari: kas manual, setoran, pencairan saldo, dan penjualan ke pengepul
-     * (lihat App\Support\RingkasanKeuangan).
-     */
     public function index(Request $request)
     {
         $transaksi = RingkasanKeuangan::transaksi();

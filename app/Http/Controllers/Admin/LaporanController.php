@@ -17,10 +17,26 @@ class LaporanController extends Controller
 
         $totalPenjualan = BarangKeluar::sum('total');
 
-        // berat_gram dikonversi ke Kg
-        $totalBeratKeluar = BarangKeluar::sum('berat_gram') / 1000;
-
         $totalTransaksiKeluar = BarangKeluar::count();
+
+        // Volume keluar dikelompokkan per satuan kategori.
+        // Hasil: ['kg' => 25000, 'pcs' => 120, 'liter' => 40]
+        // Nilai kg masih dalam gram (konversi ke Kg dilakukan di view),
+        // satuan lain disimpan apa adanya di kolom berat_gram.
+        $tabelKeluar = (new BarangKeluar)->getTable();
+
+        $rincianVolume = BarangKeluar::leftJoin(
+                'kategori_sampah',
+                'kategori_sampah.id_kategori',
+                '=',
+                "{$tabelKeluar}.id_kategori"
+            )
+            ->selectRaw(
+                "LOWER(TRIM(COALESCE(kategori_sampah.satuan, 'kg'))) as satuan_key,
+                 SUM({$tabelKeluar}.berat_gram) as total_dasar"
+            )
+            ->groupBy('satuan_key')
+            ->pluck('total_dasar', 'satuan_key');
 
 
         // ==========================================
@@ -33,13 +49,11 @@ class LaporanController extends Controller
         ]);
 
         if ($request->filled('search_penjualan')) {
-
             $queryPenjualan->where(
                 'pembeli',
                 'like',
                 '%' . $request->search_penjualan . '%'
             );
-
         }
 
         $riwayatPenjualan = $queryPenjualan
@@ -57,20 +71,14 @@ class LaporanController extends Controller
         ]);
 
         if ($request->filled('search_setoran')) {
-
             $keyword = $request->search_setoran;
 
             $querySetoran->where(function ($q) use ($keyword) {
-
                 $q->where('kode_transaksi', 'like', '%' . $keyword . '%')
-
                     ->orWhereHas('warga', function ($q) use ($keyword) {
-
                         $q->where('nama', 'like', '%' . $keyword . '%')
                           ->orWhere('nik', 'like', '%' . $keyword . '%');
-
                     });
-
             });
         }
 
@@ -85,7 +93,7 @@ class LaporanController extends Controller
 
         return view('admin.pages.laporan', compact(
             'totalPenjualan',
-            'totalBeratKeluar',
+            'rincianVolume',
             'totalTransaksiKeluar',
             'riwayatPenjualan',
             'riwayatSetoran'

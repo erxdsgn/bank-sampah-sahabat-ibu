@@ -633,9 +633,7 @@ export function initTopbarEvents() {
 }
 
 /* =========================================================
- * CSS SEARCH DINAMIS
- *
- * Tidak perlu menambahkan CSS tambahan ke Blade.
+ * CSS DINAMIS (Termasuk Sticky Topbar)
  * ========================================================= */
 
 function injectSearchStyles() {
@@ -645,6 +643,41 @@ function injectSearchStyles() {
     style.id = "topbar-search-dynamic-style";
 
     style.textContent = `
+        /* ===== Fixed Topbar di sebelah kanan sidebar ===== */
+        .d-topbar {
+            position: fixed !important;
+            top: 0;
+            right: 0;
+            left: var(--sidebar-width, 260px);
+            width: calc(100% - var(--sidebar-width, 260px));
+            z-index: 100;
+            background: var(--overlay, var(--bg-card, #ffffff));
+            color: var(--t-base, #1f2937);
+            border-bottom: 1px solid var(--border, rgba(0, 0, 0, .08));
+        }
+
+        /* Pastikan sidebar tetap di atas dan tidak tertutup */
+        .d-sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: var(--sidebar-width, 260px);
+            z-index: 101;
+            overflow-y: auto;
+            background: var(--bg-sidebar, var(--bg-card, #ffffff));
+            border-right: 1px solid var(--border, rgba(0, 0, 0, .08));
+        }
+
+        /* Sesuaikan padding atas dan kiri pada konten utama */
+        body,
+        .main-content,
+        .admin-content,
+        .content-wrapper {
+            padding-top: 60px;
+        }
+
+        /* ===== SEARCH OVERLAY ===== */
         #topbarSearchOverlay {
             position: fixed;
             inset: 0;
@@ -663,6 +696,10 @@ function injectSearchStyles() {
             backdrop-filter: blur(4px);
         }
 
+        [data-theme="dark"] .topbar-search-backdrop {
+            background: rgba(0, 0, 0, .60);
+        }
+
         .topbar-search-card {
             position: relative;
             width: min(620px, calc(100vw - 32px));
@@ -670,10 +707,10 @@ function injectSearchStyles() {
             margin: 80px auto 0;
             overflow: hidden;
             border-radius: 16px;
-            background: var(--card-bg, #ffffff);
-            color: var(--text-color, #222222);
-            box-shadow: 0 25px 80px rgba(0, 0, 0, .25);
-            border: 1px solid rgba(0, 0, 0, .08);
+            background: var(--bg-card, #ffffff);
+            color: var(--t-base, #1f2937);
+            box-shadow: var(--shadow-lg, 0 25px 80px rgba(0, 0, 0, .25));
+            border: 1px solid var(--border, rgba(0, 0, 0, .08));
         }
 
         .topbar-search-header {
@@ -681,13 +718,14 @@ function injectSearchStyles() {
             align-items: center;
             gap: 12px;
             padding: 16px 18px;
-            border-bottom: 1px solid rgba(0, 0, 0, .08);
+            border-bottom: 1px solid var(--border-soft, var(--border, rgba(0, 0, 0, .08)));
         }
 
         .topbar-search-header svg {
             width: 20px;
             height: 20px;
             flex: 0 0 auto;
+            stroke: var(--t-muted, currentColor);
         }
 
         .topbar-search-header input {
@@ -695,8 +733,12 @@ function injectSearchStyles() {
             border: 0;
             outline: none;
             background: transparent;
-            color: inherit;
+            color: var(--t-base, inherit);
             font-size: 16px;
+        }
+
+        .topbar-search-header input::placeholder {
+            color: var(--t-light, rgba(0, 0, 0, .45));
         }
 
         .topbar-search-header button {
@@ -705,8 +747,8 @@ function injectSearchStyles() {
             border-radius: 7px;
             padding: 5px 8px;
             cursor: pointer;
-            background: rgba(0, 0, 0, .07);
-            color: inherit;
+            background: var(--bg-muted, rgba(0, 0, 0, .07));
+            color: var(--t-base, inherit);
             font-size: 11px;
         }
 
@@ -723,13 +765,13 @@ function injectSearchStyles() {
             gap: 16px;
             padding: 13px 14px;
             border-radius: 10px;
-            color: inherit;
+            color: var(--t-base, inherit);
             text-decoration: none;
             transition: background .15s ease;
         }
 
         .topbar-search-item:hover {
-            background: rgba(0, 0, 0, .06);
+            background: var(--bg-hover, rgba(0, 0, 0, .06));
         }
 
         .search-arrow {
@@ -740,33 +782,14 @@ function injectSearchStyles() {
             padding: 30px 20px;
             text-align: center;
             opacity: .65;
+            color: var(--t-muted, inherit);
         }
 
         body.search-open {
             overflow: hidden;
         }
 
-        [data-theme="dark"] .topbar-search-card {
-            background: #1e1f23;
-            color: #f1f1f1;
-            border-color: rgba(255, 255, 255, .1);
-        }
-
-        [data-theme="dark"] .topbar-search-item:hover {
-            background: rgba(255, 255, 255, .08);
-        }
-
-        [data-theme="dark"] .topbar-search-header {
-            border-bottom-color: rgba(255, 255, 255, .1);
-        }
-
-        @media (max-width: 600px) {
-            .topbar-search-card {
-                width: calc(100vw - 20px);
-                margin-top: 55px;
-            }
-        }
-
+        /* ===== LOGOUT FORM ===== */
         .logout-form {
             margin: 0;
             display: inline-flex;
@@ -782,8 +805,7 @@ function injectSearchStyles() {
             cursor: not-allowed;
         }
 
-        /* ===== Modal Konfirmasi Logout ===== */
-
+        /* ===== MODAL KONFIRMASI LOGOUT ===== */
         .logout-confirm-overlay {
             display: none;
             position: fixed;
@@ -795,6 +817,10 @@ function injectSearchStyles() {
             z-index: 100000;
         }
 
+        [data-theme="dark"] .logout-confirm-overlay {
+            background: rgba(0, 0, 0, .65);
+        }
+
         .logout-confirm-overlay.active {
             display: flex;
         }
@@ -802,10 +828,11 @@ function injectSearchStyles() {
         .logout-confirm-box {
             width: 100%;
             max-width: 380px;
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
+            background: var(--bg-card, #ffffff);
+            color: var(--t-base, #1f2937);
+            border: 1px solid var(--border, #e5e7eb);
             border-radius: 14px;
-            box-shadow: 0 20px 45px rgba(15, 23, 42, .18);
+            box-shadow: var(--shadow-lg, 0 20px 45px rgba(15, 23, 42, .18));
             padding: 28px 24px 22px;
             text-align: center;
             animation: modalPop .15s ease-out;
@@ -816,8 +843,8 @@ function injectSearchStyles() {
             height: 52px;
             margin: 0 auto 14px;
             border-radius: 50%;
-            background: #fef2f2;
-            color: #dc2626;
+            background: var(--danger-soft, rgba(239, 68, 68, .14));
+            color: var(--danger, #f87171);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -832,17 +859,18 @@ function injectSearchStyles() {
             margin: 0 0 6px;
             font-size: 16px;
             font-weight: 700;
-            color: #1f2937;
+            color: var(--t-base, #1f2937);
         }
 
         .logout-confirm-text {
             margin: 0 0 20px;
             font-size: 13px;
-            color: #6b7280;
+            color: var(--t-muted, #6b7280);
             line-height: 1.5;
         }
 
         .logout-confirm-actions {
+            clear: both;
             display: flex;
             justify-content: center;
             gap: 10px;
@@ -861,24 +889,24 @@ function injectSearchStyles() {
         }
 
         .logout-confirm-cancel {
-            background: #ffffff;
-            border-color: #dfe3e8;
-            color: #374151;
+            background: var(--bg-card, #ffffff);
+            border-color: var(--border, #dfe3e8);
+            color: var(--t-base, #374151);
         }
 
         .logout-confirm-cancel:hover {
-            background: #f8fafc;
+            background: var(--bg-hover, #f8fafc);
         }
 
         .logout-confirm-submit {
-            background: #dc2626;
+            background: var(--danger, #dc2626);
             color: #ffffff;
-            border-color: #dc2626;
+            border-color: var(--danger, #dc2626);
         }
 
         .logout-confirm-submit:hover {
-            background: #b91c1c;
-            border-color: #b91c1c;
+            background: color-mix(in oklab, var(--danger, #dc2626) 88%, #000);
+            border-color: color-mix(in oklab, var(--danger, #dc2626) 88%, #000);
         }
 
         .logout-confirm-submit:disabled {
@@ -887,8 +915,22 @@ function injectSearchStyles() {
         }
 
         @keyframes modalPop {
-            from { opacity: 0; transform: translateY(8px) scale(.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            from {
+                opacity: 0;
+                transform: translateY(8px) scale(.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .d-topbar {
+                left: 0;
+                width: 100%;
+            }
         }
     `;
 

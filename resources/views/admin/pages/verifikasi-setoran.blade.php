@@ -36,6 +36,8 @@
                 'kg', 'kilogram', 'kilogram (kg)' => 'kg',
                 'pcs', 'piece', 'pieces' => 'pcs',
                 'l', 'liter', 'litre', 'liter (l)' => 'liter',
+                'set' => 'set',
+                'unit' => 'unit',
                 default => 'gram',
             };
         };
@@ -51,6 +53,8 @@
                 'kg' => 'Kilogram',
                 'pcs' => 'Pieces',
                 'liter' => 'Liter',
+                'set' => 'Set',
+                'unit' => 'Unit',
                 default => 'Gram',
             };
         };
@@ -66,6 +70,8 @@
                 'kg' => 'kg',
                 'pcs' => 'pcs',
                 'liter' => 'L',
+                'set' => 'set',
+                'unit' => 'unit',
                 default => 'gram',
             };
         };
@@ -111,8 +117,9 @@
             </div>
 
             <button class="btn btn--primary" type="button" onclick="bukaTambahSetoran()">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 5v14M5 12h14"></path>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
                 Tambah Setoran
             </button>
@@ -444,17 +451,37 @@
 
             </table>
 
+            <div class="catalog-empty" id="setoranKosongCari" style="display: none;">
+                <div class="empty-icon">🔍</div>
+                <strong>Data Tidak Ditemukan</strong>
+                <p class="empty-desc">Tidak ada setoran yang cocok dengan pencarian ini.</p>
+            </div>
+
         </div>
 
 
         <!-- FOOTER -->
         <div class="table-footer">
+            <div class="table-info" id="tableInfoPagination">Menampilkan data...</div>
 
-            <div class="table-info">
-                Total setoran:
-                <strong>{{ $setoran->count() }}</strong>
+            <div class="table-pagination-controls">
+                <div class="per-page">
+                    <label for="cari_perPageSelect">Setoran per halaman:</label>
+                    <div class="combo combo--up combo--arrow" id="combo_perPageSelect">
+                        <input type="text" id="cari_perPageSelect" class="combo-input" placeholder=""
+                            autocomplete="off">
+                        <div class="combo-list" id="list_perPageSelect"></div>
+                    </div>
+                    <select id="perPageSelect" class="combo-hidden" tabindex="-1" aria-hidden="true">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+
+                <div class="pagination-buttons" id="paginationButtons"></div>
             </div>
-
         </div>
 
     </section>
@@ -476,9 +503,9 @@
 
                 <h3 class="modal-title">
 
-                    <svg viewBox="0 0 24 24">
-                        <path d="M9 11l3 3L22 4"></path>
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
 
                     <span id="verifJudul">
@@ -549,11 +576,18 @@
                         <!-- KATEGORI -->
                         <div class="form-group">
 
-                            <label for="verifKategori">
+                            <label for="cariVerifKategori">
                                 Kategori Sampah
                             </label>
 
-                            <select id="verifKategori" required>
+                            <div class="combo" id="comboVerifKategori">
+                                <input type="text" id="cariVerifKategori" class="combo-input"
+                                    placeholder="Ketik / pilih kategori sampah..." autocomplete="off">
+                                <div class="combo-list" id="listVerifKategori"></div>
+                            </div>
+
+                            {{-- Select asli disembunyikan; nilai & data-harga/satuan tetap dibaca dari sini --}}
+                            <select id="verifKategori" class="combo-hidden" tabindex="-1" aria-hidden="true">
 
                                 <option value="" data-harga="0" data-satuan="" disabled selected>
                                     -- Pilih Kategori Sampah --
@@ -691,8 +725,9 @@
 
                 <h3 class="modal-title">
 
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 5v14M5 12h14"></path>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
 
                     Tambah Setoran
@@ -1081,8 +1116,8 @@
         }
 
         .fpill.active {
-            background: #16a34a;
-            border-color: #16a34a;
+            background: var(--primary);
+            border-color: var(--primary);
             color: #fff;
         }
 
@@ -1252,7 +1287,73 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
             padding: 16px 24px;
+            flex-wrap: wrap;
+        }
+
+        .table-pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .per-page {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .per-page label {
+            font-size: 13px;
+            color: var(--vs-text-secondary);
+        }
+
+        .per-page .combo {
+            width: 84px;
+        }
+
+        .per-page .combo-input {
+            padding-top: 6px;
+            padding-bottom: 6px;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .pagination-buttons .btn {
+            padding: 6px 12px;
+            min-width: 32px;
+        }
+
+        .pagination-buttons .btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .pagination-dots {
+            padding: 0 4px;
+            color: var(--vs-text-secondary);
+        }
+
+        .catalog-empty {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--vs-text);
+        }
+
+        .empty-icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        .empty-desc {
+            margin: 5px 0 0;
+            color: var(--vs-text-secondary);
         }
 
         .table-info {
@@ -1338,6 +1439,8 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
         }
 
         .modal-title svg {
@@ -1791,198 +1894,254 @@
                 flex: 1;
             }
         }
+
+        /* =========================================================
+           MODAL & COMBOBOX — konsisten dengan halaman lain
+           (header/footer diam, hanya isi form yang scroll)
+           ========================================================= */
+        .modal-box {
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-box > form {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .modal-head,
+        .modal-foot {
+            flex-shrink: 0;
+        }
+
+        .modal-body {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--vs-border) transparent;
+        }
+
+        .modal-body::-webkit-scrollbar { width: 6px; }
+        .modal-body::-webkit-scrollbar-track { background: transparent; }
+        .modal-body::-webkit-scrollbar-thumb { background: var(--vs-border); border-radius: 4px; }
+        .modal-body::-webkit-scrollbar-thumb:hover { background: var(--vs-text-muted); }
+
+        .combo-input:disabled {
+            opacity: .65;
+            cursor: not-allowed;
+            background: var(--vs-surface-2);
+        }
+
+        .combo-list {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, .22);
+            z-index: 60;
+            scrollbar-width: thin;
+            scrollbar-color: var(--vs-border) transparent;
+        }
+
+        .combo-list::-webkit-scrollbar { width: 6px; }
+        .combo-list::-webkit-scrollbar-track { background: transparent; }
+        .combo-list::-webkit-scrollbar-thumb { background: var(--vs-border); border-radius: 4px; }
+        .combo-list::-webkit-scrollbar-thumb:hover { background: var(--vs-text-muted); }
+
+        .combo-item {
+            padding: 10px 14px;
+            transition: background .1s ease, color .1s ease;
+        }
+
+        .combo-item.is-selected { font-weight: 700; }
+
+        .combo-list {
+            min-width: 84px;
+        }
+
+        .combo--up .combo-list {
+            top: auto;
+            bottom: calc(100% + 4px);
+        }
+
+        .combo--arrow .combo-input {
+            cursor: pointer;
+            padding-right: 30px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 9px center;
+            background-size: 14px;
+        }
+
+        .combo-item:hover,
+        .combo-item.is-active {
+            background: var(--vs-table-hover);
+            color: #16a34a;
+        }
     </style>
 
 
     <script>
         let verifItem = null;
 
-
         /*
         |--------------------------------------------------------------------------
         | DOM READY
         |--------------------------------------------------------------------------
         */
-
         document.addEventListener('DOMContentLoaded', function() {
-
             @if (session('success'))
-                showToast(
-                    'Berhasil',
-                    @json(session('success'))
-                );
+                showToast('Berhasil', @json(session('success')));
             @endif
 
+            const searchInput = document.getElementById('searchSetoran');
+            const table = document.getElementById('setoranTable');
+            const perPageSelect = document.getElementById('perPageSelect');
+            const paginationContainer = document.getElementById('paginationButtons');
+            const tableInfo = document.getElementById('tableInfoPagination');
+            const kosongCari = document.getElementById('setoranKosongCari');
 
-            const searchInput =
-                document.getElementById('searchSetoran');
+            let currentPage = 1;
 
-            const table =
-                document.getElementById('setoranTable');
-
+            const rows = table ? Array.from(table.querySelectorAll('tbody tr[data-status]')) : [];
 
             /*
             |--------------------------------------------------------------------------
-            | FILTER TABLE
+            | FILTER TABLE & PAGINASI
             |--------------------------------------------------------------------------
             */
+            function render() {
+                if (!table) return;
 
-            function applyFilters() {
+                const keyword = (searchInput?.value || '').toLowerCase().trim();
+                const activePill = document.querySelector('.fpill.active');
+                const statusFilter = activePill ? activePill.dataset.filter : 'all';
 
-                const keyword =
-                    (searchInput?.value || '')
-                    .toLowerCase()
-                    .trim();
-
-                const activePill =
-                    document.querySelector('.fpill.active');
-
-                const statusFilter =
-                    activePill ?
-                    activePill.dataset.filter :
-                    'all';
-
-
-                table
-                    .querySelectorAll('tbody tr[data-status]')
-                    .forEach(function(row) {
-
-                        const matchSearch = !keyword ||
-                            row.textContent
-                            .toLowerCase()
-                            .includes(keyword);
-
-                        const matchStatus =
-                            statusFilter === 'all' ||
-                            row.dataset.status === statusFilter;
-
-
-                        row.style.display =
-                            (matchSearch && matchStatus) ?
-                            '' :
-                            'none';
-
-                    });
-
-            }
-
-
-            if (searchInput) {
-                searchInput.addEventListener(
-                    'keyup',
-                    applyFilters
-                );
-            }
-
-
-            document
-                .querySelectorAll('.fpill')
-                .forEach(function(pill) {
-
-                    pill.addEventListener(
-                        'click',
-                        function() {
-
-                            document
-                                .querySelectorAll('.fpill')
-                                .forEach(
-                                    p => p.classList.remove('active')
-                                );
-
-                            pill.classList.add('active');
-
-                            applyFilters();
-
-                        }
-                    );
-
+                const filtered = rows.filter(function(row) {
+                    const matchSearch = !keyword || row.textContent.toLowerCase().includes(keyword);
+                    const matchStatus = statusFilter === 'all' || row.dataset.status === statusFilter;
+                    return matchSearch && matchStatus;
                 });
 
+                if (kosongCari) {
+                    kosongCari.style.display = (rows.length > 0 && filtered.length === 0) ? '' : 'none';
+                }
+
+                const perPage = parseInt(perPageSelect ? perPageSelect.value : 10, 10);
+                const totalPages = Math.ceil(filtered.length / perPage) || 1;
+                currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+
+                rows.forEach(r => r.style.display = 'none');
+
+                const start = (currentPage - 1) * perPage;
+                const end = start + perPage;
+                filtered.slice(start, end).forEach(r => r.style.display = '');
+
+                if (tableInfo) {
+                    tableInfo.innerHTML = filtered.length === 0 ?
+                        'Tidak ada data yang ditampilkan' :
+                        `Menampilkan setoran <strong>${start + 1}</strong> - <strong>${Math.min(end, filtered.length)}</strong> dari <strong>${filtered.length}</strong>`;
+                }
+
+                if (!paginationContainer) return;
+
+                let html =
+                    `<button class="btn btn--ghost" type="button" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                        html +=
+                            `<button class="btn ${i === currentPage ? 'btn--primary' : 'btn--ghost'}" type="button" data-page="${i}">${i}</button>`;
+                    } else if (i === currentPage - 2 || i === currentPage + 2) {
+                        html += '<span class="pagination-dots">…</span>';
+                    }
+                }
+
+                html +=
+                    `<button class="btn btn--ghost" type="button" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`;
+                paginationContainer.innerHTML = html;
+            }
+
+            if (paginationContainer) {
+                paginationContainer.addEventListener('click', function(e) {
+                    const btn = e.target.closest('button[data-page]');
+                    if (!btn || btn.disabled) return;
+                    currentPage = parseInt(btn.dataset.page, 10);
+                    render();
+                });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    currentPage = 1;
+                    render();
+                });
+            }
+
+            document.querySelectorAll('.fpill').forEach(function(pill) {
+                pill.addEventListener('click', function() {
+                    document.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    currentPage = 1;
+                    render();
+                });
+            });
+
+            if (perPageSelect) {
+                perPageSelect.addEventListener('change', function() {
+                    currentPage = 1;
+                    render();
+                });
+            }
+
+            initCombo({
+                comboId: 'combo_perPageSelect',
+                selectId: 'perPageSelect',
+                inputId: 'cari_perPageSelect',
+                listId: 'list_perPageSelect',
+                readonly: true,
+                onChange: function() {
+                    currentPage = 1;
+                    render();
+                }
+            });
+
+            render();
 
             /*
             |--------------------------------------------------------------------------
             | CLOSE MODAL
             |--------------------------------------------------------------------------
             */
-
-            document
-                .querySelectorAll('.modal-overlay')
-                .forEach(function(overlay) {
-
-                    overlay.addEventListener(
-                        'click',
-                        function(e) {
-
-                            if (e.target === overlay) {
-                                overlay.classList.remove('active');
-                            }
-
-                        }
-                    );
-
-                });
-
-
-            document.addEventListener(
-                'keydown',
-                function(e) {
-
-                    if (e.key === 'Escape') {
-
-                        document
-                            .querySelectorAll('.modal-overlay.active')
-                            .forEach(function(overlay) {
-                                overlay.classList.remove('active');
-                            });
-
+            document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        overlay.classList.remove('active');
                     }
+                });
+            });
 
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal-overlay.active').forEach(function(overlay) {
+                        overlay.classList.remove('active');
+                    });
                 }
-            );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | VERIFIKASI
-            |--------------------------------------------------------------------------
-            */
-
-            document
-                .getElementById('verifKategori')
-                ?.addEventListener(
-                    'change',
-                    updateEstimasi
-                );
-
-
-            document
-                .getElementById('verifBerat')
-                ?.addEventListener(
-                    'input',
-                    updateEstimasi
-                );
-
+            });
 
             /*
             |--------------------------------------------------------------------------
-            | TAMBAH SETORAN
+            | VERIFIKASI & TAMBAH EVENT LISTENERS
             |--------------------------------------------------------------------------
             */
-
-            document
-                .getElementById('tambahBerat')
-                ?.addEventListener(
-                    'input',
-                    updateEstimasiTambah
-                );
-
+            document.getElementById('verifBerat')?.addEventListener('input', updateEstimasi);
+            document.getElementById('tambahBerat')?.addEventListener('input', updateEstimasiTambah);
 
             /*
             |--------------------------------------------------------------------------
-            | COMBO WARGA
+            | COMBOBOX INISIALISASI
             |--------------------------------------------------------------------------
             */
-
             initCombo({
                 comboId: 'comboWarga',
                 selectId: 'tambahWarga',
@@ -1990,12 +2149,13 @@
                 listId: 'listWarga'
             });
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | COMBO KATEGORI
-            |--------------------------------------------------------------------------
-            */
+            initCombo({
+                comboId: 'comboVerifKategori',
+                selectId: 'verifKategori',
+                inputId: 'cariVerifKategori',
+                listId: 'listVerifKategori',
+                onChange: updateEstimasi
+            });
 
             initCombo({
                 comboId: 'comboKategori',
@@ -2004,303 +2164,162 @@
                 listId: 'listKategori',
                 onChange: updateEstimasiTambah
             });
-
         });
 
 
         /*
         |--------------------------------------------------------------------------
-        | COMBOBOX
+        | COMBOBOX COMPONENT UTAMA
         |--------------------------------------------------------------------------
         */
+        const comboRegistry = {};
+
+        function syncCombo(selectId) {
+            if (comboRegistry[selectId]) comboRegistry[selectId]();
+        }
 
         function initCombo(cfg) {
+            const select = document.getElementById(cfg.selectId);
+            const input = document.getElementById(cfg.inputId);
+            const list = document.getElementById(cfg.listId);
+            const onChange = cfg.onChange || function() {};
 
-            const select =
-                document.getElementById(cfg.selectId);
+            if (!select || !input || !list) return;
 
-            const input =
-                document.getElementById(cfg.inputId);
+            const data = Array.from(select.options)
+                .filter(o => o.value !== '')
+                .map(o => ({
+                    value: o.value,
+                    label: o.textContent.replace(/\s+/g, ' ').trim()
+                }));
 
-            const list =
-                document.getElementById(cfg.listId);
-
-            const onChange =
-                cfg.onChange || function() {};
-
-
-            if (!select || !input || !list) {
-                return;
-            }
-
-
-            const data =
-                Array
-                .from(select.options)
-                .filter(function(o) {
-                    return o.value !== '';
-                })
-                .map(function(o) {
-
-                    return {
-                        value: o.value,
-                        label: o.textContent
-                            .replace(/\s+/g, ' ')
-                            .trim()
-                    };
-
-                });
-
+            const readonly = !!cfg.readonly;
+            input.readOnly = readonly;
 
             let aktif = -1;
 
-
             function escapeHtml(s) {
-
-                return String(s).replace(
-                    /[&<>"']/g,
-                    function(c) {
-
-                        return {
-                            '&': '&amp;',
-                            '<': '&lt;',
-                            '>': '&gt;',
-                            '"': '&quot;',
-                            "'": '&#39;'
-                        } [c];
-
-                    }
-                );
-
+                return String(s).replace(/[&<>"']/g, function(c) {
+                    return {
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#39;'
+                    }[c];
+                });
             }
 
+            // Samakan teks input dengan pilihan aktif (kosong jika belum ada pilihan)
+            function sync() {
+                const d = data.find(x => x.value === String(select.value));
+                input.value = d ? d.label : '';
+                input.disabled = select.disabled;
+            }
 
             function render(keyword) {
-
-                const k =
-                    (keyword || '')
-                    .toLowerCase()
-                    .trim();
-
-
-                const hasil =
-                    data.filter(function(d) {
-
-                        return d.label
-                            .toLowerCase()
-                            .includes(k);
-
-                    });
-
+                const k = (keyword || '').toLowerCase().trim();
+                const hasil = data.filter(d => d.label.toLowerCase().includes(k));
 
                 aktif = -1;
 
-
-                list.innerHTML =
-                    hasil.length
-
-                    ?
-                    hasil
-                    .map(function(d) {
-
-                        return `
-                                <div
-                                    class="combo-item"
-                                    data-value="${d.value}">
-                                    ${escapeHtml(d.label)}
-                                </div>
-                            `;
-
-                    })
-                    .join('')
-
-                    :
-                    '<div class="combo-empty">Data tidak ditemukan</div>';
-
+                list.innerHTML = hasil.length
+                    ? hasil.map(d => `<div class="combo-item${d.value === String(select.value) ? ' is-selected' : ''}" data-value="${escapeHtml(d.value)}">${escapeHtml(d.label)}</div>`).join('')
+                    : '<div class="combo-empty">Data tidak ditemukan</div>';
             }
 
+            function buka(keyword) {
+                render(keyword);
+                list.classList.add('show');
+                const terpilih = list.querySelector('.is-selected');
+                if (terpilih) terpilih.scrollIntoView({ block: 'nearest' });
+            }
+
+            function tutup() {
+                list.classList.remove('show');
+                sync(); // buang ketikan pencarian, tampilkan pilihan yang aktif
+            }
 
             function pilih(value) {
+                const d = data.find(x => x.value === String(value));
+                if (!d) return;
 
-                const d =
-                    data.find(function(x) {
-                        return x.value === String(value);
-                    });
-
-
-                if (!d) {
-                    return;
-                }
-
-
+                const berubah = select.value !== d.value;
                 select.value = d.value;
-
-                input.value = d.label;
-
-                list.classList.remove('show');
-
-                onChange();
-
+                tutup();
+                if (berubah) onChange();
             }
-
 
             function sorot(arah) {
+                const items = list.querySelectorAll('.combo-item');
+                if (!items.length) return;
 
-                const items =
-                    list.querySelectorAll('.combo-item');
+                aktif = (aktif + arah + items.length) % items.length;
 
-
-                if (!items.length) {
-                    return;
-                }
-
-
-                aktif =
-                    (aktif + arah + items.length) %
-                    items.length;
-
-
-                items.forEach(function(el, i) {
-
-                    el.classList.toggle(
-                        'is-active',
-                        i === aktif
-                    );
-
+                items.forEach((el, i) => {
+                    el.classList.toggle('is-active', i === aktif);
                 });
 
-
-                items[aktif].scrollIntoView({
-                    block: 'nearest'
-                });
-
+                items[aktif].scrollIntoView({ block: 'nearest' });
             }
 
+            input.addEventListener('focus', function() {
+                if (!readonly) input.select();
+                buka('');
+            });
 
-            input.addEventListener(
-                'focus',
-                function() {
+            input.addEventListener('click', function() {
+                if (!list.classList.contains('show')) buka('');
+            });
 
-                    render(
-                        select.value ?
-                        '' :
-                        this.value
-                    );
+            // Mengetik hanya menyaring daftar; nilai baru tersimpan setelah memilih item
+            input.addEventListener('input', function() {
+                buka(this.value);
+            });
 
-                    list.classList.add('show');
+            input.addEventListener('blur', tutup);
 
-                }
-            );
+            input.addEventListener('keydown', function(e) {
+                const items = list.querySelectorAll('.combo-item');
 
-
-            input.addEventListener(
-                'input',
-                function() {
-
-                    select.value = '';
-
-                    onChange();
-
-                    render(this.value);
-
-                    list.classList.add('show');
-
-                }
-            );
-
-
-            input.addEventListener(
-                'keydown',
-                function(e) {
-
-                    if (e.key === 'ArrowDown') {
-
-                        e.preventDefault();
-
-                        if (!list.classList.contains('show')) {
-
-                            render(this.value);
-
-                            list.classList.add('show');
-
-                        }
-
-                        sorot(1);
-
-                    } else if (e.key === 'ArrowUp') {
-
-                        e.preventDefault();
-
-                        sorot(-1);
-
-                    } else if (e.key === 'Enter') {
-
-                        const items =
-                            list.querySelectorAll('.combo-item');
-
-
-                        if (
-                            list.classList.contains('show') &&
-                            aktif > -1 &&
-                            items[aktif]
-                        ) {
-
-                            e.preventDefault();
-
-                            pilih(
-                                items[aktif].dataset.value
-                            );
-
-                        }
-
-                    } else if (e.key === 'Escape') {
-
-                        if (list.classList.contains('show')) {
-
-                            e.stopPropagation();
-
-                            list.classList.remove('show');
-
-                        }
-
-                    }
-
-                }
-            );
-
-
-            list.addEventListener(
-                'mousedown',
-                function(e) {
-
-                    const item =
-                        e.target.closest('.combo-item');
-
-
-                    if (!item) {
-                        return;
-                    }
-
-
+                if (e.key === 'ArrowDown') {
                     e.preventDefault();
-
-                    pilih(item.dataset.value);
-
-                }
-            );
-
-
-            document.addEventListener(
-                'click',
-                function(e) {
-
-                    if (!e.target.closest('#' + cfg.comboId)) {
-                        list.classList.remove('show');
+                    if (!list.classList.contains('show')) buka(readonly ? '' : this.value);
+                    sorot(1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    sorot(-1);
+                } else if (e.key === 'Enter') {
+                    if (list.classList.contains('show') && aktif > -1 && items[aktif]) {
+                        e.preventDefault();
+                        pilih(items[aktif].dataset.value);
                     }
-
+                } else if (e.key === 'Escape') {
+                    if (list.classList.contains('show')) {
+                        e.stopPropagation(); // jangan ikut menutup modal
+                        tutup();
+                    }
                 }
-            );
+            });
 
+            list.addEventListener('mouseover', function(e) {
+                const item = e.target.closest('.combo-item');
+                if (!item) return;
+
+                list.querySelectorAll('.combo-item').forEach((el, i) => {
+                    el.classList.toggle('is-active', el === item);
+                    if (el === item) aktif = i;
+                });
+            });
+
+            list.addEventListener('mousedown', function(e) {
+                e.preventDefault(); // jaga fokus agar list tidak tertutup saat scroll/klik
+                const item = e.target.closest('.combo-item');
+                if (item) pilih(item.dataset.value);
+            });
+
+            comboRegistry[cfg.selectId] = sync;
+            sync();
         }
 
 
@@ -2309,274 +2328,100 @@
         | RESET COMBO
         |--------------------------------------------------------------------------
         */
+        function resetCombo(selectId, inputId, listId) {
+            const select = document.getElementById(selectId);
+            const input = document.getElementById(inputId);
+            const list = document.getElementById(listId);
 
-        function resetCombo(
-            selectId,
-            inputId,
-            listId
-        ) {
-
-            const select =
-                document.getElementById(selectId);
-
-            const input =
-                document.getElementById(inputId);
-
-            const list =
-                document.getElementById(listId);
-
-
-            if (select) {
-                select.value = '';
-            }
-
-            if (input) {
-                input.value = '';
-            }
-
-            if (list) {
-                list.classList.remove('show');
-            }
-
+            if (select) select.value = '';
+            if (input) input.value = '';
+            if (list) list.classList.remove('show');
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | MODAL
+        | MODAL CONTROL
         |--------------------------------------------------------------------------
         */
-
         function bukaModal(id) {
-
-            document
-                .getElementById(id)
-                .classList.add('active');
-
+            document.getElementById(id).classList.add('active');
         }
-
 
         function tutupModal(id) {
-
-            document
-                .getElementById(id)
-                .classList.remove('active');
-
+            document.getElementById(id).classList.remove('active');
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | FORMAT RUPIAH
+        | FORMATTER HELPERS
         |--------------------------------------------------------------------------
         */
-
         function formatRupiah(angka) {
-
-            return 'Rp ' +
-                (Number(angka) || 0)
-                .toLocaleString('id-ID', {
-                    maximumFractionDigits: 2
-                });
-
+            return 'Rp ' + (Number(angka) || 0).toLocaleString('id-ID', {
+                maximumFractionDigits: 2
+            });
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | FORMAT HARGA + SATUAN
-        |--------------------------------------------------------------------------
-        */
-
-        function formatHarga(
-            n,
-            satuan = ''
-        ) {
-
-            const nilai =
-                Number(n) || 0;
-
-
-            return 'Rp ' +
-                nilai.toLocaleString('id-ID', {
-                    maximumFractionDigits: 2
-                }) +
-                (
-                    satuan ?
-                    ' / ' + satuan :
-                    ''
-                );
-
+        function formatHarga(n, satuan = '') {
+            const nilai = Number(n) || 0;
+            return 'Rp ' + nilai.toLocaleString('id-ID', {
+                maximumFractionDigits: 2
+            }) + (satuan ? ' / ' + satuan : '');
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | AMBIL HARGA DARI OPTION
-        |--------------------------------------------------------------------------
-        */
 
         function hargaDariSelect(select) {
-
-            if (
-                !select ||
-                select.selectedIndex < 0
-            ) {
-                return 0;
-            }
-
-
-            return Number(
-                select
-                .options[select.selectedIndex]
-                ?.dataset.harga || 0
-            );
-
+            if (!select || select.selectedIndex < 0) return 0;
+            return Number(select.options[select.selectedIndex]?.dataset.harga || 0);
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | AMBIL SATUAN DARI OPTION
-        |--------------------------------------------------------------------------
-        */
 
         function satuanDariSelect(select) {
-
-            if (
-                !select ||
-                select.selectedIndex < 0
-            ) {
-                return '';
-            }
-
-
-            return select
-                .options[select.selectedIndex]
-                ?.dataset.satuan || '';
-
+            if (!select || select.selectedIndex < 0) return '';
+            return select.options[select.selectedIndex]?.dataset.satuan || '';
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | PILIH KATEGORI
-        |--------------------------------------------------------------------------
-        */
-
-        function pilihKategori(
-            select,
-            idKategori
-        ) {
-
-            select.value =
-                idKategori ?
-                String(idKategori) :
-                '';
-
-
+        function pilihKategori(select, idKategori) {
+            select.value = idKategori ? String(idKategori) : '';
             if (select.selectedIndex === -1) {
                 select.value = '';
             }
-
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | TOAST
+        | TOAST NOTIFICATION
         |--------------------------------------------------------------------------
         */
+        function showToast(title, text, type = 'success') {
+            const wrap = document.getElementById('toastWrap');
+            const toast = document.createElement('div');
 
-        function showToast(
-            title,
-            text,
-            type = 'success'
-        ) {
-
-            const wrap =
-                document.getElementById('toastWrap');
-
-
-            const toast =
-                document.createElement('div');
-
-
-            toast.className =
-                'toast' +
-                (
-                    type === 'error' ?
-                    ' toast--error' :
-                    ''
-                );
-
-
-            const iconPath =
-                type === 'error'
-
-                ?
-                '<path d="M18 6 6 18M6 6l12 12"></path>'
-
-                :
-                '<path d="M20 6 9 17l-5-5"></path>';
-
+            toast.className = 'toast' + (type === 'error' ? ' toast--error' : '');
+            const iconPath = type === 'error'
+                ? '<path d="M18 6 6 18M6 6l12 12"></path>'
+                : '<path d="M20 6 9 17l-5-5"></path>';
 
             toast.innerHTML = `
-            <div class="toast-icon">
-                <svg viewBox="0 0 24 24">
-                    ${iconPath}
-                </svg>
-            </div>
-
-            <div class="toast-body">
-                <p class="toast-title">
-                    ${title}
-                </p>
-
-                <p class="toast-text">
-                    ${text}
-                </p>
-            </div>
-
-            <button
-                class="toast-close"
-                type="button"
-                aria-label="Tutup">
-                &times;
-            </button>
-        `;
-
+                <div class="toast-icon">
+                    <svg viewBox="0 0 24 24">${iconPath}</svg>
+                </div>
+                <div class="toast-body">
+                    <p class="toast-title">${title}</p>
+                    <p class="toast-text">${text}</p>
+                </div>
+                <button class="toast-close" type="button" aria-label="Tutup">&times;</button>
+            `;
 
             function hapusToast() {
-
-                toast.classList.add(
-                    'toast--leaving'
-                );
-
-                setTimeout(
-                    () => toast.remove(),
-                    180
-                );
-
+                toast.classList.add('toast--leaving');
+                setTimeout(() => toast.remove(), 180);
             }
 
-
-            toast
-                .querySelector('.toast-close')
-                .addEventListener(
-                    'click',
-                    hapusToast
-                );
-
-
+            toast.querySelector('.toast-close').addEventListener('click', hapusToast);
             wrap.appendChild(toast);
-
-
-            setTimeout(
-                hapusToast,
-                3500
-            );
-
+            setTimeout(hapusToast, 3500);
         }
 
 
@@ -2585,190 +2430,47 @@
         | BUKA MODAL VERIFIKASI
         |--------------------------------------------------------------------------
         */
-
         function bukaVerifikasi(item) {
-
             verifItem = item;
+            const nama = item.warga?.nama || '-';
 
+            document.getElementById('verifAvatar').textContent = nama.trim().charAt(0).toUpperCase();
+            document.getElementById('verifNama').textContent = nama;
+            document.getElementById('verifNik').textContent = item.warga?.nik || '-';
+            document.getElementById('verifJudul').textContent = item.status === 'pending' ? 'Verifikasi Setoran' : 'Detail Setoran';
+            document.getElementById('verifId').value = item.id;
 
-            const nama =
-                item.warga?.nama || '-';
+            const select = document.getElementById('verifKategori');
+            pilihKategori(select, item.id_kategori);
 
+            document.getElementById('verifBerat').value = item.jumlah ?? item.total_berat ?? 0;
 
-            document
-                .getElementById('verifAvatar')
-                .textContent =
-                nama
-                .trim()
-                .charAt(0)
-                .toUpperCase();
+            const satuanItem = item.satuan || satuanDariSelect(select) || 'gram';
+            document.getElementById('verifSatuan').value = satuanItem;
+            document.getElementById('verifAlasan').value = item.catatan_admin || '';
+            document.getElementById('verifAlasanBlock').classList.remove('open');
 
-
-            document
-                .getElementById('verifNama')
-                .textContent = nama;
-
-
-            document
-                .getElementById('verifNik')
-                .textContent =
-                item.warga?.nik || '-';
-
-
-            document
-                .getElementById('verifJudul')
-                .textContent =
-                item.status === 'pending' ?
-                'Verifikasi Setoran' :
-                'Detail Setoran';
-
-
-            document
-                .getElementById('verifId')
-                .value = item.id;
-
-
-            const select =
-                document.getElementById('verifKategori');
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | PILIH KATEGORI
-            |--------------------------------------------------------------------------
-            */
-
-            pilihKategori(
-                select,
-                item.id_kategori
-            );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | JUMLAH
-            |--------------------------------------------------------------------------
-            */
-
-            document
-                .getElementById('verifBerat')
-                .value =
-                item.jumlah ??
-                item.total_berat ??
-                0;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | SATUAN
-            |--------------------------------------------------------------------------
-            |
-            | Jika item mempunyai snapshot satuan,
-            | gunakan itu.
-            |
-            | Jika tidak, ambil dari kategori.
-            |--------------------------------------------------------------------------
-            */
-
-            const satuanItem =
-                item.satuan ||
-                satuanDariSelect(select) ||
-                'gram';
-
-
-            document
-                .getElementById('verifSatuan')
-                .value = satuanItem;
-
-
-            document
-                .getElementById('verifAlasan')
-                .value =
-                item.catatan_admin || '';
-
-
-            document
-                .getElementById('verifAlasanBlock')
-                .classList.remove('open');
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | FOTO
-            |--------------------------------------------------------------------------
-            */
-
-            const fotoEl =
-                document.getElementById('verifFoto');
-
-            const fotoKosong =
-                document.getElementById('verifFotoKosong');
-
+            const fotoEl = document.getElementById('verifFoto');
+            const fotoKosong = document.getElementById('verifFotoKosong');
 
             if (item.foto_bukti) {
-
-                fotoEl.src =
-                    '/storage/' +
-                    item.foto_bukti;
-
-                fotoEl.style.display =
-                    'block';
-
-                fotoKosong.style.display =
-                    'none';
-
+                fotoEl.src = '/storage/' + item.foto_bukti;
+                fotoEl.style.display = 'block';
+                fotoKosong.style.display = 'none';
             } else {
-
-                fotoEl.style.display =
-                    'none';
-
-                fotoKosong.style.display =
-                    'block';
-
+                fotoEl.style.display = 'none';
+                fotoKosong.style.display = 'block';
             }
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | STATUS EDIT
-            |--------------------------------------------------------------------------
-            */
-
-            const bisaDiedit =
-                item.status === 'pending';
-
-
+            const bisaDiedit = item.status === 'pending';
             select.disabled = !bisaDiedit;
-
-
-            document
-                .getElementById('verifBerat')
-                .disabled = !bisaDiedit;
-
-
-            document
-                .getElementById('btnTolakSetoran')
-                .style.display =
-                bisaDiedit ?
-                'inline-flex' :
-                'none';
-
-
-            document
-                .getElementById('btnSetujuiSetoran')
-                .style.display =
-                bisaDiedit ?
-                'inline-flex' :
-                'none';
-
+            syncCombo('verifKategori');
+            document.getElementById('verifBerat').disabled = !bisaDiedit;
+            document.getElementById('btnTolakSetoran').style.display = bisaDiedit ? 'inline-flex' : 'none';
+            document.getElementById('btnSetujuiSetoran').style.display = bisaDiedit ? 'inline-flex' : 'none';
 
             updateEstimasi();
-
-
-            bukaModal(
-                'modalVerifikasi'
-            );
-
+            bukaModal('modalVerifikasi');
         }
 
 
@@ -2777,245 +2479,88 @@
         | UPDATE ESTIMASI VERIFIKASI
         |--------------------------------------------------------------------------
         */
-
         function updateEstimasi() {
+            const select = document.getElementById('verifKategori');
+            const harga = hargaDariSelect(select);
+            const satuan = satuanDariSelect(select);
+            const jumlah = parseFloat(document.getElementById('verifBerat').value) || 0;
 
-            const select =
-                document.getElementById(
-                    'verifKategori'
-                );
+            const hargaInfo = document.getElementById('verifHargaInfo');
+            const satuanInput = document.getElementById('verifSatuan');
+            const satuanInfo = document.getElementById('verifSatuanInfo');
+            const estimasi = document.getElementById('verifEstimasi');
 
-
-            const harga =
-                hargaDariSelect(select);
-
-
-            const satuan =
-                satuanDariSelect(select);
-
-
-            const jumlah =
-                parseFloat(
-                    document
-                    .getElementById('verifBerat')
-                    .value
-                ) || 0;
-
-
-            const hargaInfo =
-                document.getElementById(
-                    'verifHargaInfo'
-                );
-
-
-            const satuanInput =
-                document.getElementById(
-                    'verifSatuan'
-                );
-
-
-            const satuanInfo =
-                document.getElementById(
-                    'verifSatuanInfo'
-                );
-
-
-            const estimasi =
-                document.getElementById(
-                    'verifEstimasi'
-                );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | SATUAN
-            |--------------------------------------------------------------------------
-            */
-
-            satuanInput.value =
-                satuan || '-';
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | KETERANGAN SATUAN
-            |--------------------------------------------------------------------------
-            */
+            satuanInput.value = satuan || '-';
 
             const keteranganSatuan = {
-
                 gram: 'berat dalam gram',
-
                 kg: 'berat dalam kilogram',
-
                 pcs: 'jumlah barang',
-
-                liter: 'volume dalam liter'
-
+                liter: 'volume dalam liter',
+                set: 'jumlah set',
+                unit: 'jumlah unit'
             };
 
+            satuanInfo.textContent = satuan && keteranganSatuan[satuan]
+                ? 'Jumlah berdasarkan ' + keteranganSatuan[satuan] + '.'
+                : 'Pilih kategori terlebih dahulu.';
 
-            satuanInfo.textContent =
-                satuan &&
-                keteranganSatuan[satuan]
-
-                ?
-                'Jumlah berdasarkan ' +
-                keteranganSatuan[satuan] +
-                '.'
-
-                :
-                'Pilih kategori terlebih dahulu.';
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | HARGA
-            |--------------------------------------------------------------------------
-            */
-
-            if (
-                harga > 0 &&
-                satuan
-            ) {
-
-                hargaInfo.textContent =
-                    'Harga aktif: ' +
-                    formatHarga(
-                        harga,
-                        satuan === 'liter' ?
-                        'L' :
-                        satuan
-                    );
-
+            if (harga > 0 && satuan) {
+                hargaInfo.textContent = 'Harga aktif: ' + formatHarga(harga, satuan === 'liter' ? 'L' : satuan);
             } else {
-
-                hargaInfo.textContent =
-                    'Kategori ini belum memiliki harga aktif.';
-
+                hargaInfo.textContent = 'Kategori ini belum memiliki harga aktif.';
             }
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | ESTIMASI
-            |--------------------------------------------------------------------------
-            */
-
-            estimasi.textContent =
-                formatRupiah(
-                    harga * jumlah
-                );
-
+            estimasi.textContent = formatRupiah(harga * jumlah);
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | PROSES VERIFIKASI
+        | PROSES VERIFIKASI (SETUJUI)
         |--------------------------------------------------------------------------
         */
-
         function prosesVerifikasi(event) {
-
             event.preventDefault();
 
-
-            const id =
-                document.getElementById(
-                    'verifId'
-                ).value;
-
-
+            const id = document.getElementById('verifId').value;
             const payload = {
-
-                id_kategori: document.getElementById(
-                    'verifKategori'
-                ).value,
-
-                jumlah: document.getElementById(
-                    'verifBerat'
-                ).value
-
+                id_kategori: document.getElementById('verifKategori').value,
+                jumlah: document.getElementById('verifBerat').value
             };
 
+            if (!payload.id_kategori) {
+                showToast('Gagal memproses', 'Silakan pilih kategori sampah terlebih dahulu.', 'error');
+                document.getElementById('cariVerifKategori')?.focus();
+                return false;
+            }
 
-            fetch(
-                    `/admin/pages/verifikasi-setoran/${id}/setujui`, {
-                        method: 'PATCH',
-
-                        headers: {
-
-                            'Content-Type': 'application/json',
-
-                            'Accept': 'application/json',
-
-                            'X-CSRF-TOKEN': document.querySelector(
-                                'meta[name="csrf-token"]'
-                            ).content
-
-                        },
-
-                        body: JSON.stringify(payload)
-
-                    }
-                )
-
-                .then(async (res) => {
-
-                    if (!res.ok) {
-
-                        const err =
-                            await res
-                            .json()
-                            .catch(() => ({}));
-
-
-                        throw new Error(
-                            err.message ||
-                            'Gagal menyetujui setoran.'
-                        );
-
-                    }
-
-
-                    return res.json();
-
-                })
-
-                .then(() => {
-
-                    tutupModal(
-                        'modalVerifikasi'
-                    );
-
-
-                    showToast(
-                        'Setoran disetujui',
-                        'Saldo warga telah diperbarui.'
-                    );
-
-
-                    setTimeout(
-                        () => window.location.reload(),
-                        800
-                    );
-
-                })
-
-                .catch((err) => {
-
-                    showToast(
-                        'Gagal menyetujui',
-                        err.message,
-                        'error'
-                    );
-
-                });
-
+            fetch(`/admin/pages/verifikasi-setoran/${id}/setujui`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(async (res) => {
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.message || 'Gagal menyetujui setoran.');
+                }
+                return res.json();
+            })
+            .then(() => {
+                tutupModal('modalVerifikasi');
+                showToast('Setoran disetujui', 'Saldo warga telah diperbarui.');
+                setTimeout(() => window.location.reload(), 800);
+            })
+            .catch((err) => {
+                showToast('Gagal menyetujui', err.message, 'error');
+            });
 
             return false;
-
         }
 
 
@@ -3024,55 +2569,17 @@
         | BUKA TAMBAH SETORAN
         |--------------------------------------------------------------------------
         */
-
         function bukaTambahSetoran() {
+            document.getElementById('formTambahSetoran').reset();
+            resetCombo('tambahWarga', 'cariWarga', 'listWarga');
+            resetCombo('tambahKategori', 'cariKategori', 'listKategori');
 
-            document
-                .getElementById(
-                    'formTambahSetoran'
-                )
-                .reset();
-
-
-            resetCombo(
-                'tambahWarga',
-                'cariWarga',
-                'listWarga'
-            );
-
-
-            resetCombo(
-                'tambahKategori',
-                'cariKategori',
-                'listKategori'
-            );
-
-
-            document
-                .getElementById('tambahSatuan')
-                .value = '-';
-
-
-            const today =
-                new Date()
-                .toISOString()
-                .substring(0, 10);
-
-
-            document
-                .getElementById(
-                    'tambahTanggal'
-                )
-                .value = today;
-
+            document.getElementById('tambahSatuan').value = '-';
+            const today = new Date().toISOString().substring(0, 10);
+            document.getElementById('tambahTanggal').value = today;
 
             updateEstimasiTambah();
-
-
-            bukaModal(
-                'modalTambah'
-            );
-
+            bukaModal('modalTambah');
         }
 
 
@@ -3081,56 +2588,18 @@
         | UPDATE ESTIMASI TAMBAH
         |--------------------------------------------------------------------------
         */
-
         function updateEstimasiTambah() {
-
-            const select =
-                document.getElementById(
-                    'tambahKategori'
-                );
-
-
-            const harga =
-                hargaDariSelect(select);
-
-
-            const satuan =
-                satuanDariSelect(select);
-
-
-            const jumlah =
-                parseFloat(
-                    document
-                    .getElementById(
-                        'tambahBerat'
-                    )
-                    .value
-                ) || 0;
-
-
-            const satuanInput =
-                document.getElementById(
-                    'tambahSatuan'
-                );
-
+            const select = document.getElementById('tambahKategori');
+            const harga = hargaDariSelect(select);
+            const satuan = satuanDariSelect(select);
+            const jumlah = parseFloat(document.getElementById('tambahBerat').value) || 0;
+            const satuanInput = document.getElementById('tambahSatuan');
 
             if (satuanInput) {
-
-                satuanInput.value =
-                    satuan || '-';
-
+                satuanInput.value = satuan || '-';
             }
 
-
-            document
-                .getElementById(
-                    'tambahEstimasi'
-                )
-                .textContent =
-                formatRupiah(
-                    harga * jumlah
-                );
-
+            document.getElementById('tambahEstimasi').textContent = formatRupiah(harga * jumlah);
         }
 
 
@@ -3139,200 +2608,61 @@
         | SIMPAN SETORAN BARU
         |--------------------------------------------------------------------------
         */
-
         function simpanSetoranBaru(event) {
-
             event.preventDefault();
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | PAYLOAD
-            |--------------------------------------------------------------------------
-            |
-            | Perhatikan koma setelah jumlah.
-            |--------------------------------------------------------------------------
-            */
-
             const payload = {
-
-                id_warga: document.getElementById(
-                    'tambahWarga'
-                ).value,
-
-                id_kategori: document.getElementById(
-                    'tambahKategori'
-                ).value,
-
-                jumlah: document.getElementById(
-                    'tambahBerat'
-                ).value,
-
-                tanggal_setoran: document.getElementById(
-                    'tambahTanggal'
-                ).value,
-
-                catatan_admin: document.getElementById(
-                    'tambahCatatan'
-                )?.value || null
-
+                id_warga: document.getElementById('tambahWarga').value,
+                id_kategori: document.getElementById('tambahKategori').value,
+                jumlah: document.getElementById('tambahBerat').value,
+                tanggal_setoran: document.getElementById('tambahTanggal').value,
+                catatan_admin: document.getElementById('tambahCatatan')?.value || null
             };
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | VALIDASI WARGA
-            |--------------------------------------------------------------------------
-            */
-
             if (!payload.id_warga) {
-
-                showToast(
-                    'Gagal menyimpan',
-                    'Silakan pilih warga terlebih dahulu.',
-                    'error'
-                );
-
-
-                document
-                    .getElementById('cariWarga')
-                    .focus();
-
-
+                showToast('Gagal menyimpan', 'Silakan pilih warga terlebih dahulu.', 'error');
+                document.getElementById('cariWarga').focus();
                 return false;
-
             }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | VALIDASI KATEGORI
-            |--------------------------------------------------------------------------
-            */
 
             if (!payload.id_kategori) {
-
-                showToast(
-                    'Gagal menyimpan',
-                    'Silakan pilih kategori sampah terlebih dahulu.',
-                    'error'
-                );
-
-
-                document
-                    .getElementById('cariKategori')
-                    .focus();
-
-
+                showToast('Gagal menyimpan', 'Silakan pilih kategori sampah terlebih dahulu.', 'error');
+                document.getElementById('cariKategori').focus();
                 return false;
-
             }
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | VALIDASI JUMLAH
-            |--------------------------------------------------------------------------
-            */
-
-            if (
-                !payload.jumlah ||
-                Number(payload.jumlah) <= 0
-            ) {
-
-                showToast(
-                    'Gagal menyimpan',
-                    'Jumlah setoran harus lebih dari 0.',
-                    'error'
-                );
-
-
-                document
-                    .getElementById('tambahBerat')
-                    .focus();
-
-
+            if (!payload.jumlah || Number(payload.jumlah) <= 0) {
+                showToast('Gagal menyimpan', 'Jumlah setoran harus lebih dari 0.', 'error');
+                document.getElementById('tambahBerat').focus();
                 return false;
-
             }
 
-
-            fetch(
-                    `/admin/pages/verifikasi-setoran`, {
-                        method: 'POST',
-
-                        headers: {
-
-                            'Content-Type': 'application/json',
-
-                            'Accept': 'application/json',
-
-                            'X-CSRF-TOKEN': document.querySelector(
-                                'meta[name="csrf-token"]'
-                            ).content
-
-                        },
-
-                        body: JSON.stringify(payload)
-
-                    }
-                )
-
-                .then(async (res) => {
-
-                    if (!res.ok) {
-
-                        const err =
-                            await res
-                            .json()
-                            .catch(() => ({}));
-
-
-                        throw new Error(
-                            err.message ||
-                            'Gagal menyimpan setoran.'
-                        );
-
-                    }
-
-
-                    return res.json();
-
-                })
-
-                .then(() => {
-
-                    tutupModal(
-                        'modalTambah'
-                    );
-
-
-                    showToast(
-                        'Setoran ditambahkan',
-                        'Data setoran tersimpan dan saldo warga diperbarui.'
-                    );
-
-
-                    setTimeout(
-                        () => window.location.reload(),
-                        800
-                    );
-
-                })
-
-                .catch((err) => {
-
-                    showToast(
-                        'Gagal menyimpan',
-                        err.message,
-                        'error'
-                    );
-
-                });
-
+            fetch(`/admin/pages/verifikasi-setoran`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(async (res) => {
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.message || 'Gagal menyimpan setoran.');
+                }
+                return res.json();
+            })
+            .then(() => {
+                tutupModal('modalTambah');
+                showToast('Setoran ditambahkan', 'Data setoran tersimpan dan saldo warga diperbarui.');
+                setTimeout(() => window.location.reload(), 800);
+            })
+            .catch((err) => {
+                showToast('Gagal menyimpan', err.message, 'error');
+            });
 
             return false;
-
         }
 
 
@@ -3341,150 +2671,48 @@
         | TOLAK SETORAN
         |--------------------------------------------------------------------------
         */
-
         function tolakSetoran() {
+            const alasanBlock = document.getElementById('verifAlasanBlock');
 
-            const alasanBlock =
-                document.getElementById(
-                    'verifAlasanBlock'
-                );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Tampilkan textarea terlebih dahulu
-            |--------------------------------------------------------------------------
-            */
-
-            if (
-                !alasanBlock
-                .classList
-                .contains('open')
-            ) {
-
-                alasanBlock
-                    .classList
-                    .add('open');
-
-
-                document
-                    .getElementById(
-                        'verifAlasan'
-                    )
-                    .focus();
-
-
+            if (!alasanBlock.classList.contains('open')) {
+                alasanBlock.classList.add('open');
+                document.getElementById('verifAlasan').focus();
                 return;
-
             }
 
-
-            const catatan =
-                document
-                .getElementById(
-                    'verifAlasan'
-                )
-                .value
-                .trim();
-
+            const catatan = document.getElementById('verifAlasan').value.trim();
 
             if (!catatan) {
-
-                showToast(
-                    'Catatan diperlukan',
-                    'Isi alasan penolakan sebelum melanjutkan.',
-                    'error'
-                );
-
-
+                showToast('Catatan diperlukan', 'Isi alasan penolakan sebelum melanjutkan.', 'error');
                 return;
-
             }
 
+            const id = document.getElementById('verifId').value;
 
-            const id =
-                document
-                .getElementById(
-                    'verifId'
-                )
-                .value;
-
-
-            fetch(
-                    `/admin/pages/verifikasi-setoran/${id}/tolak`, {
-                        method: 'PATCH',
-
-                        headers: {
-
-                            'Content-Type': 'application/json',
-
-                            'Accept': 'application/json',
-
-                            'X-CSRF-TOKEN': document.querySelector(
-                                'meta[name="csrf-token"]'
-                            ).content
-
-                        },
-
-                        body: JSON.stringify({
-                            catatan_admin: catatan
-                        })
-
-                    }
-                )
-
-                .then(async (res) => {
-
-                    if (!res.ok) {
-
-                        const err =
-                            await res
-                            .json()
-                            .catch(() => ({}));
-
-
-                        throw new Error(
-                            err.message ||
-                            'Gagal menolak setoran.'
-                        );
-
-                    }
-
-
-                    return res.json();
-
-                })
-
-                .then(() => {
-
-                    tutupModal(
-                        'modalVerifikasi'
-                    );
-
-
-                    showToast(
-                        'Setoran ditolak',
-                        'Warga perlu mengisi ulang data setoran.'
-                    );
-
-
-                    setTimeout(
-                        () => window.location.reload(),
-                        800
-                    );
-
-                })
-
-                .catch((err) => {
-
-                    showToast(
-                        'Gagal menolak',
-                        err.message,
-                        'error'
-                    );
-
-                });
-
+            fetch(`/admin/pages/verifikasi-setoran/${id}/tolak`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ catatan_admin: catatan })
+            })
+            .then(async (res) => {
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.message || 'Gagal menolak setoran.');
+                }
+                return res.json();
+            })
+            .then(() => {
+                tutupModal('modalVerifikasi');
+                showToast('Setoran ditolak', 'Warga perlu mengisi ulang data setoran.');
+                setTimeout(() => window.location.reload(), 800);
+            })
+            .catch((err) => {
+                showToast('Gagal menolak', err.message, 'error');
+            });
         }
     </script>
 

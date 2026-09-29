@@ -7,7 +7,7 @@
 @section('content')
 
     @php
-        // 1. Ringkasan Statistik Data
+        // 1. Ringkasan statistik
         $totalInduk = $kategoriInduk->count();
         $totalSub = $kategoriInduk->sum(fn($k) => $k->anak->count());
         $totalHarga = $kategoriInduk->reduce(function ($carry, $k) {
@@ -17,7 +17,21 @@
         }, 0);
         $totalBelum = $totalInduk + $totalSub - $totalHarga;
 
-        // 2. Pemetaan Riwayat Harga Kategori
+        // Helper: singkatan satuan -> nama lengkap
+        $formatSatuan = function ($satuan) {
+            $map = [
+                'kg' => 'Kilogram (kg)',
+                'pcs' => 'Pieces (pcs)',
+                'gram' => 'Gram (gram)',
+                'liter' => 'Liter (L)',
+                'set' => 'Set (set)',
+                'unit' => 'Unit (unit)',
+            ];
+            $satuanLower = strtolower(trim((string) $satuan));
+            return $map[$satuanLower] ?? ($satuan ? ucfirst($satuan) : '-');
+        };
+
+        // 2. Riwayat harga per kategori
         $riwayatMap = [];
         $mapRiwayat = function ($kat) use (&$riwayatMap) {
             $riwayatMap[$kat->id_kategori] = collect($kat->hargaSampah ?? [])
@@ -45,24 +59,32 @@
             }
         }
 
-        // 3. Daftar Kategori untuk Rekap Bulanan
+        // 3. Daftar kategori untuk rekap bulanan
         $daftarKategori = [];
         foreach ($kategoriInduk as $k) {
             $daftarKategori[] = [
                 'id' => $k->id_kategori,
                 'nama' => $k->nama_kategori,
-                'satuan' => $k->satuan,
+                'satuan' => $formatSatuan($k->satuan),
                 'sub' => false,
             ];
             foreach ($k->anak as $s) {
                 $daftarKategori[] = [
                     'id' => $s->id_kategori,
                     'nama' => $s->nama_kategori,
-                    'satuan' => $s->satuan,
+                    'satuan' => $formatSatuan($s->satuan),
                     'sub' => true,
                 ];
             }
         }
+
+        // SVG reusable
+        $iconEdit =
+            '<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
+        $iconHarga =
+            '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M15 8.5c-.6-.7-1.6-1.1-2.8-1.1-1.7 0-2.8.9-2.8 2.2 0 1.2 1 1.8 2.8 2.2 1.8.4 2.8 1 2.8 2.2 0 1.3-1.1 2.2-2.9 2.2-1.3 0-2.4-.5-3.1-1.3M12 5v14"></path></svg>';
+        $iconHapus =
+            '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6 18 20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>';
     @endphp
 
     <!-- HERO HEADER -->
@@ -74,8 +96,10 @@
         </div>
         <div class="hero-actions">
             <button class="btn btn--primary" type="button" onclick="bukaModalTambahKategori()">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 5v14M5 12h14"></path>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
                 Tambah Kategori
             </button>
@@ -147,7 +171,7 @@
         </div>
     </section>
 
-    <!-- DATA TABLE CONTAINER -->
+    <!-- DATA TABLE -->
     <section class="card">
         <div class="table-toolbar">
             <div class="table-search">
@@ -184,7 +208,7 @@
                     <tr>
                         <th>No</th>
                         <th>Nama Kategori</th>
-                        <th>Satuan</th>
+                        <th>Satuan Unit</th>
                         <th>Berlaku Sejak</th>
                         <th>Harga Aktif</th>
                         <th>Status</th>
@@ -198,10 +222,10 @@
                                 ? \Carbon\Carbon::parse($kategori->hargaTerbaru->tanggal_berlaku)
                                 : null;
                         @endphp
-                        <tr data-row-kategori>
+                        <tr data-row-kategori data-group="{{ $kategori->id_kategori }}">
                             <td>{{ $index + 1 }}</td>
                             <td><strong>{{ $kategori->nama_kategori }}</strong></td>
-                            <td><span class="badge badge--satuan">{{ $kategori->satuan ?? '-' }}</span></td>
+                            <td><span class="badge badge--satuan">{{ $formatSatuan($kategori->satuan) }}</span></td>
                             <td class="nowrap">{{ $tglInduk ? $tglInduk->translatedFormat('d M Y') : '-' }}</td>
                             <td>
                                 @if ($kategori->hargaTerbaru)
@@ -219,28 +243,16 @@
                             <td>
                                 <div class="table-actions">
                                     <button class="icon-btn" title="Edit Kategori" type="button"
-                                        onclick="editKategoriModal({{ Js::from(['id_kategori' => $kategori->id_kategori, 'id_induk' => $kategori->id_induk, 'nama_kategori' => $kategori->nama_kategori, 'satuan' => $kategori->satuan]) }})">
-                                        <svg viewBox="0 0 24 24">
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                        </svg>
+                                        onclick="editKategoriModal({{ Js::from(['id_kategori' => $kategori->id_kategori, 'id_induk' => $kategori->id_induk, 'nama_kategori' => $kategori->nama_kategori, 'satuan' => $kategori->satuan, 'punya_anak' => $kategori->anak->count() > 0]) }})">
+                                        {!! $iconEdit !!}
                                     </button>
                                     <button class="icon-btn icon-btn--harga" title="Kelola Harga" type="button"
                                         onclick="kelolaHarga({{ Js::from(['id_kategori' => $kategori->id_kategori, 'nama_kategori' => $kategori->nama_kategori, 'satuan' => $kategori->satuan, 'store_url' => route('admin.kategori-harga.harga.store', $kategori->id_kategori)]) }})">
-                                        <svg viewBox="0 0 24 24">
-                                            <circle cx="12" cy="12" r="9"></circle>
-                                            <path
-                                                d="M15 8.5c-.6-.7-1.6-1.1-2.8-1.1-1.7 0-2.8.9-2.8 2.2 0 1.2 1 1.8 2.8 2.2 1.8.4 2.8 1 2.8 2.2 0 1.3-1.1 2.2-2.9 2.2-1.3 0-2.4-.5-3.1-1.3M12 5v14">
-                                            </path>
-                                        </svg>
+                                        {!! $iconHarga !!}
                                     </button>
                                     <button class="icon-btn icon-btn--danger" title="Hapus Kategori" type="button"
                                         onclick="hapusKategori({{ Js::from(['id_kategori' => $kategori->id_kategori, 'nama_kategori' => $kategori->nama_kategori]) }})">
-                                        <svg viewBox="0 0 24 24">
-                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path d="M19 6 18 20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                                            <path d="M10 11v6M14 11v6"></path>
-                                        </svg>
+                                        {!! $iconHapus !!}
                                     </button>
                                 </div>
                             </td>
@@ -252,10 +264,10 @@
                                     ? \Carbon\Carbon::parse($sub->hargaTerbaru->tanggal_berlaku)
                                     : null;
                             @endphp
-                            <tr data-row-kategori class="sub-row">
+                            <tr data-row-kategori data-group="{{ $kategori->id_kategori }}" class="sub-row">
                                 <td></td>
                                 <td class="sub-cell"><span class="sub-arrow">↳</span> {{ $sub->nama_kategori }}</td>
-                                <td><span class="badge badge--satuan">{{ $sub->satuan ?? '-' }}</span></td>
+                                <td><span class="badge badge--satuan">{{ $formatSatuan($sub->satuan) }}</span></td>
                                 <td class="nowrap">{{ $tglSub ? $tglSub->translatedFormat('d M Y') : '-' }}</td>
                                 <td>
                                     @if ($sub->hargaTerbaru)
@@ -273,28 +285,16 @@
                                 <td>
                                     <div class="table-actions">
                                         <button class="icon-btn" title="Edit Kategori" type="button"
-                                            onclick="editKategoriModal({{ Js::from(['id_kategori' => $sub->id_kategori, 'id_induk' => $sub->id_induk, 'nama_kategori' => $sub->nama_kategori, 'satuan' => $sub->satuan]) }})">
-                                            <svg viewBox="0 0 24 24">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                            </svg>
+                                            onclick="editKategoriModal({{ Js::from(['id_kategori' => $sub->id_kategori, 'id_induk' => $sub->id_induk, 'nama_kategori' => $sub->nama_kategori, 'satuan' => $sub->satuan, 'punya_anak' => false]) }})">
+                                            {!! $iconEdit !!}
                                         </button>
                                         <button class="icon-btn icon-btn--harga" title="Kelola Harga" type="button"
                                             onclick="kelolaHarga({{ Js::from(['id_kategori' => $sub->id_kategori, 'nama_kategori' => $sub->nama_kategori, 'satuan' => $sub->satuan, 'store_url' => route('admin.kategori-harga.harga.store', $sub->id_kategori)]) }})">
-                                            <svg viewBox="0 0 24 24">
-                                                <circle cx="12" cy="12" r="9"></circle>
-                                                <path
-                                                    d="M15 8.5c-.6-.7-1.6-1.1-2.8-1.1-1.7 0-2.8.9-2.8 2.2 0 1.2 1 1.8 2.8 2.2 1.8.4 2.8 1 2.8 2.2 0 1.3-1.1 2.2-2.9 2.2-1.3 0-2.4-.5-3.1-1.3M12 5v14">
-                                                </path>
-                                            </svg>
+                                            {!! $iconHarga !!}
                                         </button>
                                         <button class="icon-btn icon-btn--danger" title="Hapus Kategori" type="button"
                                             onclick="hapusKategori({{ Js::from(['id_kategori' => $sub->id_kategori, 'nama_kategori' => $sub->nama_kategori]) }})">
-                                            <svg viewBox="0 0 24 24">
-                                                <polyline points="3 6 5 6 21 6"></polyline>
-                                                <path d="M19 6 18 20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                                                <path d="M10 11v6M14 11v6"></path>
-                                            </svg>
+                                            {!! $iconHapus !!}
                                         </button>
                                     </div>
                                 </td>
@@ -320,11 +320,30 @@
         </div>
 
         <div class="table-footer">
-            <div class="table-info">Total kategori induk: <strong>{{ $totalInduk }}</strong></div>
+            <div class="table-info" id="tableInfoPagination">Menampilkan data...</div>
+
+            <div class="table-pagination-controls">
+                <div class="per-page">
+                    <label for="cari_perPageSelect">Kategori per halaman:</label>
+                    <div class="combo combo--up combo--arrow" id="combo_perPageSelect">
+                        <input type="text" id="cari_perPageSelect" class="combo-input" placeholder=""
+                            autocomplete="off">
+                        <div class="combo-list" id="list_perPageSelect"></div>
+                    </div>
+                    <select id="perPageSelect" class="combo-hidden" tabindex="-1" aria-hidden="true">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+
+                <div class="pagination-buttons" id="paginationButtons"></div>
+            </div>
         </div>
     </section>
 
-    <!-- TOAST CONTAINER -->
+    <!-- TOAST -->
     <div class="toast-wrap" id="toastWrap"></div>
 
     <!-- MODAL 1: TAMBAH / EDIT KATEGORI -->
@@ -332,21 +351,29 @@
         <div class="modal-box">
             <div class="modal-head">
                 <h3 class="modal-title" id="modalKategoriTitle">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 5v14M5 12h14"></path>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
-                    <span>Tambah Kategori</span>
+                    <span id="modalKategoriTitleText">Tambah Kategori</span>
                 </h3>
-                <button class="modal-close" type="button" onclick="tutupModal('modalKategori')">&times;</button>
+                <button class="modal-close" type="button" aria-label="Tutup"
+                    onclick="tutupModal('modalKategori')">&times;</button>
             </div>
 
-            <form id="formKategori" onsubmit="return simpanKategori(event)">
+            <form id="formKategori" class="modal-form" onsubmit="return simpanKategori(event)">
                 <div class="modal-body">
                     <input type="hidden" id="kategoriId">
                     <div class="form-grid">
                         <div class="form-group form-group--full">
-                            <label for="id_induk">Kategori Induk (opsional)</label>
-                            <select id="id_induk" class="form-control">
+                            <label for="cari_id_induk">Kategori Induk (opsional)</label>
+                            <div class="combo" id="combo_id_induk">
+                                <input type="text" id="cari_id_induk" class="combo-input"
+                                    placeholder="Pilih / ketik kategori induk..." autocomplete="off">
+                                <div class="combo-list" id="list_id_induk"></div>
+                            </div>
+                            <select id="id_induk" class="combo-hidden" tabindex="-1" aria-hidden="true">
                                 <option value="">— Tidak ada (kategori utama) —</option>
                                 @foreach ($kategoriInduk as $induk)
                                     <option value="{{ $induk->id_kategori }}">{{ $induk->nama_kategori }}</option>
@@ -358,24 +385,31 @@
                         <div class="form-group">
                             <label for="nama_kategori">Nama Kategori</label>
                             <input type="text" id="nama_kategori" class="form-control"
-                                placeholder="Contoh: Botol Plastik" required>
+                                placeholder="Contoh: Botol Plastik" required autocomplete="off">
                             <span class="form-error" id="err_nama_kategori"></span>
                         </div>
 
                         <div class="form-group">
-                            <label for="satuan">Satuan Jual</label>
-                            <select id="satuan" class="form-control" required>
+                            <label for="cari_satuan">Satuan Jual</label>
+                            <div class="combo combo-satuan" id="combo_satuan">
+                                <input type="text" id="cari_satuan" class="combo-input" placeholder="Pilih satuan..."
+                                    autocomplete="off">
+                                <div class="combo-list" id="list_satuan"></div>
+                            </div>
+                            <select id="satuan" class="combo-hidden" tabindex="-1" aria-hidden="true">
                                 <option value="kg">Kilogram (kg)</option>
                                 <option value="pcs">Pieces (pcs)</option>
                                 <option value="gram">Gram (gram)</option>
                                 <option value="liter">Liter (L)</option>
+                                <option value="set">Set (set)</option>
+                                <option value="unit">Unit (unit)</option>
                             </select>
                             <span class="form-error" id="err_satuan"></span>
                         </div>
 
                         <div class="form-group" id="blokHargaAwal">
                             <label for="harga_awal">Harga Satuan (Rp)</label>
-                            <input type="number" step="0.01" id="harga_awal" class="form-control"
+                            <input type="number" step="0.01" min="0" id="harga_awal" class="form-control"
                                 placeholder="Contoh: 5000">
                             <span class="form-error" id="err_harga_awal"></span>
                         </div>
@@ -401,15 +435,17 @@
         <div class="modal-box">
             <div class="modal-head">
                 <h3 class="modal-title">
-                    <svg viewBox="0 0 24 24">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
                         <circle cx="12" cy="12" r="9"></circle>
                         <path
                             d="M15 8.5c-.6-.7-1.6-1.1-2.8-1.1-1.7 0-2.8.9-2.8 2.2 0 1.2 1 1.8 2.8 2.2 1.8.4 2.8 1 2.8 2.2 0 1.3-1.1 2.2-2.9 2.2-1.3 0-2.4-.5-3.1-1.3M12 5v14">
                         </path>
                     </svg>
-                    Kelola Harga — <span id="hargaNamaKategori">-</span>
+                    <span>Kelola Harga — <span id="hargaNamaKategori">-</span></span>
                 </h3>
-                <button class="modal-close" type="button" onclick="tutupModal('modalHarga')">&times;</button>
+                <button class="modal-close" type="button" aria-label="Tutup"
+                    onclick="tutupModal('modalHarga')">&times;</button>
             </div>
 
             <div class="modal-body">
@@ -417,7 +453,7 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="harga_satuan">Harga per <span id="hargaSatuanLabel">satuan</span> (Rp)</label>
-                            <input type="number" step="0.01" id="harga_satuan" class="form-control"
+                            <input type="number" step="0.01" min="0" id="harga_satuan" class="form-control"
                                 placeholder="Contoh: 5000" required>
                             <span class="form-error" id="err_harga_satuan"></span>
                         </div>
@@ -429,10 +465,12 @@
                         </div>
                     </div>
 
-                    <div class="form-actions form-actions--modal">
-                        <button class="btn btn--primary" type="submit">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 5v14M5 12h14"></path>
+                    <div class="form-actions--modal">
+                        <button class="btn btn--primary" type="submit" id="hargaSubmitBtn">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
                             Tambah Harga
                         </button>
@@ -483,7 +521,8 @@
 
             <div class="modal-foot modal-foot--center">
                 <button class="btn btn--ghost" type="button" onclick="tutupModal('modalHapus')">Batal</button>
-                <button class="btn btn--danger" type="button" onclick="konfirmasiHapus()">Ya, Hapus</button>
+                <button class="btn btn--danger" type="button" id="hapusConfirmBtn" onclick="konfirmasiHapus()">Ya,
+                    Hapus</button>
             </div>
         </div>
     </div>
@@ -493,20 +532,30 @@
         <div class="modal-box modal-box--xl">
             <div class="modal-head">
                 <h3 class="modal-title">
-                    <svg viewBox="0 0 24 24">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
                         <rect x="3" y="4" width="18" height="17" rx="2"></rect>
                         <path d="M3 10h18M8 2v4M16 2v4"></path>
                     </svg>
-                    Update Harga per Bulan
+                    <span>Update Harga per Bulan</span>
                 </h3>
-                <button class="modal-close" type="button" onclick="tutupModal('modalBulanan')">&times;</button>
+                <button class="modal-close" type="button" aria-label="Tutup"
+                    onclick="tutupModal('modalBulanan')">&times;</button>
             </div>
 
             <div class="modal-body">
                 <div class="bulan-bar">
-                    <button class="btn btn--ghost" type="button" onclick="geserTahun(-1)">‹</button>
-                    <select id="rekapTahun" class="form-control" onchange="renderRekap()"></select>
-                    <button class="btn btn--ghost" type="button" onclick="geserTahun(1)">›</button>
+                    <button class="btn btn--ghost" type="button" onclick="geserTahun(-1)"
+                        aria-label="Tahun sebelumnya">‹</button>
+                    <div class="combo combo--arrow" id="combo_rekapTahun">
+                        <input type="text" id="cari_rekapTahun" class="combo-input" placeholder=""
+                            autocomplete="off">
+                        <div class="combo-list" id="list_rekapTahun"></div>
+                    </div>
+                    <select id="rekapTahun" class="combo-hidden" tabindex="-1" aria-hidden="true"
+                        onchange="renderRekap()"></select>
+                    <button class="btn btn--ghost" type="button" onclick="geserTahun(1)"
+                        aria-label="Tahun berikutnya">›</button>
                     <span class="rekap-legend"><i class="dot"></i> harga berubah dari bulan sebelumnya</span>
                 </div>
 
@@ -531,76 +580,101 @@
 
     <!-- STYLESHEET -->
     <style>
-        /* =========================================================
-               DASHBOARD THEME
-               ========================================================= */
-
         :root {
             --dashboard-page: #f5f7fb;
             --dashboard-card: #ffffff;
             --dashboard-card-secondary: #f8fafc;
-
             --dashboard-text: #1f2937;
             --dashboard-text-secondary: #6b7280;
             --dashboard-text-muted: #9ca3af;
-
             --dashboard-border: #e5e7eb;
             --dashboard-table-head: #f8fafc;
             --dashboard-table-row: #ffffff;
             --dashboard-table-hover: #f8fafc;
-
             --dashboard-input: #ffffff;
             --dashboard-row-strong: #e5e7eb;
-
             --dashboard-shadow: 0 8px 25px rgba(15, 23, 42, .06);
             --dashboard-shadow-lg: 0 18px 45px rgba(15, 23, 42, .12);
 
             --primary-color: var(--primary, #4338ca);
+            --primary-ring: rgba(67, 56, 202, .10);
+
+            --combo-accent: #4338ca;
+            --combo-ring: rgba(67, 56, 202, .12);
+            --combo-input-bg: #ffffff;
+            --combo-hover: #eef2ff;
+
+            --tone-primary-bg: #eef2ff;
+            --tone-income-bg: #dcfce7;
+            --tone-income-fg: #16a34a;
+            --tone-expense-bg: #fee2e2;
+            --tone-expense-fg: #dc2626;
+
+            --badge-satuan-bg: #e0f2fe;
+            --badge-satuan-fg: #0369a1;
+            --badge-success-bg: #dcfce7;
+            --badge-success-fg: #15803d;
+            --badge-warning-bg: #fef3c7;
+            --badge-warning-fg: #b45309;
+
+            /* Tombol Berlogo Uang (Tetap Hijau di Mode Terang maupun Gelap) */
+            --btn-harga-bg: #dcfce7;
+            --btn-harga-bd: #bbf7d0;
+            --btn-harga-fg: #15803d;
+
+            --btn-danger-bg: #fef2f2;
+            --btn-danger-bd: #fecaca;
+            --btn-danger-fg: #dc2626;
         }
 
         [data-theme="dark"] {
             --dashboard-page: #0b1220;
             --dashboard-card: #151d2f;
             --dashboard-card-secondary: #1b2438;
-
             --dashboard-text: #f1f5f9;
             --dashboard-text-secondary: #aab6c8;
             --dashboard-text-muted: #748198;
-
             --dashboard-border: #29364d;
             --dashboard-table-head: #111a2c;
             --dashboard-table-row: #151d2f;
             --dashboard-table-hover: #202b40;
-
             --dashboard-input: #1b2438;
             --dashboard-row-strong: #29364d;
-
             --dashboard-shadow: 0 8px 25px rgba(0, 0, 0, .25);
             --dashboard-shadow-lg: 0 20px 50px rgba(0, 0, 0, .35);
 
+            /* Konsistensi Warna Biru untuk Tombol Umum (seperti Tambah Kategori) */
             --primary-color: #818cf8;
+            --primary-ring: rgba(129, 140, 248, .18);
+            --combo-accent: #818cf8;
+            --combo-ring: rgba(129, 140, 248, .20);
+            --combo-input-bg: #111a2c;
+            --combo-hover: #202b40;
+
+            --tone-primary-bg: rgba(129, 140, 248, .15);
+            --tone-income-bg: rgba(34, 197, 94, .15);
+            --tone-income-fg: #4ade80;
+            --tone-expense-bg: rgba(220, 38, 38, .15);
+            --tone-expense-fg: #f87171;
+
+            --badge-satuan-bg: rgba(3, 105, 161, .25);
+            --badge-satuan-fg: #38bdf8;
+            --badge-success-bg: rgba(34, 197, 94, .20);
+            --badge-success-fg: #4ade80;
+            --badge-warning-bg: rgba(245, 158, 11, .20);
+            --badge-warning-fg: #fbbf24;
+
+            /* TOMBOL BERLOGO UANG TETAP DIJAGA NUANSA HIJAU NYA */
+            --btn-harga-bg: rgba(34, 197, 94, .15);
+            --btn-harga-bd: rgba(34, 197, 94, .35);
+            --btn-harga-fg: #4ade80;
+
+            --btn-danger-bg: rgba(220, 38, 38, .15);
+            --btn-danger-bd: rgba(220, 38, 38, .35);
+            --btn-danger-fg: #f87171;
         }
 
-
-        /* =========================================================
-               GLOBAL
-               ========================================================= */
-
-        body {
-            background: var(--dashboard-page);
-            color: var(--dashboard-text);
-            transition: background-color .25s ease, color .25s ease;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-
-        /* =========================================================
-               SUMMARY CARD
-               ========================================================= */
-
+        /* ---------- SUMMARY ---------- */
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -611,10 +685,11 @@
         .summary-card {
             border: 1px solid var(--dashboard-border);
             background: var(--dashboard-card);
+            color: var(--dashboard-text);
             border-radius: 14px;
             padding: 18px;
             box-shadow: var(--dashboard-shadow);
-            transition: transform .2s ease, box-shadow .2s ease, background .25s ease, border-color .25s ease;
+            transition: transform .2s ease, box-shadow .2s ease;
         }
 
         .summary-card:hover {
@@ -650,18 +725,18 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #eef2ff;
+            background: var(--tone-primary-bg);
             color: var(--primary-color);
         }
 
         .summary-icon--income {
-            background: #dcfce7;
-            color: #16a34a;
+            background: var(--tone-income-bg);
+            color: var(--tone-income-fg);
         }
 
         .summary-icon--expense {
-            background: #fee2e2;
-            color: #dc2626;
+            background: var(--tone-expense-bg);
+            color: var(--tone-expense-fg);
         }
 
         .summary-icon svg {
@@ -679,11 +754,7 @@
             line-height: 1.5;
         }
 
-
-        /* =========================================================
-               CARD
-               ========================================================= */
-
+        /* ---------- CARD & TOOLBAR ---------- */
         .card {
             background: var(--dashboard-card);
             border: 1px solid var(--dashboard-border);
@@ -692,11 +763,6 @@
             box-shadow: var(--dashboard-shadow);
             color: var(--dashboard-text);
         }
-
-
-        /* =========================================================
-               TABLE TOOLBAR
-               ========================================================= */
 
         .table-toolbar {
             display: flex;
@@ -734,14 +800,17 @@
             border: 1px solid var(--dashboard-border);
             border-radius: 8px;
             outline: none;
+            box-sizing: border-box;
             background: var(--dashboard-input);
             color: var(--dashboard-text);
+            font-family: inherit;
+            font-size: 13px;
             transition: border-color .2s ease, box-shadow .2s ease;
         }
 
         .table-search input:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(67, 56, 202, .08);
+            box-shadow: 0 0 0 3px var(--primary-ring);
         }
 
         .toolbar-right {
@@ -751,44 +820,13 @@
             flex-wrap: wrap;
         }
 
-
-        /* =========================================================
-               TABLE RESPONSIVE
-               ========================================================= */
-
+        /* ---------- TABLE ---------- */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
             overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
         }
-
-        .table-responsive::-webkit-scrollbar,
-        .rekap-wrap::-webkit-scrollbar {
-            height: 8px;
-            width: 8px;
-        }
-
-        .table-responsive::-webkit-scrollbar-track,
-        .rekap-wrap::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .table-responsive::-webkit-scrollbar-thumb,
-        .rekap-wrap::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 20px;
-        }
-
-        [data-theme="dark"] .table-responsive::-webkit-scrollbar-thumb,
-        [data-theme="dark"] .rekap-wrap::-webkit-scrollbar-thumb {
-            background: #475569;
-        }
-
-
-        /* =========================================================
-               MAIN DATA TABLE
-               ========================================================= */
 
         .data-table {
             width: 100%;
@@ -822,19 +860,24 @@
             color: var(--dashboard-text);
             vertical-align: middle;
             background: var(--dashboard-table-row);
+            transition: background .15s ease;
         }
 
         .data-table tbody tr:hover td {
             background: var(--dashboard-table-hover);
         }
 
-        .sub-row td {
+        .data-table .sub-row td {
             background: var(--dashboard-card-secondary);
         }
 
+        .data-table .sub-row:hover td {
+            background: var(--dashboard-table-hover);
+        }
+
         .sub-cell {
-            padding-left: 28px;
-            color: var(--dashboard-text-secondary);
+            padding-left: 28px !important;
+            color: var(--dashboard-text-secondary) !important;
         }
 
         .sub-arrow {
@@ -846,6 +889,10 @@
             white-space: nowrap;
         }
 
+        .saldo {
+            color: var(--tone-income-fg);
+        }
+
         .muted,
         .empty-desc {
             color: var(--dashboard-text-secondary);
@@ -854,11 +901,6 @@
         .text-center {
             text-align: center;
         }
-
-
-        /* =========================================================
-               BADGE
-               ========================================================= */
 
         .badge {
             display: inline-flex;
@@ -872,25 +914,21 @@
         }
 
         .badge--satuan {
-            background: #e0f2fe;
-            color: #0369a1;
+            background: var(--badge-satuan-bg);
+            color: var(--badge-satuan-fg);
         }
 
         .badge--success {
-            background: #dcfce7;
-            color: #15803d;
+            background: var(--badge-success-bg);
+            color: var(--badge-success-fg);
         }
 
         .badge--warning {
-            background: #fef3c7;
-            color: #b45309;
+            background: var(--badge-warning-bg);
+            color: var(--badge-warning-fg);
         }
 
-
-        /* =========================================================
-               TABLE ACTIONS
-               ========================================================= */
-
+        /* ---------- ICON BUTTONS ---------- */
         .table-actions {
             display: flex;
             align-items: center;
@@ -902,17 +940,24 @@
             height: 34px;
             border: 1px solid var(--dashboard-border);
             background: var(--dashboard-card);
+            color: var(--dashboard-text-secondary);
             border-radius: 7px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
-            color: var(--dashboard-text-secondary);
         }
 
         .icon-btn:hover {
             transform: translateY(-1px);
+            background: var(--dashboard-table-hover);
+            color: var(--dashboard-text);
+        }
+
+        .icon-btn--sm {
+            width: 30px;
+            height: 30px;
         }
 
         .icon-btn svg {
@@ -921,48 +966,42 @@
             fill: none;
             stroke: currentColor;
             stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .icon-btn--harga {
-            color: #16a34a;
-            background: #f0fdf4;
-            border-color: #bbf7d0;
+            color: var(--btn-harga-fg);
+            background: var(--btn-harga-bg);
+            border-color: var(--btn-harga-bd);
         }
 
         .icon-btn--harga:hover {
-            background: #dcfce7;
-            border-color: #86efac;
-            color: #15803d;
+            color: var(--btn-harga-fg);
+            background: var(--btn-harga-bg);
+            filter: brightness(1.1);
         }
 
         .icon-btn--danger {
-            color: #dc2626;
-            background: #fef2f2;
-            border-color: #fecaca;
+            color: var(--btn-danger-fg);
+            background: var(--btn-danger-bg);
+            border-color: var(--btn-danger-bd);
         }
 
         .icon-btn--danger:hover {
-            background: #fee2e2;
-            border-color: #fca5a5;
-            color: #b91c1c;
+            color: var(--btn-danger-fg);
+            background: var(--btn-danger-bg);
+            filter: brightness(.96);
         }
 
-        .icon-btn--danger.icon-btn--sm {
-            width: 34px;
-            padding: 0;
-        }
-
-
-        /* =========================================================
-               TABLE FOOTER & EMPTY STATE
-               ========================================================= */
-
+        /* ---------- FOOTER & PAGINATION ---------- */
         .table-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 12px;
             padding: 16px 24px;
+            flex-wrap: wrap;
         }
 
         .table-info {
@@ -970,14 +1009,63 @@
             color: var(--dashboard-text-secondary);
         }
 
+        .table-pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .per-page {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .per-page label {
+            font-size: 13px;
+            color: var(--dashboard-text-secondary);
+        }
+
+        .per-page .combo {
+            width: 84px;
+        }
+
+        .per-page .combo-input {
+            padding-top: 6px;
+            padding-bottom: 6px;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .pagination-buttons .btn {
+            padding: 6px 12px;
+            min-width: 32px;
+        }
+
+        .pagination-buttons .btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .pagination-dots {
+            padding: 0 4px;
+            color: var(--dashboard-text-secondary);
+        }
+
         .catalog-empty {
             text-align: center;
             padding: 50px 20px;
+            color: var(--dashboard-text);
         }
 
         .empty-state-cell {
             text-align: center;
-            padding: 40px;
+            padding: 40px !important;
         }
 
         .empty-icon {
@@ -985,11 +1073,277 @@
             margin-bottom: 10px;
         }
 
+        /* ---------- FORM ---------- */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px 20px;
+        }
 
-        /* =========================================================
-               MONTH BAR
-               ========================================================= */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+        }
 
+        .form-group--full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--dashboard-text-secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            min-height: 40px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--dashboard-text);
+            border: 1px solid var(--dashboard-border);
+            border-radius: 8px;
+            outline: none;
+            box-sizing: border-box;
+            background: var(--dashboard-input);
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--primary-ring);
+        }
+
+        .form-control.is-invalid {
+            border-color: #dc2626;
+        }
+
+        .form-control:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+        .form-error {
+            display: block;
+            margin-top: 2px;
+            font-size: 12px;
+            color: #dc2626;
+            min-height: 14px;
+        }
+
+        .form-actions--modal {
+            margin-top: 16px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        /* ---------- MODAL ---------- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, .60);
+            backdrop-filter: blur(3px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            width: 100%;
+            max-width: 620px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--dashboard-card);
+            color: var(--dashboard-text);
+            border: 1px solid var(--dashboard-border);
+            border-radius: 14px;
+            box-shadow: var(--dashboard-shadow-lg);
+        }
+
+        .modal-box--sm {
+            max-width: 420px;
+        }
+
+        .modal-box--xl {
+            max-width: 1180px;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--dashboard-border);
+            background: var(--dashboard-card);
+            flex-shrink: 0;
+        }
+
+        .modal-title {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dashboard-text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .modal-title span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .modal-subtitle {
+            margin: 20px 0 12px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--dashboard-text);
+        }
+
+        .modal-close {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: transparent;
+            border-radius: 7px;
+            font-size: 20px;
+            line-height: 1;
+            color: var(--dashboard-text-secondary);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background .2s ease, color .2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--dashboard-card-secondary);
+            color: var(--dashboard-text);
+        }
+
+        .modal-body {
+            padding: 22px 24px;
+            background: var(--dashboard-card);
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--dashboard-border) transparent;
+        }
+
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: var(--dashboard-border);
+            border-radius: 4px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: var(--dashboard-text-muted);
+        }
+
+        .modal-body--center {
+            text-align: center;
+            padding-top: 28px;
+        }
+
+        .modal-foot {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 24px;
+            border-top: 1px solid var(--dashboard-border);
+            background: var(--dashboard-card);
+            flex-shrink: 0;
+        }
+
+        .modal-foot--center {
+            justify-content: center;
+        }
+
+        .btn--danger {
+            background: #dc2626;
+            color: #fff;
+            border: 1px solid #dc2626;
+        }
+
+        .btn--danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+        .confirm-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 14px;
+            border-radius: 50%;
+            background: var(--btn-danger-bg);
+            color: var(--btn-danger-fg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .confirm-title {
+            margin: 0 0 8px;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dashboard-text);
+        }
+
+        .confirm-text {
+            margin: 0;
+            font-size: 13px;
+            color: var(--dashboard-text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ---------- REKAP BULANAN ---------- */
         .bulan-bar {
             display: flex;
             align-items: center;
@@ -997,23 +1351,8 @@
             flex-wrap: wrap;
         }
 
-        .bulan-bar .form-control {
-            width: auto;
-            min-width: 110px;
-            padding: 8px 12px;
-        }
-
         .bulan-bar .btn {
             padding: 6px 12px;
-        }
-
-
-        /* =========================================================
-               REKAP HARGA BULANAN (GARIS SAJA / TANPA SHADOW)
-               ========================================================= */
-
-        .modal-box--xl {
-            max-width: 1180px;
         }
 
         .rekap-legend {
@@ -1044,12 +1383,23 @@
             border-radius: 8px;
             isolation: isolate;
             background: var(--dashboard-card);
+            scrollbar-width: thin;
+            scrollbar-color: var(--dashboard-border) transparent;
         }
 
+        .rekap-wrap::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
 
-        /* =========================================================
-               REKAP TABLE
-               ========================================================= */
+        .rekap-wrap::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .rekap-wrap::-webkit-scrollbar-thumb {
+            background: var(--dashboard-border);
+            border-radius: 4px;
+        }
 
         .rekap-table {
             border-collapse: separate;
@@ -1072,18 +1422,9 @@
             background: var(--dashboard-table-row);
         }
 
-        .rekap-table tr th:first-child,
-        .rekap-table tr td:first-child {
-            border-left: 0;
-        }
-
-
-        /* =========================================================
-               REKAP HEADER STICKY
-               ========================================================= */
-
         .rekap-table thead th {
             background: var(--dashboard-table-head);
+            color: var(--dashboard-text-secondary);
             text-align: center;
             font-size: 12px;
             font-weight: 700;
@@ -1093,85 +1434,35 @@
             border-bottom: 2px solid var(--dashboard-border);
         }
 
-        .rekap-table thead tr:first-child th {
-            top: 0;
-            z-index: 31;
-        }
-
-        .rekap-table thead tr:nth-child(2) th {
-            top: 34px;
-            z-index: 30;
-        }
-
-
-        /* =========================================================
-               STICKY COLUMN "JENIS SAMPAH" (GARIS SAJA)
-               ========================================================= */
-
         .rekap-table .col-nama {
             position: sticky;
             left: 0;
             width: 240px;
             min-width: 240px;
             max-width: 240px;
-            text-align: left;
-            background: var(--dashboard-card) !important;
-            color: var(--dashboard-text);
-            z-index: 40;
-            border-right: 2px solid var(--dashboard-border) !important;
             overflow: hidden;
-            isolation: isolate;
+            text-overflow: ellipsis;
+            text-align: left;
+            background: var(--dashboard-card);
+            z-index: 40;
+            border-right: 2px solid var(--dashboard-border);
         }
 
         .rekap-table thead .col-nama {
             top: 0;
-            background: var(--dashboard-table-head) !important;
+            background: var(--dashboard-table-head);
             z-index: 50;
-            border-right: 2px solid var(--dashboard-border) !important;
         }
-
-        .rekap-table .col-nama.sub {
-            padding-left: 22px;
-            background: var(--dashboard-card) !important;
-            color: var(--dashboard-text);
-            z-index: 40;
-        }
-
-        .rekap-table .col-nama small {
-            color: var(--dashboard-text-secondary);
-            margin-left: 6px;
-            font-size: 11px;
-        }
-
-
-        /* =========================================================
-               BARIS KATEGORI INDUK
-               ========================================================= */
 
         .rekap-table tr.baris-induk td {
             background: var(--dashboard-row-strong);
             font-weight: 800;
             text-transform: uppercase;
-            color: var(--dashboard-text);
         }
 
         .rekap-table tr.baris-induk .col-nama {
-            position: sticky;
-            left: 0;
-            width: 240px;
-            min-width: 240px;
-            max-width: 240px;
-            background: var(--dashboard-row-strong) !important;
-            color: var(--dashboard-text);
-            font-weight: 800;
             z-index: 45;
-            border-right: 2px solid var(--dashboard-border) !important;
         }
-
-
-        /* =========================================================
-               HARGA BERUBAH & KOSONG
-               ========================================================= */
 
         .rekap-table td.berubah {
             background: #fef3c7;
@@ -1180,259 +1471,25 @@
             border: 1px solid #fcd34d;
         }
 
+        [data-theme="dark"] .rekap-table td.berubah {
+            background: rgba(245, 158, 11, .25);
+            color: #fde68a;
+            border-color: rgba(251, 191, 36, .45);
+        }
+
         .rekap-table td.kosong {
             color: var(--dashboard-text-muted);
             text-align: center;
             font-weight: 500;
         }
 
-        .rekap-table tbody td:not(.col-nama) {
-            position: relative;
-            z-index: 1;
-        }
-
         .legend-info {
             margin: 12px 0 0;
             font-size: 12px;
             line-height: 1.6;
-            color: var(--dashboard-text-secondary);
         }
 
-
-        /* =========================================================
-               FORM & MODAL
-               ========================================================= */
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 16px 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .form-group--full {
-            grid-column: 1 / -1;
-        }
-
-        .form-group label {
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--dashboard-text-secondary);
-        }
-
-        .form-control {
-            width: 100%;
-            min-height: 40px;
-            padding: 10px 14px;
-            font-size: 13px;
-            color: var(--dashboard-text);
-            border: 1px solid var(--dashboard-border);
-            border-radius: 8px;
-            outline: none;
-            background: var(--dashboard-input);
-            transition: border-color .2s ease, box-shadow .2s ease;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(67, 56, 202, .08);
-        }
-
-        .form-control.is-invalid {
-            border-color: #dc2626;
-        }
-
-        .form-error {
-            display: block;
-            margin-top: 2px;
-            font-size: 12px;
-            color: #dc2626;
-            min-height: 14px;
-        }
-
-        .form-actions--modal {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 4px;
-        }
-
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, .60);
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 1000;
-            backdrop-filter: blur(2px);
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal-box {
-            width: 100%;
-            max-width: 620px;
-            max-height: 90vh;
-            overflow-y: auto;
-            background: var(--dashboard-card);
-            border: 1px solid var(--dashboard-border);
-            border-radius: 14px;
-            box-shadow: var(--dashboard-shadow-lg);
-            animation: modalPop .15s ease-out;
-        }
-
-        .modal-box--sm {
-            max-width: 420px;
-        }
-
-        @keyframes modalPop {
-            from {
-                opacity: 0;
-                transform: translateY(8px) scale(.98);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        .modal-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--dashboard-border);
-            background: var(--dashboard-card);
-        }
-
-        .modal-title {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--dashboard-text);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .modal-title svg {
-            width: 18px;
-            height: 18px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 1.8;
-        }
-
-        .modal-subtitle {
-            margin: 20px 0 12px;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--dashboard-text);
-        }
-
-        .modal-close {
-            width: 30px;
-            height: 30px;
-            border: none;
-            background: transparent;
-            border-radius: 7px;
-            font-size: 20px;
-            color: var(--dashboard-text-secondary);
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: background .15s ease, color .15s ease;
-        }
-
-        .modal-close:hover {
-            background: var(--dashboard-table-hover);
-            color: var(--dashboard-text);
-        }
-
-        .modal-body {
-            padding: 22px 24px;
-        }
-
-        .modal-body--center {
-            text-align: center;
-            padding-top: 28px;
-        }
-
-        .modal-foot {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            padding: 16px 24px;
-            border-top: 1px solid var(--dashboard-border);
-            background: var(--dashboard-card);
-        }
-
-        .modal-foot--center {
-            justify-content: center;
-        }
-
-        .btn--danger {
-            background: #dc2626;
-            color: #fff;
-            border: 1px solid #dc2626;
-        }
-
-        .btn--danger:hover {
-            background: #b91c1c;
-            border-color: #b91c1c;
-        }
-
-        .confirm-icon {
-            width: 56px;
-            height: 56px;
-            margin: 0 auto 14px;
-            border-radius: 50%;
-            background: #fef2f2;
-            color: #dc2626;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .confirm-icon svg {
-            width: 24px;
-            height: 24px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 1.8;
-        }
-
-        .confirm-title {
-            margin: 0 0 8px;
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--dashboard-text);
-        }
-
-        .confirm-text {
-            margin: 0;
-            font-size: 13px;
-            color: var(--dashboard-text-secondary);
-            line-height: 1.6;
-        }
-
-
-        /* =========================================================
-               TOAST
-               ========================================================= */
-
+        /* ---------- TOAST ---------- */
         .toast-wrap {
             position: fixed;
             top: 20px;
@@ -1451,13 +1508,13 @@
             min-width: 300px;
             max-width: 380px;
             background: var(--dashboard-card);
+            color: var(--dashboard-text);
             border: 1px solid var(--dashboard-border);
             border-left: 4px solid #16a34a;
             border-radius: 10px;
             box-shadow: var(--dashboard-shadow-lg);
             padding: 14px 16px;
             pointer-events: auto;
-            animation: toastIn .18s ease-out;
         }
 
         .toast.toast--error {
@@ -1468,25 +1525,27 @@
             width: 22px;
             height: 22px;
             border-radius: 50%;
-            background: #dcfce7;
-            color: #16a34a;
+            background: var(--tone-income-bg);
+            color: var(--tone-income-fg);
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .toast.toast--error .toast-icon {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
         .toast-icon svg {
-            width: 13px;
-            height: 13px;
+            width: 14px;
+            height: 14px;
             fill: none;
             stroke: currentColor;
-            stroke-width: 2.4;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .toast.toast--error .toast-icon {
+            background: var(--tone-expense-bg);
+            color: var(--tone-expense-fg);
         }
 
         .toast-body {
@@ -1517,388 +1576,146 @@
             padding: 0;
         }
 
-        .toast-close:hover {
+        /* ---------- FORM DALAM MODAL ---------- */
+        .modal-box .form-group label {
+            text-transform: none;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--dashboard-text-secondary);
+        }
+
+        .modal-box .form-control {
+            min-height: 0;
+            padding: 9px 12px;
+            background: var(--combo-input-bg);
+        }
+
+        .modal-box .form-control:focus {
+            border-color: var(--combo-accent);
+            box-shadow: 0 0 0 3px var(--combo-ring);
+        }
+
+        /* ---------- COMBOBOX ---------- */
+        .combo {
+            position: relative;
+        }
+
+        .combo-hidden {
+            display: none !important;
+        }
+
+        .combo-input {
+            width: 100%;
+            border: 1px solid var(--dashboard-border);
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            box-sizing: border-box;
+            background: var(--combo-input-bg);
             color: var(--dashboard-text);
+            transition: border-color .2s ease, box-shadow .2s ease;
         }
 
-        .toast.toast--leaving {
-            animation: toastOut .18s ease-in forwards;
+        .combo-input::placeholder {
+            color: var(--dashboard-text-muted);
         }
 
-        @keyframes toastIn {
-            from {
-                opacity: 0;
-                transform: translateX(16px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .combo-input:focus {
+            border-color: var(--combo-accent);
+            box-shadow: 0 0 0 3px var(--combo-ring);
         }
 
-        @keyframes toastOut {
-            from {
-                opacity: 1;
-                transform: translateX(0);
-            }
-
-            to {
-                opacity: 0;
-                transform: translateX(16px);
-            }
+        .combo-input:disabled {
+            opacity: .6;
+            cursor: not-allowed;
         }
 
-
-        /* =========================================================
-               DARK MODE
-               ========================================================= */
-
-        [data-theme="dark"] .summary-icon {
-            background: rgba(99, 102, 241, .18);
-            color: #a5b4fc;
+        .combo--arrow .combo-input {
+            cursor: pointer;
+            padding-right: 30px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 9px center;
+            background-size: 14px;
         }
 
-        [data-theme="dark"] .summary-icon--income {
-            background: rgba(34, 197, 94, .16);
-            color: #4ade80;
+        .combo-list {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            min-width: 84px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--dashboard-card);
+            border: 1px solid var(--dashboard-border);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, .22);
+            z-index: 60;
+            scrollbar-width: thin;
+            scrollbar-color: var(--dashboard-border) transparent;
         }
 
-        [data-theme="dark"] .summary-icon--expense {
-            background: rgba(220, 38, 38, .16);
-            color: #f87171;
+        .combo-satuan .combo-list {
+            max-height: 125px;
         }
 
-        [data-theme="dark"] .badge--satuan {
-            background: rgba(3, 105, 161, .20);
-            color: #38bdf8;
+        .combo--up .combo-list {
+            top: auto;
+            bottom: calc(100% + 4px);
         }
 
-        [data-theme="dark"] .badge--success {
-            background: rgba(34, 197, 94, .16);
-            color: #4ade80;
+        .combo-list.show {
+            display: block;
         }
 
-        [data-theme="dark"] .badge--warning {
-            background: rgba(245, 158, 11, .18);
-            color: #fbbf24;
+        .combo-list::-webkit-scrollbar {
+            width: 6px;
         }
 
-        [data-theme="dark"] .icon-btn {
-            background: #151d2f;
-            border-color: #29364d;
+        .combo-list::-webkit-scrollbar-track {
+            background: transparent;
         }
 
-        [data-theme="dark"] .icon-btn--harga {
-            background: rgba(34, 197, 94, .12);
-            border-color: rgba(34, 197, 94, .35);
-            color: #4ade80;
+        .combo-list::-webkit-scrollbar-thumb {
+            background: var(--dashboard-border);
+            border-radius: 4px;
         }
 
-        [data-theme="dark"] .icon-btn--harga:hover {
-            background: rgba(34, 197, 94, .20);
-            border-color: rgba(34, 197, 94, .50);
-            color: #86efac;
+        .combo-list::-webkit-scrollbar-thumb:hover {
+            background: var(--dashboard-text-muted);
         }
 
-        [data-theme="dark"] .icon-btn--danger {
-            background: rgba(220, 38, 38, .12);
-            border-color: rgba(220, 38, 38, .35);
-            color: #f87171;
+        .combo-item {
+            padding: 10px 14px;
+            font-size: 13px;
+            color: var(--dashboard-text);
+            cursor: pointer;
+            transition: background .1s ease, color .1s ease;
         }
 
-        [data-theme="dark"] .icon-btn--danger:hover {
-            background: rgba(220, 38, 38, .20);
-            border-color: rgba(220, 38, 38, .50);
-            color: #fca5a5;
+        .combo-item.is-selected {
+            font-weight: 700;
         }
 
-
-        /* =========================================================
-               DARK MODE - REKAP TABLE
-               ========================================================= */
-
-        [data-theme="dark"] .rekap-table {
-            background: #151d2f;
+        .combo-item:hover,
+        .combo-item.is-active {
+            background: var(--combo-hover);
+            color: var(--combo-accent);
         }
 
-        [data-theme="dark"] .rekap-table th,
-        [data-theme="dark"] .rekap-table td {
-            border-color: #29364d;
-            color: #f1f5f9;
-            background: #151d2f;
-        }
-
-        [data-theme="dark"] .rekap-table thead th {
-            background: #111a2c;
-            color: #aab6c8;
-            border-bottom: 2px solid #29364d;
-        }
-
-        [data-theme="dark"] .rekap-table .col-nama {
-            background: #151d2f !important;
-            color: #f1f5f9;
-            border-right: 2px solid #29364d !important;
-        }
-
-        [data-theme="dark"] .rekap-table thead .col-nama {
-            background: #111a2c !important;
-            border-right: 2px solid #29364d !important;
-        }
-
-        [data-theme="dark"] .rekap-table tr.baris-induk td {
-            background: #29364d;
-            color: #f1f5f9;
-        }
-
-        [data-theme="dark"] .rekap-table tr.baris-induk .col-nama {
-            background: #29364d !important;
-            color: #f1f5f9;
-            border-right: 2px solid #3b4d6d !important;
-        }
-
-        [data-theme="dark"] .rekap-table .col-nama small {
-            color: #aab6c8;
-        }
-
-        [data-theme="dark"] .rekap-table td.berubah {
-            background: rgba(245, 158, 11, .20);
-            color: #fde68a;
-            border: 1px solid rgba(245, 158, 11, .40);
-        }
-
-        [data-theme="dark"] .rekap-table td.kosong {
-            color: #748198;
-        }
-
-        [data-theme="dark"] .rekap-legend .dot {
-            background: rgba(245, 158, 11, .25);
-            border-color: #fbbf24;
-        }
-
-
-        /* =========================================================
-               DARK MODE - DATA TABLE & MODAL / FORM
-               ========================================================= */
-
-        [data-theme="dark"] .data-table {
-            background: #151d2f;
-            color: #f1f5f9;
-        }
-
-        [data-theme="dark"] .data-table th {
-            background: #111a2c;
-            color: #aab6c8;
-            border-color: #29364d;
-        }
-
-        [data-theme="dark"] .data-table td {
-            background: #151d2f;
-            color: #f1f5f9;
-            border-color: #29364d;
-        }
-
-        [data-theme="dark"] .data-table tbody tr:hover td {
-            background: #202b40;
-        }
-
-        [data-theme="dark"] .sub-row td {
-            background: #1b2438;
-        }
-
-        [data-theme="dark"] .form-control,
-        [data-theme="dark"] .table-search input {
-            background: #1b2438;
-            color: #f1f5f9;
-            border-color: #29364d;
-        }
-
-        [data-theme="dark"] .form-control:focus,
-        [data-theme="dark"] .table-search input:focus {
-            border-color: #818cf8;
-            box-shadow: 0 0 0 3px rgba(129, 140, 248, .12);
-        }
-
-        [data-theme="dark"] .form-control::placeholder,
-        [data-theme="dark"] .table-search input::placeholder {
-            color: rgba(255, 255, 255, .35);
-        }
-
-        [data-theme="dark"] .modal-overlay {
-            background: rgba(0, 0, 0, .68);
-        }
-
-        [data-theme="dark"] .modal-box,
-        [data-theme="dark"] .modal-head,
-        [data-theme="dark"] .modal-foot,
-        [data-theme="dark"] .toast,
-        [data-theme="dark"] .summary-card,
-        [data-theme="dark"] .card {
-            background: #151d2f;
-            color: #f1f5f9;
-            border-color: #29364d;
-        }
-
-        [data-theme="dark"] .confirm-icon {
-            background: rgba(220, 38, 38, .16);
-            color: #f87171;
-        }
-
-        [data-theme="dark"] .toast-icon {
-            background: rgba(34, 197, 94, .16);
-            color: #4ade80;
-        }
-
-        [data-theme="dark"] .toast.toast--error .toast-icon {
-            background: rgba(220, 38, 38, .16);
-            color: #f87171;
-        }
-
-
-        /* =========================================================
-               RESPONSIVE - TABLET & MOBILE
-               ========================================================= */
-
-        @media (max-width: 1100px) {
-            .summary-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .table-search {
-                width: 320px;
-            }
-
-            .modal-box--xl {
-                max-width: calc(100vw - 30px);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .summary-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 12px;
-            }
-
-            .summary-card {
-                padding: 14px;
-            }
-
-            .summary-value {
-                font-size: 18px;
-            }
-
-            .summary-icon {
-                width: 36px;
-                height: 36px;
-                flex-basis: 36px;
-            }
-
-            .table-toolbar {
-                padding: 14px 16px;
-            }
-
-            .table-search {
-                width: 100%;
-            }
-
-            .toolbar-right {
-                width: 100%;
-            }
-
-            .rekap-wrap {
-                max-height: 65vh;
-                margin-left: -1px;
-                margin-right: -1px;
-                border-radius: 8px;
-            }
-
-            .rekap-table .col-nama,
-            .rekap-table tr.baris-induk .col-nama {
-                width: 210px;
-                min-width: 210px;
-                max-width: 210px;
-            }
-
-            .modal-overlay {
-                padding: 12px;
-            }
-
-            .modal-box {
-                max-height: 94vh;
-            }
-
-            .modal-head,
-            .modal-body,
-            .modal-foot {
-                padding-left: 18px;
-                padding-right: 18px;
-            }
-
-            .toast-wrap {
-                left: 12px;
-                right: 12px;
-                top: 12px;
-            }
-
-            .toast {
-                min-width: 0;
-                width: 100%;
-                max-width: none;
-            }
-        }
-
-        @media (max-width: 560px) {
-            .summary-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .summary-card {
-                padding: 16px;
-            }
-
-            .table-toolbar {
-                align-items: stretch;
-            }
-
-            .toolbar-right {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .bulan-bar {
-                width: 100%;
-            }
-
-            .bulan-bar .form-control {
-                flex: 1;
-            }
-
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-group--full {
-                grid-column: auto;
-            }
-
-            .modal-foot {
-                flex-wrap: wrap;
-            }
-
-            .modal-foot .btn {
-                flex: 1;
-            }
-
-            .rekap-table .col-nama,
-            .rekap-table tr.baris-induk .col-nama {
-                width: 190px;
-                min-width: 190px;
-                max-width: 190px;
-            }
+        .combo-empty {
+            padding: 12px;
+            font-size: 12.5px;
+            color: var(--dashboard-text-muted);
+            text-align: center;
         }
     </style>
 
-    <!-- JAVASCRIPT LOGIC -->
+    <!-- JAVASCRIPT -->
     <script>
         const riwayatData = @json($riwayatMap);
         const daftarKategori = @json($daftarKategori);
@@ -1909,9 +1726,21 @@
 
         const BULAN_SINGKAT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         const FIELD_KATEGORI = ['id_induk', 'nama_kategori', 'satuan', 'harga_awal', 'tanggal_awal'];
+        const FIELD_HARGA = ['harga_satuan', 'tanggal_berlaku'];
 
         let hargaContext = null;
         let hapusContext = null;
+
+        /* ---------- UTIL ---------- */
+        function escapeHtml(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            } [c]));
+        }
 
         function getCsrfToken() {
             const meta = document.querySelector('meta[name="csrf-token"]');
@@ -1920,8 +1749,12 @@
 
         function tanggalHariIni() {
             const d = new Date();
-            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2,
-                '0');
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate())
+                .padStart(2, '0');
+        }
+
+        function setBusy(btn, busy) {
+            if (btn) btn.disabled = busy;
         }
 
         function bukaModal(id) {
@@ -1946,23 +1779,19 @@
             toast.innerHTML = `
                 <div class="toast-icon"><svg viewBox="0 0 24 24">${iconPath}</svg></div>
                 <div class="toast-body">
-                    <p class="toast-title">${title}</p>
-                    <p class="toast-text">${text}</p>
+                    <p class="toast-title">${escapeHtml(title)}</p>
+                    <p class="toast-text">${escapeHtml(text)}</p>
                 </div>
                 <button class="toast-close" type="button" aria-label="Tutup">&times;</button>
             `;
 
-            const hapusToast = () => {
-                toast.classList.add('toast--leaving');
-                setTimeout(() => toast.remove(), 180);
-            };
-
+            const hapusToast = () => toast.remove();
             toast.querySelector('.toast-close').addEventListener('click', hapusToast);
             wrap.appendChild(toast);
             setTimeout(hapusToast, 3500);
         }
 
-        function clearFormErrors(prefix, fields) {
+        function clearFormErrors(fields) {
             fields.forEach(f => {
                 const el = document.getElementById('err_' + f);
                 if (el) el.textContent = '';
@@ -1982,6 +1811,155 @@
             });
         }
 
+        async function kirimJson(url, method, payload) {
+            const headers = {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken()
+            };
+            const opts = {
+                method,
+                headers
+            };
+            if (payload !== undefined) {
+                headers['Content-Type'] = 'application/json';
+                opts.body = JSON.stringify(payload);
+            }
+            const res = await fetch(url, opts);
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                const e = new Error(err.message || 'Terjadi kesalahan pada server.');
+                e.errors = err.errors || null;
+                throw e;
+            }
+            return res.json().catch(() => ({}));
+        }
+
+        /* ---------- COMBOBOX (menggantikan <select> bawaan browser) ---------- */
+        const comboRegistry = {};
+
+        function syncCombo(selectId) {
+            if (comboRegistry[selectId]) comboRegistry[selectId].sync();
+        }
+
+        function initCombo(selectId, opts = {}) {
+            const select = document.getElementById(selectId);
+            const input = document.getElementById('cari_' + selectId);
+            const list = document.getElementById('list_' + selectId);
+            if (!select || !input || !list) return;
+
+            const readonly = !!opts.readonly;
+            input.readOnly = readonly;
+            let aktif = -1;
+
+            const teks = o => o.textContent.replace(/\s+/g, ' ').trim();
+            const daftar = () => Array.from(select.options).filter(o => !o.disabled)
+                .map(o => ({
+                    value: o.value,
+                    label: teks(o)
+                }));
+
+            function sync() {
+                const o = select.options[select.selectedIndex];
+                input.value = o ? teks(o) : '';
+                input.disabled = select.disabled;
+            }
+
+            function render(keyword) {
+                const k = (keyword || '').toLowerCase().trim();
+                const hasil = daftar().filter(d => d.label.toLowerCase().includes(k));
+                aktif = -1;
+                list.innerHTML = hasil.length ?
+                    hasil.map(d =>
+                        `<div class="combo-item${d.value === select.value ? ' is-selected' : ''}" data-value="${escapeHtml(d.value)}">${escapeHtml(d.label)}</div>`
+                    ).join('') :
+                    '<div class="combo-empty">Data tidak ditemukan</div>';
+            }
+
+            function buka(keyword) {
+                render(keyword);
+                list.classList.add('show');
+                const terpilih = list.querySelector('.is-selected');
+                if (terpilih) terpilih.scrollIntoView({
+                    block: 'nearest'
+                });
+            }
+
+            function tutup() {
+                list.classList.remove('show');
+                sync(); // ketikan pencarian dibuang, tampilkan pilihan yang aktif
+            }
+
+            function pilih(value) {
+                const berubah = select.value !== String(value);
+                select.value = value;
+                tutup();
+                if (berubah) select.dispatchEvent(new Event('change', {
+                    bubbles: true
+                }));
+            }
+
+            function sorot(arah) {
+                const items = list.querySelectorAll('.combo-item');
+                if (!items.length) return;
+                aktif = (aktif + arah + items.length) % items.length;
+                items.forEach((el, i) => el.classList.toggle('is-active', i === aktif));
+                items[aktif].scrollIntoView({
+                    block: 'nearest'
+                });
+            }
+
+            input.addEventListener('focus', () => {
+                if (!readonly) input.select();
+                buka('');
+            });
+            input.addEventListener('click', () => {
+                if (!list.classList.contains('show')) buka('');
+            });
+            input.addEventListener('input', () => buka(input.value));
+            input.addEventListener('blur', tutup);
+
+            input.addEventListener('keydown', function(e) {
+                const items = list.querySelectorAll('.combo-item');
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (!list.classList.contains('show')) buka(readonly ? '' : input.value);
+                    sorot(1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    sorot(-1);
+                } else if (e.key === 'Enter') {
+                    if (list.classList.contains('show') && aktif > -1 && items[aktif]) {
+                        e.preventDefault();
+                        pilih(items[aktif].dataset.value);
+                    }
+                } else if (e.key === 'Escape' && list.classList.contains('show')) {
+                    e.stopPropagation(); // jangan ikut menutup modal
+                    tutup();
+                }
+            });
+
+            list.addEventListener('mouseover', function(e) {
+                const item = e.target.closest('.combo-item');
+                if (!item) return;
+                list.querySelectorAll('.combo-item').forEach((el, i) => {
+                    el.classList.toggle('is-active', el === item);
+                    if (el === item) aktif = i;
+                });
+            });
+
+            list.addEventListener('mousedown', function(e) {
+                e.preventDefault(); // pertahankan fokus agar list tidak tertutup saat scroll/klik
+                const item = e.target.closest('.combo-item');
+                if (item) pilih(item.dataset.value);
+            });
+
+            comboRegistry[selectId] = {
+                sync
+            };
+            sync();
+        }
+
+        /* ---------- REKAP BULANAN ---------- */
         function hargaPadaBulan(id, ym) {
             const [y, m] = ym.split('-').map(Number);
             const akhir = new Date(Date.UTC(y, m, 0)).toISOString().substring(0, 10);
@@ -2004,6 +1982,7 @@
                 sel.insertAdjacentHTML('beforeend', `<option value="${y}">${y}</option>`);
             }
             sel.value = now;
+            syncCombo('rekapTahun');
 
             renderRekap();
             bukaModal('modalBulanan');
@@ -2014,6 +1993,7 @@
             const idx = sel.selectedIndex - delta;
             if (idx >= 0 && idx < sel.options.length) {
                 sel.selectedIndex = idx;
+                syncCombo('rekapTahun');
                 renderRekap();
             }
         }
@@ -2026,13 +2006,14 @@
             head.innerHTML = `
                 <tr>
                     <th rowspan="2" class="col-nama">Jenis Sampah</th>
-                    <th colspan="12">Harga Nasabah Tahun ${tahun}</th>
+                    <th colspan="12">Harga Sampah Tahun ${tahun}</th>
                 </tr>
                 <tr>${BULAN_SINGKAT.map(b => `<th>${b}</th>`).join('')}</tr>
             `;
 
             if (daftarKategori.length === 0) {
-                body.innerHTML = '<tr><td colspan="13" class="text-center empty-desc">Belum ada kategori.</td></tr>';
+                body.innerHTML =
+                    '<tr><td colspan="13" class="text-center empty-desc">Belum ada kategori.</td></tr>';
                 return;
             }
 
@@ -2042,31 +2023,40 @@
                     const ym = tahun + '-' + String(i + 1).padStart(2, '0');
                     const h = hargaPadaBulan(k.id, ym);
                     const val = h ? h.harga : null;
-                    const berubah = val !== null && prev !== null && val !== prev;
+                    let berubah = val !== null && prev !== null && val !== prev;
 
-                    let berubahJan = false;
                     if (i === 0 && val !== null) {
                         const hp = hargaPadaBulan(k.id, (tahun - 1) + '-12');
-                        berubahJan = !!hp && hp.harga !== val;
+                        berubah = !!hp && hp.harga !== val;
                     }
                     prev = val;
 
                     if (val === null) return '<td class="kosong">–</td>';
-                    return `<td class="${(berubah || berubahJan) ? 'berubah' : ''}">${Number(val).toLocaleString('id-ID')}</td>`;
+                    return `<td class="${berubah ? 'berubah' : ''}">${Number(val).toLocaleString('id-ID')}</td>`;
                 }).join('');
 
+                const nama = escapeHtml(k.nama);
                 if (!k.sub) {
-                    return `<tr class="baris-induk"><td class="col-nama">${k.nama}</td>${cells}</tr>`;
+                    return `<tr class="baris-induk"><td class="col-nama">${nama}</td>${cells}</tr>`;
                 }
-                return `<tr><td class="col-nama sub"><span class="sub-arrow">↳</span> ${k.nama} <small>${k.satuan ?? ''}</small></td>${cells}</tr>`;
+                return `<tr><td class="col-nama"><span class="sub-arrow">↳</span> ${nama} <small class="muted">${escapeHtml(k.satuan ?? '')}</small></td>${cells}</tr>`;
             }).join('');
+        }
+
+        /* ---------- KATEGORI: TAMBAH / EDIT ---------- */
+        function resetOpsiInduk() {
+            document.querySelectorAll('#id_induk option').forEach(o => o.disabled = false);
+            document.getElementById('id_induk').disabled = false;
         }
 
         function bukaModalTambahKategori() {
             document.getElementById('formKategori').reset();
             document.getElementById('kategoriId').value = '';
             document.getElementById('satuan').value = 'kg';
-            clearFormErrors('kategori', FIELD_KATEGORI);
+            clearFormErrors(FIELD_KATEGORI);
+            resetOpsiInduk();
+            syncCombo('id_induk');
+            syncCombo('satuan');
 
             document.getElementById('tanggal_awal').value = tanggalHariIni();
             document.getElementById('blokHargaAwal').style.display = '';
@@ -2074,39 +2064,52 @@
             document.getElementById('harga_awal').required = true;
             document.getElementById('tanggal_awal').required = true;
 
-            const titleEl = document.getElementById('modalKategoriTitle');
-            if (titleEl)(titleEl.querySelector('span') || titleEl).textContent = 'Tambah Kategori';
+            document.getElementById('modalKategoriTitleText').textContent = 'Tambah Kategori';
             document.getElementById('kategoriSubmitBtn').textContent = 'Simpan Kategori';
             bukaModal('modalKategori');
         }
 
         function editKategoriModal(kategori) {
+            document.getElementById('formKategori').reset();
             document.getElementById('kategoriId').value = kategori.id_kategori;
-            document.getElementById('id_induk').value = kategori.id_induk || '';
+            clearFormErrors(FIELD_KATEGORI);
+            resetOpsiInduk();
+
+            // Kategori tidak boleh menjadi induk dirinya sendiri
+            const selfOpt = document.querySelector(`#id_induk option[value="${kategori.id_kategori}"]`);
+            if (selfOpt) selfOpt.disabled = true;
+
+            // Kategori yang sudah punya sub tidak boleh dijadikan sub kategori (maks. 2 tingkat)
+            const selInduk = document.getElementById('id_induk');
+            selInduk.value = kategori.id_induk || '';
+            selInduk.disabled = !!kategori.punya_anak;
+
             document.getElementById('nama_kategori').value = kategori.nama_kategori || '';
             document.getElementById('satuan').value = kategori.satuan || 'kg';
-            clearFormErrors('kategori', FIELD_KATEGORI);
+            syncCombo('id_induk');
+            syncCombo('satuan');
 
             document.getElementById('blokHargaAwal').style.display = 'none';
             document.getElementById('blokTanggalAwal').style.display = 'none';
             document.getElementById('harga_awal').required = false;
             document.getElementById('tanggal_awal').required = false;
 
-            const titleEl = document.getElementById('modalKategoriTitle');
-            if (titleEl)(titleEl.querySelector('span') || titleEl).textContent = 'Edit Kategori';
+            document.getElementById('modalKategoriTitleText').textContent = 'Edit Kategori';
             document.getElementById('kategoriSubmitBtn').textContent = 'Simpan Perubahan';
-
             bukaModal('modalKategori');
         }
 
         function simpanKategori(event) {
             event.preventDefault();
             const id = document.getElementById('kategoriId').value;
-            clearFormErrors('kategori', FIELD_KATEGORI);
+            const btn = document.getElementById('kategoriSubmitBtn');
+            clearFormErrors(FIELD_KATEGORI);
 
+            const selInduk = document.getElementById('id_induk');
             const payload = {
-                id_induk: document.getElementById('id_induk').value || null,
-                nama_kategori: document.getElementById('nama_kategori').value,
+                // select yang disabled tetap mengirim nilai aslinya
+                id_induk: selInduk.value || null,
+                nama_kategori: document.getElementById('nama_kategori').value.trim(),
                 satuan: document.getElementById('satuan').value,
             };
 
@@ -2116,52 +2119,40 @@
             }
 
             const url = id ? urlKategoriUpdate.replace(':id', id) : urlKategoriStore;
+            setBusy(btn, true);
 
-            fetch(url, {
-                    method: id ? 'PUT' : 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': getCsrfToken()
-                    },
-                    body: JSON.stringify(payload)
-                })
-                .then(async (res) => {
-                    if (!res.ok) {
-                        const err = await res.json().catch(() => ({}));
-                        if (err.errors) {
-                            const e = {
-                                ...err.errors
-                            };
-                            if (e.harga_satuan) e.harga_awal = e.harga_satuan;
-                            if (e.tanggal_berlaku) e.tanggal_awal = e.tanggal_berlaku;
-                            tampilkanFormErrors(e, FIELD_KATEGORI);
-                            throw new Error(err.message || 'Periksa kembali isian form.');
-                        }
-                        throw new Error(err.message || 'Gagal menyimpan kategori.');
-                    }
-                    return res.json();
-                })
+            kirimJson(url, id ? 'PUT' : 'POST', payload)
                 .then(() => {
                     tutupModal('modalKategori');
                     showToast('Berhasil disimpan', id ? 'Perubahan kategori telah tersimpan.' :
-                        'Kategori baru beserta harga awal telah ditambahkan.');
+                        'Kategori baru telah ditambahkan.');
                     setTimeout(() => window.location.reload(), 800);
                 })
                 .catch((err) => {
+                    if (err.errors) {
+                        const e = {
+                            ...err.errors
+                        };
+                        if (e.harga_satuan) e.harga_awal = e.harga_satuan;
+                        if (e.tanggal_berlaku) e.tanggal_awal = e.tanggal_berlaku;
+                        tampilkanFormErrors(e, FIELD_KATEGORI);
+                    }
                     showToast('Gagal menyimpan', err.message, 'error');
+                    setBusy(btn, false);
                 });
 
             return false;
         }
 
+        /* ---------- HARGA ---------- */
         function kelolaHarga(kategori) {
             hargaContext = kategori;
             document.getElementById('hargaNamaKategori').textContent = kategori.nama_kategori;
             document.getElementById('hargaSatuanLabel').textContent = kategori.satuan || 'satuan';
             document.getElementById('formHarga').reset();
             document.getElementById('tanggal_berlaku').value = tanggalHariIni();
-            clearFormErrors('harga', ['harga_satuan', 'tanggal_berlaku']);
+            clearFormErrors(FIELD_HARGA);
+            setBusy(document.getElementById('hargaSubmitBtn'), false);
 
             renderRiwayatHarga(kategori.id_kategori);
             bukaModal('modalHarga');
@@ -2172,17 +2163,18 @@
             const riwayat = riwayatData[idKategori] || [];
 
             if (riwayat.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="empty-desc text-center">Belum ada riwayat harga.</td></tr>';
+                tbody.innerHTML =
+                    '<tr><td colspan="3" class="empty-desc text-center">Belum ada riwayat harga.</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = riwayat.map(h => `
+            tbody.innerHTML = riwayat.map((h, i) => `
                 <tr>
-                    <td>${h.tanggal}</td>
+                    <td>${escapeHtml(h.tanggal)}</td>
                     <td><strong class="saldo">Rp ${Number(h.harga).toLocaleString('id-ID')}</strong></td>
                     <td>
-                        <button class="icon-btn icon-btn--danger icon-btn--sm" title="Hapus"
-                            type="button" onclick='hapusHarga(${h.id_harga}, ${JSON.stringify(h.delete_url)})'>
+                        <button class="icon-btn icon-btn--danger icon-btn--sm" title="Hapus" type="button"
+                            data-index="${i}">
                             <svg viewBox="0 0 24 24">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6 18 20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
@@ -2192,58 +2184,53 @@
                     </td>
                 </tr>
             `).join('');
+
+            tbody.querySelectorAll('button[data-index]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const item = riwayat[parseInt(btn.dataset.index, 10)];
+                    hapusHarga(item.delete_url);
+                });
+            });
         }
 
         function tambahHarga(event) {
             event.preventDefault();
             if (!hargaContext) return false;
 
-            clearFormErrors('harga', ['harga_satuan', 'tanggal_berlaku']);
+            const btn = document.getElementById('hargaSubmitBtn');
+            clearFormErrors(FIELD_HARGA);
+
             const payload = {
                 harga_satuan: document.getElementById('harga_satuan').value,
                 tanggal_berlaku: document.getElementById('tanggal_berlaku').value,
             };
 
-            fetch(hargaContext.store_url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': getCsrfToken()
-                    },
-                    body: JSON.stringify(payload)
-                })
-                .then(async (res) => {
-                    if (!res.ok) {
-                        const err = await res.json().catch(() => ({}));
-                        if (err.errors) {
-                            tampilkanFormErrors(err.errors, ['harga_satuan', 'tanggal_berlaku']);
-                            throw new Error(err.message || 'Periksa kembali isian form.');
-                        }
-                        throw new Error(err.message || 'Gagal menambah harga.');
-                    }
-                    return res.json();
-                })
+            setBusy(btn, true);
+
+            kirimJson(hargaContext.store_url, 'POST', payload)
                 .then(() => {
-                    showToast('Berhasil', 'Harga baru telah ditambahkan.');
+                    showToast('Berhasil disimpan', 'Harga baru telah ditambahkan.');
                     setTimeout(() => window.location.reload(), 800);
                 })
                 .catch((err) => {
+                    if (err.errors) tampilkanFormErrors(err.errors, FIELD_HARGA);
                     showToast('Gagal menyimpan', err.message, 'error');
+                    setBusy(btn, false);
                 });
 
             return false;
         }
 
-        function hapusHarga(idHarga, url) {
+        /* ---------- HAPUS ---------- */
+        function hapusHarga(url) {
             hapusContext = {
                 type: 'harga',
-                url: url,
-                label: 'data harga ini'
+                url
             };
             document.getElementById('hapusTitle').textContent = 'Hapus Data Harga?';
-            document.getElementById('hapusText').innerHTML =
+            document.getElementById('hapusText').textContent =
                 'Anda akan menghapus data harga ini. Tindakan ini tidak dapat dibatalkan.';
+            setBusy(document.getElementById('hapusConfirmBtn'), false);
             bukaModal('modalHapus');
         }
 
@@ -2251,72 +2238,148 @@
             hapusContext = {
                 type: 'kategori',
                 url: urlKategoriHapus.replace(':id', kategori.id_kategori),
-                label: kategori.nama_kategori,
             };
 
             document.getElementById('hapusTitle').textContent = 'Hapus Kategori Sampah?';
             document.getElementById('hapusText').innerHTML =
-                `Anda akan menghapus kategori <strong>${kategori.nama_kategori}</strong>. Tindakan ini tidak dapat dibatalkan.`;
+                `Anda akan menghapus kategori <strong>${escapeHtml(kategori.nama_kategori)}</strong>. Tindakan ini tidak dapat dibatalkan.`;
+            setBusy(document.getElementById('hapusConfirmBtn'), false);
             bukaModal('modalHapus');
         }
 
         function konfirmasiHapus() {
             if (!hapusContext) return;
+            const btn = document.getElementById('hapusConfirmBtn');
+            setBusy(btn, true);
 
-            fetch(hapusContext.url, {
-                    method: 'DELETE',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': getCsrfToken()
-                    }
-                })
-                .then(async (res) => {
-                    if (!res.ok) {
-                        const err = await res.json().catch(() => ({}));
-                        throw new Error(err.message || 'Gagal menghapus data.');
-                    }
-                    return res.json();
-                })
+            kirimJson(hapusContext.url, 'DELETE')
                 .then(() => {
                     tutupModal('modalHapus');
-                    showToast('Berhasil dihapus', hapusContext.type === 'kategori' ?
-                        `${hapusContext.label} telah dihapus dari data kategori.` :
-                        'Data harga telah dihapus.');
+                    showToast('Berhasil dihapus', 'Data telah dihapus.');
                     hapusContext = null;
                     setTimeout(() => window.location.reload(), 800);
                 })
                 .catch((err) => {
                     showToast('Gagal menghapus', err.message, 'error');
+                    setBusy(btn, false);
                 });
         }
 
+        /* ---------- TABEL: PENCARIAN & PAGINASI (per grup induk) ---------- */
         document.addEventListener('DOMContentLoaded', function() {
             @if (session('success'))
                 showToast('Berhasil', @json(session('success')));
             @endif
 
+            initCombo('id_induk');
+            initCombo('satuan');
+            initCombo('perPageSelect', {
+                readonly: true
+            });
+            initCombo('rekapTahun', {
+                readonly: true
+            });
+
             const searchInput = document.getElementById('searchKategori');
             const table = document.getElementById('kategoriTable');
+            const perPageSelect = document.getElementById('perPageSelect');
+            const paginationContainer = document.getElementById('paginationButtons');
+            const tableInfo = document.getElementById('tableInfoPagination');
+            const kosongCari = document.getElementById('kategoriKosongCari');
 
-            if (searchInput && table) {
-                searchInput.addEventListener('keyup', function() {
-                    const keyword = this.value.toLowerCase().trim();
-                    const rows = table.querySelectorAll('tbody tr[data-row-kategori]');
-                    let tampil = 0;
+            let currentPage = 1;
 
-                    rows.forEach(function(row) {
-                        const cocok = row.textContent.toLowerCase().includes(keyword);
-                        row.style.display = cocok ? '' : 'none';
-                        if (cocok) tampil++;
-                    });
-
-                    const kosong = document.getElementById('kategoriKosongCari');
-                    if (kosong) kosong.style.display = (rows.length > 0 && tampil === 0) ? '' : 'none';
+            // Kelompokkan baris: induk + sub-nya selalu satu halaman
+            const groups = [];
+            if (table) {
+                const map = new Map();
+                table.querySelectorAll('tbody tr[data-row-kategori]').forEach(row => {
+                    const key = row.dataset.group;
+                    if (!map.has(key)) {
+                        const g = {
+                            rows: []
+                        };
+                        map.set(key, g);
+                        groups.push(g);
+                    }
+                    map.get(key).rows.push(row);
                 });
             }
 
+            function render() {
+                if (!table) return;
+
+                const keyword = searchInput ? searchInput.value.toLowerCase().trim() : '';
+                const filtered = groups.filter(g => g.rows.some(r => r.textContent.toLowerCase().includes(
+                    keyword)));
+
+                if (kosongCari) {
+                    kosongCari.style.display = (groups.length > 0 && filtered.length === 0) ? '' : 'none';
+                }
+
+                const perPage = parseInt(perPageSelect ? perPageSelect.value : 10, 10);
+                const totalPages = Math.ceil(filtered.length / perPage) || 1;
+                currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+
+                groups.forEach(g => g.rows.forEach(r => r.style.display = 'none'));
+
+                const start = (currentPage - 1) * perPage;
+                const end = start + perPage;
+                filtered.slice(start, end).forEach(g => g.rows.forEach(r => r.style.display = ''));
+
+                if (tableInfo) {
+                    tableInfo.innerHTML = filtered.length === 0 ?
+                        'Tidak ada data yang ditampilkan' :
+                        `Menampilkan kategori induk <strong>${start + 1}</strong> - <strong>${Math.min(end, filtered.length)}</strong> dari <strong>${filtered.length}</strong>`;
+                }
+
+                if (!paginationContainer) return;
+
+                let html =
+                    `<button class="btn btn--ghost" type="button" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                        html +=
+                            `<button class="btn ${i === currentPage ? 'btn--primary' : 'btn--ghost'}" type="button" data-page="${i}">${i}</button>`;
+                    } else if (i === currentPage - 2 || i === currentPage + 2) {
+                        html += '<span class="pagination-dots">…</span>';
+                    }
+                }
+
+                html +=
+                    `<button class="btn btn--ghost" type="button" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`;
+                paginationContainer.innerHTML = html;
+            }
+
+            if (paginationContainer) {
+                paginationContainer.addEventListener('click', function(e) {
+                    const btn = e.target.closest('button[data-page]');
+                    if (!btn || btn.disabled) return;
+                    currentPage = parseInt(btn.dataset.page, 10);
+                    render();
+                });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    currentPage = 1;
+                    render();
+                });
+            }
+
+            if (perPageSelect) {
+                perPageSelect.addEventListener('change', function() {
+                    currentPage = 1;
+                    render();
+                });
+            }
+
+            render();
+
+            // Tutup modal: klik overlay & tombol Escape
             document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
-                overlay.addEventListener('click', function(e) {
+                overlay.addEventListener('mousedown', function(e) {
                     if (e.target === overlay) overlay.classList.remove('active');
                 });
             });

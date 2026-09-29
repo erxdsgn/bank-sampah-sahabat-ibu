@@ -61,7 +61,7 @@
                 </thead>
                 <tbody>
                     @forelse($pencairan as $item)
-                        <tr>
+                        <tr data-row-pencairan>
                             <td><span class="mono">#{{ $item->id_pencairan }}</span></td>
                             <td>
                                 <span class="mono">
@@ -80,12 +80,27 @@
                             </td>
                             <td>
                                 @if ($item->warga && $item->warga->nama_bank_ewallet)
-                                    <div><strong>{{ $item->warga->nama_bank_ewallet }}</strong></div>
-                                    <div class="mono rekening-number">{{ $item->warga->nomor_rekening ?? '-' }}</div>
-                                    <span
-                                        class="badge-status {{ $item->warga->status_rekening === 'verified' ? 'badge-verified' : 'badge-unverified' }}">
-                                        {{ $item->warga->status_rekening === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi' }}
-                                    </span>
+                                    <div class="bank-info">
+                                        <div class="bank-main">
+                                            <span
+                                                class="status-badge status-badge--icon {{ $item->warga->status_rekening === 'verified' ? 'status-badge--approved' : 'status-badge--pending' }}"
+                                                title="{{ $item->warga->status_rekening === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi' }}"
+                                                aria-label="{{ $item->warga->status_rekening === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi' }}">
+                                                @if ($item->warga->status_rekening === 'verified')
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path d="M20 6 9 17l-5-5"></path>
+                                                    </svg>
+                                                @else
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                        <circle cx="12" cy="12" r="9"></circle>
+                                                        <path d="M12 7v5l3 2"></path>
+                                                    </svg>
+                                                @endif
+                                            </span>
+                                            <strong title="{{ $item->warga->nama_bank_ewallet }}">{{ $item->warga->nama_bank_ewallet }}</strong>
+                                        </div>
+                                        <div class="mono rekening-number" title="{{ $item->warga->nomor_rekening ?? '-' }}">{{ $item->warga->nomor_rekening ?? '-' }}</div>
+                                    </div>
                                 @else
                                     <span class="muted-text">Tunai / Lainnya</span>
                                 @endif
@@ -137,11 +152,34 @@
                     @endforelse
                 </tbody>
             </table>
+
+            <div class="empty-table" id="pencairanKosongCari" style="display: none;">
+                <div class="empty-icon">🔍</div>
+                <strong>Data Tidak Ditemukan</strong>
+                <p>Tidak ada permohonan yang cocok dengan pencarian ini.</p>
+            </div>
         </div>
 
         <div class="table-footer">
-            <div class="table-info">
-                Total permohonan: <strong>{{ $pencairan->count() }}</strong>
+            <div class="table-info" id="tableInfoPagination">Menampilkan data...</div>
+
+            <div class="table-pagination-controls">
+                <div class="per-page">
+                    <label for="cari_perPageSelect">Permohonan per halaman:</label>
+                    <div class="combo combo--up combo--arrow" id="combo_perPageSelect">
+                        <input type="text" id="cari_perPageSelect" class="combo-input" placeholder=""
+                            autocomplete="off">
+                        <div class="combo-list" id="list_perPageSelect"></div>
+                    </div>
+                    <select id="perPageSelect" class="combo-hidden" tabindex="-1" aria-hidden="true">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+
+                <div class="pagination-buttons" id="paginationButtons"></div>
             </div>
         </div>
     </section>
@@ -274,8 +312,12 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="tambahMetode">Metode Pencairan</label>
-                            <select id="tambahMetode" required>
+                            <label for="cari_tambahMetode">Metode Pencairan</label>
+                            <div class="combo combo--arrow" id="combo_tambahMetode">
+                                <input type="text" id="cari_tambahMetode" class="combo-input" autocomplete="off">
+                                <div class="combo-list" id="list_tambahMetode"></div>
+                            </div>
+                            <select id="tambahMetode" class="combo-hidden" tabindex="-1" aria-hidden="true">
                                 <option value="">-- Pilih Metode --</option>
                                 <option value="tunai">Tunai</option>
                                 <option value="transfer">Transfer Bank</option>
@@ -341,8 +383,12 @@
                         </div>
 
                         <div class="form-group form-group--full">
-                            <label for="editStatus">Status Pencairan</label>
-                            <select id="editStatus">
+                            <label for="cari_editStatus">Status Pencairan</label>
+                            <div class="combo combo--arrow" id="combo_editStatus">
+                                <input type="text" id="cari_editStatus" class="combo-input" autocomplete="off">
+                                <div class="combo-list" id="list_editStatus"></div>
+                            </div>
+                            <select id="editStatus" class="combo-hidden" tabindex="-1" aria-hidden="true">
                                 <option value="menunggu">Menunggu</option>
                                 <option value="selesai">Selesai (Uang Diserahkan)</option>
                                 <option value="ditolak">Ditolak</option>
@@ -496,8 +542,39 @@
             color: var(--pencairan-text-secondary);
         }
 
-        .rekening-number {
-            margin-top: 2px;
+        /* Perbaikan Layout Kolom Bank & Nomor Rekening agar Sejajar Rapi */
+        .bank-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 3px;
+            line-height: 1.35;
+            min-width: 0;
+        }
+
+        .bank-main {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .bank-main > strong {
+            display: block;
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bank-info .rekening-number {
+            display: block;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-left: 27px; /* Menjajarkan nomor rekening/HP agar rapi di bawah teks nama bank */
         }
 
         .muted-text {
@@ -509,28 +586,40 @@
             white-space: nowrap;
         }
 
-        .badge-status {
-            display: inline-block;
-            margin-top: 4px;
-            padding: 2px 6px;
+        /* Styles untuk Icon Badge Status Rekening */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             border-radius: 999px;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .02em;
-            white-space: nowrap;
+            flex-shrink: 0;
         }
 
-        .badge-verified {
+        .status-badge--icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .status-badge--icon svg {
+            width: 12px;
+            height: 12px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .status-badge--approved {
             background: rgba(34, 197, 94, .13);
             color: #22c55e;
-            border: 1px solid rgba(34, 197, 94, .20);
+            border: 1px solid rgba(34, 197, 94, .25);
         }
 
-        .badge-unverified {
+        .status-badge--pending {
             background: rgba(245, 158, 11, .13);
             color: #f59e0b;
-            border: 1px solid rgba(245, 158, 11, .20);
+            border: 1px solid rgba(245, 158, 11, .25);
         }
 
         .table-actions {
@@ -576,8 +665,58 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
             padding: 14px 24px;
+            flex-wrap: wrap;
             background: var(--pencairan-surface);
+        }
+
+        .table-pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .per-page {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .per-page label {
+            font-size: 13px;
+            color: var(--pencairan-text-secondary);
+        }
+
+        .per-page .combo {
+            width: 84px;
+        }
+
+        .per-page .combo-input {
+            padding-top: 6px;
+            padding-bottom: 6px;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .pagination-buttons .btn {
+            padding: 6px 12px;
+            min-width: 32px;
+        }
+
+        .pagination-buttons .btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .pagination-dots {
+            padding: 0 4px;
+            color: var(--pencairan-text-secondary);
         }
 
         .table-info {
@@ -1105,6 +1244,71 @@
                 right: 20px;
             }
         }
+
+        /* =========================================================
+           MODAL & COMBOBOX — konsisten dengan halaman lain
+           (header/footer diam, hanya isi form yang scroll)
+           ========================================================= */
+        .modal-box {
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-box > form {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .modal-head,
+        .modal-foot {
+            flex-shrink: 0;
+        }
+
+        .modal-body {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--pencairan-border) transparent;
+        }
+
+        .modal-body::-webkit-scrollbar { width: 6px; }
+        .modal-body::-webkit-scrollbar-track { background: transparent; }
+        .modal-body::-webkit-scrollbar-thumb { background: var(--pencairan-border); border-radius: 4px; }
+        .modal-body::-webkit-scrollbar-thumb:hover { background: var(--pencairan-text-muted); }
+
+        .combo--arrow .combo-input {
+            cursor: pointer;
+            padding-right: 30px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 9px center;
+            background-size: 14px;
+        }
+
+        .combo-list {
+            z-index: 60;
+            scrollbar-width: thin;
+            scrollbar-color: var(--pencairan-border) transparent;
+        }
+
+        .combo-list::-webkit-scrollbar { width: 6px; }
+        .combo-list::-webkit-scrollbar-track { background: transparent; }
+        .combo-list::-webkit-scrollbar-thumb { background: var(--pencairan-border); border-radius: 4px; }
+        .combo-list::-webkit-scrollbar-thumb:hover { background: var(--pencairan-text-muted); }
+
+        .combo-item { padding: 10px 14px; }
+        .combo-item.is-selected { font-weight: 700; }
+
+        .combo-list { min-width: 84px; }
+
+        .combo--up .combo-list {
+            top: auto;
+            bottom: calc(100% + 4px);
+        }
     </style>
 
     <script>
@@ -1118,14 +1322,73 @@
 
             const searchInput = document.getElementById('searchPencairan');
             const table = document.getElementById('pencairanTable');
+            const perPageSelect = document.getElementById('perPageSelect');
+            const paginationContainer = document.getElementById('paginationButtons');
+            const tableInfo = document.getElementById('tableInfoPagination');
+            const kosongCari = document.getElementById('pencairanKosongCari');
 
-            if (searchInput && table) {
-                searchInput.addEventListener('keyup', function() {
-                    const keyword = this.value.toLowerCase().trim();
-                    table.querySelectorAll('tbody tr').forEach(function(row) {
-                        row.style.display = row.textContent.toLowerCase().includes(keyword) ? '' :
-                            'none';
-                    });
+            let currentPage = 1;
+
+            const rows = table ? Array.from(table.querySelectorAll('tbody tr[data-row-pencairan]')) : [];
+
+            function render() {
+                if (!table) return;
+
+                const keyword = searchInput ? searchInput.value.toLowerCase().trim() : '';
+                const filtered = rows.filter(r => r.textContent.toLowerCase().includes(keyword));
+
+                if (kosongCari) {
+                    kosongCari.style.display = (rows.length > 0 && filtered.length === 0) ? '' : 'none';
+                }
+
+                const perPage = parseInt(perPageSelect ? perPageSelect.value : 10, 10);
+                const totalPages = Math.ceil(filtered.length / perPage) || 1;
+                currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+
+                rows.forEach(r => r.style.display = 'none');
+
+                const start = (currentPage - 1) * perPage;
+                const end = start + perPage;
+                filtered.slice(start, end).forEach(r => r.style.display = '');
+
+                if (tableInfo) {
+                    tableInfo.innerHTML = filtered.length === 0 ?
+                        'Tidak ada data yang ditampilkan' :
+                        `Menampilkan permohonan <strong>${start + 1}</strong> - <strong>${Math.min(end, filtered.length)}</strong> dari <strong>${filtered.length}</strong>`;
+                }
+
+                if (!paginationContainer) return;
+
+                let html =
+                    `<button class="btn btn--ghost" type="button" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                        html +=
+                            `<button class="btn ${i === currentPage ? 'btn--primary' : 'btn--ghost'}" type="button" data-page="${i}">${i}</button>`;
+                    } else if (i === currentPage - 2 || i === currentPage + 2) {
+                        html += '<span class="pagination-dots">…</span>';
+                    }
+                }
+
+                html +=
+                    `<button class="btn btn--ghost" type="button" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`;
+                paginationContainer.innerHTML = html;
+            }
+
+            if (paginationContainer) {
+                paginationContainer.addEventListener('click', function(e) {
+                    const btn = e.target.closest('button[data-page]');
+                    if (!btn || btn.disabled) return;
+                    currentPage = parseInt(btn.dataset.page, 10);
+                    render();
+                });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    currentPage = 1;
+                    render();
                 });
             }
 
@@ -1144,7 +1407,110 @@
             });
 
             initComboWarga();
+            initComboSelect('tambahMetode');
+            initComboSelect('editStatus');
+            initComboSelect('perPageSelect', function() {
+                currentPage = 1;
+                render();
+            });
+
+            render();
         });
+
+        /* Combobox untuk <select> tersembunyi (pilihan tetap, tanpa teks bebas) */
+        const comboSelectRegistry = {};
+
+        function syncComboSelect(selectId) {
+            if (comboSelectRegistry[selectId]) comboSelectRegistry[selectId]();
+        }
+
+        function initComboSelect(selectId, onChange) {
+            const select = document.getElementById(selectId);
+            const input = document.getElementById('cari_' + selectId);
+            const list = document.getElementById('list_' + selectId);
+            if (!select || !input || !list) return;
+
+            input.readOnly = true;
+            let aktif = -1;
+
+            const teks = o => o.textContent.replace(/\s+/g, ' ').trim();
+            const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+            const kosong = Array.from(select.options).find(o => o.value === '');
+            if (kosong) input.placeholder = teks(kosong);
+
+            function sync() {
+                const o = select.options[select.selectedIndex];
+                input.value = (o && o.value !== '') ? teks(o) : '';
+            }
+
+            function buka() {
+                list.innerHTML = Array.from(select.options).filter(o => o.value !== '').map(o =>
+                    `<div class="combo-item${o.value === select.value ? ' is-selected' : ''}" data-value="${esc(o.value)}">${esc(teks(o))}</div>`
+                ).join('');
+                aktif = -1;
+                list.classList.add('show');
+            }
+
+            function tutup() { list.classList.remove('show'); }
+
+            function pilih(value) {
+                const berubah = select.value !== String(value);
+                select.value = value;
+                sync();
+                tutup();
+                if (berubah && typeof onChange === 'function') onChange();
+            }
+
+            function sorot(arah) {
+                const items = list.querySelectorAll('.combo-item');
+                if (!items.length) return;
+                aktif = (aktif + arah + items.length) % items.length;
+                items.forEach((el, i) => el.classList.toggle('is-active', i === aktif));
+            }
+
+            input.addEventListener('focus', buka);
+            input.addEventListener('click', () => { if (!list.classList.contains('show')) buka(); });
+            input.addEventListener('blur', tutup);
+
+            input.addEventListener('keydown', function(e) {
+                const items = list.querySelectorAll('.combo-item');
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (!list.classList.contains('show')) buka();
+                    sorot(1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    sorot(-1);
+                } else if (e.key === 'Enter') {
+                    if (list.classList.contains('show') && aktif > -1 && items[aktif]) {
+                        e.preventDefault();
+                        pilih(items[aktif].dataset.value);
+                    }
+                } else if (e.key === 'Escape' && list.classList.contains('show')) {
+                    e.stopPropagation(); // jangan ikut menutup modal
+                    tutup();
+                }
+            });
+
+            list.addEventListener('mouseover', function(e) {
+                const item = e.target.closest('.combo-item');
+                if (!item) return;
+                list.querySelectorAll('.combo-item').forEach((el, i) => {
+                    el.classList.toggle('is-active', el === item);
+                    if (el === item) aktif = i;
+                });
+            });
+
+            list.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                const item = e.target.closest('.combo-item');
+                if (item) pilih(item.dataset.value);
+            });
+
+            comboSelectRegistry[selectId] = sync;
+            sync();
+        }
 
         function formatStatusRekening(status) {
             return status === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi';
@@ -1219,18 +1585,26 @@
                 });
             }
 
+            // Kembalikan teks input ke warga yang terpilih (kosong jika belum memilih)
+            function tutup() {
+                list.classList.remove('show');
+                const d = data.find(x => x.value === String(select.value));
+                input.value = d ? d.label : '';
+            }
+
             input.addEventListener('focus', function() {
-                render(select.value ? '' : this.value);
+                this.select();
+                render('');
                 list.classList.add('show');
             });
 
+            // Mengetik hanya menyaring daftar; warga baru tersimpan setelah dipilih
             input.addEventListener('input', function() {
-                select.value = '';
-                info.textContent = '-';
-                if (rekeningInfo) rekeningInfo.textContent = '-';
                 render(this.value);
                 list.classList.add('show');
             });
+
+            input.addEventListener('blur', tutup);
 
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'ArrowDown') {
@@ -1249,20 +1623,25 @@
                         e.preventDefault();
                         pilih(items[aktif].dataset.value);
                     }
-                } else if (e.key === 'Escape') {
-                    list.classList.remove('show');
+                } else if (e.key === 'Escape' && list.classList.contains('show')) {
+                    e.stopPropagation(); // jangan ikut menutup modal
+                    tutup();
                 }
             });
 
-            list.addEventListener('mousedown', function(e) {
+            list.addEventListener('mouseover', function(e) {
                 const item = e.target.closest('.combo-item');
                 if (!item) return;
-                e.preventDefault();
-                pilih(item.dataset.value);
+                list.querySelectorAll('.combo-item').forEach((el, i) => {
+                    el.classList.toggle('is-active', el === item);
+                    if (el === item) aktif = i;
+                });
             });
 
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('#comboWarga')) list.classList.remove('show');
+            list.addEventListener('mousedown', function(e) {
+                e.preventDefault(); // jaga fokus agar list tidak tertutup saat scroll/klik
+                const item = e.target.closest('.combo-item');
+                if (item) pilih(item.dataset.value);
             });
         }
 
@@ -1285,6 +1664,7 @@
                 const form = document.getElementById('formTambahPencairan');
                 if (form) form.reset();
                 resetComboWarga();
+                syncComboSelect('tambahMetode');
             }
             document.getElementById(id).classList.add('active');
         }
@@ -1338,6 +1718,12 @@
             if (jumlahDitarik > saldoTersedia) {
                 showToast('Gagal menyimpan', 'Jumlah penarikan melebihi saldo tersedia warga!', 'error');
                 document.getElementById('tambahJumlah').focus();
+                return false;
+            }
+
+            if (!document.getElementById('tambahMetode').value) {
+                showToast('Gagal menyimpan', 'Silakan pilih metode pencairan.', 'error');
+                document.getElementById('cari_tambahMetode')?.focus();
                 return false;
             }
 
@@ -1484,6 +1870,7 @@ _Pesan otomatis oleh Sistem Bank Sampah Sahabat Ibu_`;
             document.getElementById('editStatusRekening').value = item.warga?.nama_bank_ewallet ? formatStatusRekening(item
                 .warga?.status_rekening) : '-';
             document.getElementById('editStatus').value = item.status;
+            syncComboSelect('editStatus');
 
             bukaModal('modalProses');
         }

@@ -222,11 +222,27 @@
             <!-- FOOTER -->
             <div class="table-footer">
 
-                <div class="table-info">
-                    Total produk:
-                    <strong id="totalProduk">
-                        {{ $katalogProduk->count() }}
-                    </strong>
+                <div class="table-info" id="tableInfoPagination">
+                    Menampilkan data...
+                </div>
+
+                <div class="table-pagination-controls">
+                    <div class="per-page">
+                        <label for="cari_perPageSelect">Produk per halaman:</label>
+                        <div class="combo combo--up combo--arrow" id="combo_perPageSelect">
+                            <input type="text" id="cari_perPageSelect" class="combo-input" placeholder=""
+                                autocomplete="off">
+                            <div class="combo-list" id="list_perPageSelect"></div>
+                        </div>
+                        <select id="perPageSelect" class="combo-hidden" tabindex="-1" aria-hidden="true">
+                            <option value="8" selected>8</option>
+                            <option value="12">12</option>
+                            <option value="16">16</option>
+                            <option value="20">20</option>
+                        </select>
+                    </div>
+
+                    <div class="pagination-buttons" id="paginationButtons"></div>
                 </div>
 
             </div>
@@ -848,14 +864,14 @@
             }
 
 
-            .katalog-page .btn--ghost {
+            .katalog-page :not(.pagination-buttons)>.btn--ghost {
                 background: var(--surface);
                 color: var(--text-secondary);
                 border-color: var(--border);
             }
 
 
-            .katalog-page .btn--ghost:hover {
+            .katalog-page :not(.pagination-buttons)>.btn--ghost:hover {
                 background: var(--surface-secondary);
                 color: var(--text);
                 border-color: var(--border);
@@ -870,7 +886,9 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                gap: 12px;
                 padding: 16px 24px;
+                flex-wrap: wrap;
                 border-top: 1px solid var(--border);
             }
 
@@ -883,6 +901,167 @@
 
             .katalog-page .table-info strong {
                 color: var(--text);
+            }
+
+
+            /* =========================================================
+               PAGINATION — SAMA DENGAN HALAMAN DATA WARGA & ARTIKEL
+            ========================================================== */
+
+            .katalog-page .table-pagination-controls {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            .katalog-page .per-page {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .katalog-page .per-page label {
+                font-size: 13px;
+                color: var(--text-secondary);
+            }
+
+            .katalog-page .per-page .combo {
+                width: 84px;
+            }
+
+            .katalog-page .per-page .combo-input {
+                padding-top: 6px;
+                padding-bottom: 6px;
+            }
+
+            .katalog-page .combo {
+                position: relative;
+            }
+
+            .katalog-page .combo-hidden {
+                display: none !important;
+            }
+
+            .katalog-page .combo-input {
+                width: 100%;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 9px 12px;
+                font-size: 13px;
+                font-family: inherit;
+                outline: none;
+                box-sizing: border-box;
+                background: var(--input-bg);
+                color: var(--text);
+                transition: border-color .2s ease, box-shadow .2s ease;
+            }
+
+            .katalog-page .combo--arrow .combo-input {
+                cursor: pointer;
+                padding-right: 30px;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 9px center;
+                background-size: 14px;
+            }
+
+            .katalog-page .combo-input::placeholder {
+                color: var(--text-muted);
+            }
+
+            .katalog-page .combo-input:focus {
+                border-color: #22c55e;
+                box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
+            }
+
+            .katalog-page .combo-list {
+                display: none;
+                position: absolute;
+                top: calc(100% + 4px);
+                left: 0;
+                right: 0;
+                max-height: 180px;
+                overflow-y: auto;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, .22);
+                z-index: 60;
+                scrollbar-width: thin;
+                scrollbar-color: var(--border) transparent;
+            }
+
+            .katalog-page .combo-list.show {
+                display: block;
+            }
+
+            .katalog-page .combo-list::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .katalog-page .combo-list::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .katalog-page .combo-list::-webkit-scrollbar-thumb {
+                background: var(--border);
+                border-radius: 4px;
+            }
+
+            .katalog-page .combo-list::-webkit-scrollbar-thumb:hover {
+                background: var(--text-muted);
+            }
+
+            .katalog-page .combo--up .combo-list {
+                top: auto;
+                bottom: calc(100% + 4px);
+            }
+
+            .katalog-page .combo-item {
+                padding: 10px 14px;
+                font-size: 13px;
+                color: var(--text);
+                cursor: pointer;
+                transition: background .1s ease, color .1s ease;
+            }
+
+            .katalog-page .combo-item.is-selected {
+                font-weight: 700;
+            }
+
+            .katalog-page .combo-item:hover,
+            .katalog-page .combo-item.is-active {
+                background: var(--table-hover);
+                color: #22c55e;
+            }
+
+            .katalog-page .combo-empty {
+                padding: 10px;
+                font-size: 12px;
+                color: var(--text-muted);
+                text-align: center;
+            }
+
+            .katalog-page .pagination-buttons {
+                display: flex;
+                gap: 4px;
+                align-items: center;
+            }
+
+            .katalog-page .pagination-buttons .btn {
+                padding: 6px 12px;
+                min-width: 32px;
+            }
+
+            .katalog-page .pagination-buttons .btn:disabled {
+                opacity: .5;
+                cursor: not-allowed;
+            }
+
+            .katalog-page .pagination-dots {
+                padding: 0 4px;
+                color: var(--text-secondary);
             }
 
 
@@ -1725,9 +1904,31 @@
 
                 if (searchInput) {
                     searchInput.addEventListener('keyup', function() {
-                        filterKatalog(this.value);
+                        filterKatalog(this.value, true);
                     });
                 }
+
+                const perPageSelect = document.getElementById('perPageSelect');
+                const paginationContainer = document.getElementById('paginationButtons');
+
+                initComboSelect('perPageSelect');
+
+                if (perPageSelect) {
+                    perPageSelect.addEventListener('change', function() {
+                        filterKatalog(undefined, true);
+                    });
+                }
+
+                if (paginationContainer) {
+                    paginationContainer.addEventListener('click', function(e) {
+                        const btn = e.target.closest('button[data-page]');
+                        if (!btn || btn.disabled) return;
+                        window.katalogCurrentPage = parseInt(btn.dataset.page, 10);
+                        filterKatalog();
+                    });
+                }
+
+                filterKatalog(undefined, true);
 
 
                 // Tutup modal saat klik area gelap di luar box
@@ -1849,50 +2050,202 @@
 
             /*
             |--------------------------------------------------------------------------
-            | Pencarian produk
+            | Pencarian produk + pagination
             |--------------------------------------------------------------------------
             */
 
-            function filterKatalog(keyword) {
+            window.katalogCurrentPage = 1;
 
-                const k = (keyword || '').toLowerCase().trim();
+            function filterKatalog(keyword, resetPage) {
 
-                const items =
-                    document.querySelectorAll(
-                        '#catalogGrid .catalog-item'
-                    );
+                const searchInput = document.getElementById('searchKatalog');
+                const perPageSelect = document.getElementById('perPageSelect');
+                const paginationContainer = document.getElementById('paginationButtons');
+                const tableInfo = document.getElementById('tableInfoPagination');
 
-                let tampil = 0;
+                const k = (
+                    keyword !== undefined ?
+                    keyword :
+                    (searchInput ? searchInput.value : '')
+                ).toLowerCase().trim();
 
+                const items = Array.from(
+                    document.querySelectorAll('#catalogGrid .catalog-item')
+                );
+
+                const filtered = items.filter(function(item) {
+                    return item.dataset.nama.includes(k);
+                });
+
+                const perPage = parseInt(perPageSelect ? perPageSelect.value : 8, 10) || 8;
+                const totalPages = Math.ceil(filtered.length / perPage) || 1;
+
+                if (resetPage) {
+                    window.katalogCurrentPage = 1;
+                }
+
+                window.katalogCurrentPage = Math.min(
+                    Math.max(window.katalogCurrentPage, 1),
+                    totalPages
+                );
+
+                const currentPage = window.katalogCurrentPage;
 
                 items.forEach(function(item) {
+                    item.style.display = 'none';
+                });
 
-                    const cocok =
-                        item.dataset.nama.includes(k);
+                const start = (currentPage - 1) * perPage;
+                const end = start + perPage;
 
-                    item.style.display =
-                        cocok ? '' : 'none';
-
-                    if (cocok) {
-                        tampil++;
-                    }
-
+                filtered.slice(start, end).forEach(function(item) {
+                    item.style.display = '';
                 });
 
 
-                const kosongCari =
-                    document.getElementById('catalogKosongCari');
-
+                const kosongCari = document.getElementById('catalogKosongCari');
 
                 if (kosongCari) {
-
                     kosongCari.style.display =
-                        (items.length > 0 && tampil === 0)
-                            ? ''
-                            : 'none';
-
+                        (items.length > 0 && filtered.length === 0) ? '' : 'none';
                 }
 
+
+                if (tableInfo) {
+                    tableInfo.innerHTML = filtered.length === 0 ?
+                        'Tidak ada data yang ditampilkan' :
+                        `Menampilkan produk <strong>${start + 1}</strong> - <strong>${Math.min(end, filtered.length)}</strong> dari <strong>${filtered.length}</strong>`;
+                }
+
+                if (!paginationContainer) return;
+
+                let html =
+                    `<button class="btn btn--ghost" type="button" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                        html +=
+                            `<button class="btn ${i === currentPage ? 'btn--primary' : 'btn--ghost'}" type="button" data-page="${i}">${i}</button>`;
+                    } else if (i === currentPage - 2 || i === currentPage + 2) {
+                        html += '<span class="pagination-dots">…</span>';
+                    }
+                }
+
+                html +=
+                    `<button class="btn btn--ghost" type="button" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`;
+
+                paginationContainer.innerHTML = html;
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Combo select (Produk per halaman) — sama dengan halaman warga & artikel
+            |--------------------------------------------------------------------------
+            */
+
+            const comboSelectRegistry = {};
+
+            function syncComboSelect(selectId) {
+                if (comboSelectRegistry[selectId]) comboSelectRegistry[selectId]();
+            }
+
+            function initComboSelect(selectId) {
+                const select = document.getElementById(selectId);
+                const input = document.getElementById('cari_' + selectId);
+                const list = document.getElementById('list_' + selectId);
+                if (!select || !input || !list) return;
+
+                input.readOnly = true;
+                let aktif = -1;
+
+                const teks = o => o.textContent.replace(/\s+/g, ' ').trim();
+                const esc = v => String(v).replace(/[&<>"']/g, c => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                } [c]));
+
+                function sync() {
+                    const o = select.options[select.selectedIndex];
+                    input.value = o ? teks(o) : '';
+                }
+
+                function buka() {
+                    list.innerHTML = Array.from(select.options).map(o =>
+                        `<div class="combo-item${o.value === select.value ? ' is-selected' : ''}" data-value="${esc(o.value)}">${esc(teks(o))}</div>`
+                    ).join('');
+                    aktif = -1;
+                    list.classList.add('show');
+                }
+
+                function tutup() {
+                    list.classList.remove('show');
+                }
+
+                function pilih(value) {
+                    const berubah = select.value !== String(value);
+                    select.value = value;
+                    sync();
+                    tutup();
+                    if (berubah) select.dispatchEvent(new Event('change', {
+                        bubbles: true
+                    }));
+                }
+
+                function sorot(arah) {
+                    const items = list.querySelectorAll('.combo-item');
+                    if (!items.length) return;
+                    aktif = (aktif + arah + items.length) % items.length;
+                    items.forEach((el, i) => el.classList.toggle('is-active', i === aktif));
+                }
+
+                input.addEventListener('focus', buka);
+                input.addEventListener('click', () => {
+                    if (!list.classList.contains('show')) buka();
+                });
+                input.addEventListener('blur', tutup);
+
+                input.addEventListener('keydown', function(e) {
+                    const items = list.querySelectorAll('.combo-item');
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (!list.classList.contains('show')) buka();
+                        sorot(1);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        sorot(-1);
+                    } else if (e.key === 'Enter') {
+                        if (list.classList.contains('show') && aktif > -1 && items[aktif]) {
+                            e.preventDefault();
+                            pilih(items[aktif].dataset.value);
+                        }
+                    } else if (e.key === 'Escape' && list.classList.contains('show')) {
+                        e.stopPropagation();
+                        tutup();
+                    }
+                });
+
+                list.addEventListener('mouseover', function(e) {
+                    const item = e.target.closest('.combo-item');
+                    if (!item) return;
+                    list.querySelectorAll('.combo-item').forEach((el, i) => {
+                        el.classList.toggle('is-active', el === item);
+                        if (el === item) aktif = i;
+                    });
+                });
+
+                list.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    const item = e.target.closest('.combo-item');
+                    if (item) pilih(item.dataset.value);
+                });
+
+                comboSelectRegistry[selectId] = sync;
+                sync();
             }
 
 

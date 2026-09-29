@@ -32,7 +32,12 @@
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-icon stat-icon--blue">
-                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <svg viewBox="0 0 24 24">
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"></path>
+                    <circle cx="19" cy="8" r="2.3"></circle>
+                    <path d="M17 21v-1a3 3 0 0 0-2-2.83"></path>
+                </svg>
             </div>
             <div class="stat-info">
                 <span class="stat-label">Total Warga</span>
@@ -42,7 +47,10 @@
 
         <div class="stat-card">
             <div class="stat-icon stat-icon--green">
-                <svg viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 3v18"></path>
+                    <path d="M17 7c0-2-2.2-3-5-3s-5 1-5 3 2.2 3 5 3 5 1 5 3-2.2 3-5 3-5-1-5-3"></path>
+                </svg>
             </div>
             <div class="stat-info">
                 <span class="stat-label">Total Saldo Terkumpul</span>
@@ -52,7 +60,11 @@
 
         <div class="stat-card">
             <div class="stat-icon stat-icon--amber">
-                <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                    <path d="M3 10h18"></path>
+                    <path d="M16 15h2"></path>
+                </svg>
             </div>
             <div class="stat-info">
                 <span class="stat-label">Rekening Terverifikasi</span>
@@ -70,7 +82,8 @@
                     <circle cx="11" cy="11" r="7"></circle>
                     <path d="m21 21-4.3-4.3"></path>
                 </svg>
-                <input type="text" id="searchWarga" placeholder="Cari NIK, nama, nomor HP, atau alamat..." autocomplete="off">
+                <input type="text" id="searchWarga" placeholder="Cari NIK, nama, nomor HP, atau alamat..."
+                    autocomplete="off">
             </div>
 
             <div class="filter-pills" id="filterPills">
@@ -119,7 +132,7 @@
                             <!-- ALAMAT -->
                             <td>
                                 <div class="truncate-text" title="{{ $item->alamat }}">
-                                    {{ $item->alamat ?? '-' }}
+                                    {{ Str::limit($item->alamat, 35, '...') }}
                                 </div>
                             </td>
 
@@ -141,13 +154,27 @@
                             <td>
                                 @if ($item->nama_bank_ewallet)
                                     <div class="bank-info">
-                                        <strong>{{ $item->nama_bank_ewallet }}</strong>
-                                        <span class="mono text-subtle">{{ $item->nomor_rekening ?? '-' }}</span>
-                                        <div>
-                                            <span class="status-badge {{ $item->status_rekening === 'verified' ? 'status-badge--approved' : 'status-badge--pending' }}">
-                                                {{ $item->status_rekening === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi' }}
+                                        <div class="bank-main">
+                                            <span
+                                                class="status-badge status-badge--icon {{ $item->status_rekening === 'verified' ? 'status-badge--approved' : 'status-badge--pending' }}"
+                                                title="{{ $item->status_rekening === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi' }}"
+                                                aria-label="{{ $item->status_rekening === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi' }}">
+                                                @if ($item->status_rekening === 'verified')
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path d="M20 6 9 17l-5-5"></path>
+                                                    </svg>
+                                                @else
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                        <circle cx="12" cy="12" r="9"></circle>
+                                                        <path d="M12 7v5l3 2"></path>
+                                                    </svg>
+                                                @endif
                                             </span>
+                                            <strong title="{{ $item->nama_bank_ewallet }}">{{ $item->nama_bank_ewallet }}</strong>
                                         </div>
+                                        <span class="mono text-subtle bank-number" title="{{ $item->nomor_rekening ?? '-' }}">
+                                            {{ $item->nomor_rekening ?? '-' }}
+                                        </span>
                                     </div>
                                 @else
                                     <span class="text-subtle">-</span>
@@ -166,21 +193,24 @@
                             <!-- AKSI -->
                             <td>
                                 <div class="table-actions" style="justify-content: center;">
-                                    <button class="icon-btn" title="Lihat Detail" type="button" onclick='lihatWarga(@json($item))'>
+                                    <button class="icon-btn" title="Lihat Detail" type="button"
+                                        onclick='lihatWarga(@json($item))'>
                                         <svg viewBox="0 0 24 24">
                                             <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path>
                                             <circle cx="12" cy="12" r="2.5"></circle>
                                         </svg>
                                     </button>
 
-                                    <button class="icon-btn icon-btn--primary" title="Edit Data" type="button" onclick='editWarga(@json($item))'>
+                                    <button class="icon-btn icon-btn--primary" title="Edit Data" type="button"
+                                        onclick='editWarga(@json($item))'>
                                         <svg viewBox="0 0 24 24">
                                             <path d="M12 20h9"></path>
                                             <path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"></path>
                                         </svg>
                                     </button>
 
-                                    <button class="icon-btn icon-btn--danger" title="Hapus Data" type="button" onclick='hapusWarga(@json($item))'>
+                                    <button class="icon-btn icon-btn--danger" title="Hapus Data" type="button"
+                                        onclick='hapusWarga(@json($item))'>
                                         <svg viewBox="0 0 24 24">
                                             <polyline points="3 6 5 6 21 6"></polyline>
                                             <path d="M19 6 18 20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
@@ -207,8 +237,25 @@
 
         <!-- FOOTER -->
         <div class="table-footer">
-            <div class="table-info">
-                Total warga: <strong>{{ $warga->count() }}</strong> orang
+            <div class="table-info" id="tableInfoPagination">Menampilkan data...</div>
+
+            <div class="table-pagination-controls">
+                <div class="per-page">
+                    <label for="cari_perPageSelect">Warga per halaman:</label>
+                    <div class="combo combo--up combo--arrow" id="combo_perPageSelect">
+                        <input type="text" id="cari_perPageSelect" class="combo-input" placeholder=""
+                            autocomplete="off">
+                        <div class="combo-list" id="list_perPageSelect"></div>
+                    </div>
+                    <select id="perPageSelect" class="combo-hidden" tabindex="-1" aria-hidden="true">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+
+                <div class="pagination-buttons" id="paginationButtons"></div>
             </div>
         </div>
     </section>
@@ -298,7 +345,9 @@
         <div class="modal-box">
             <div class="modal-head">
                 <h3 class="modal-title">
-                    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 5v14M5 12h14"></path>
+                    </svg>
                     Tambah Warga
                 </h3>
                 <button class="modal-close" type="button" onclick="tutupModal('modalTambah')">&times;</button>
@@ -309,7 +358,8 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="tambahNik">NIK</label>
-                            <input type="text" id="tambahNik" maxlength="16" required placeholder="Masukkan NIK 16 digit">
+                            <input type="text" id="tambahNik" maxlength="16" required
+                                placeholder="Masukkan NIK 16 digit">
                         </div>
 
                         <div class="form-group">
@@ -327,15 +377,11 @@
                             <input type="number" id="tambahKeluarga" min="1" value="1">
                         </div>
 
-                        <div class="form-group form-group--full">
-                            <label for="tambahAlamat">Alamat</label>
-                            <textarea id="tambahAlamat" rows="3" required placeholder="Alamat domisili lengkap..."></textarea>
-                        </div>
-
                         <div class="form-group">
                             <label for="tambahBankInput">Bank / E-Wallet</label>
                             <div class="combo" id="comboBankTambah">
-                                <input type="text" id="tambahBankInput" class="combo-input" placeholder="Ketik atau pilih bank/e-wallet..." maxlength="50" autocomplete="off">
+                                <input type="text" id="tambahBankInput" class="combo-input"
+                                    placeholder="Ketik atau pilih bank/e-wallet..." maxlength="50" autocomplete="off">
                                 <div class="combo-list" id="listBankTambah"></div>
                             </div>
                             <input type="hidden" id="tambahBank">
@@ -343,12 +389,19 @@
 
                         <div class="form-group">
                             <label for="tambahNoRekening">No. Rekening / No. HP E-Wallet</label>
-                            <input type="text" id="tambahNoRekening" maxlength="30" placeholder="Nomor rekening / e-wallet">
+                            <input type="text" id="tambahNoRekening" maxlength="30"
+                                placeholder="Nomor rekening / e-wallet">
                         </div>
 
                         <div class="form-group form-group--full">
                             <label for="tambahPemilikRekening">Nama Pemilik Rekening</label>
-                            <input type="text" id="tambahPemilikRekening" placeholder="Nama pada akun rekening / e-wallet">
+                            <input type="text" id="tambahPemilikRekening"
+                                placeholder="Nama pada akun rekening / e-wallet">
+                        </div>
+
+                        <div class="form-group form-group--full">
+                            <label for="tambahAlamat">Alamat</label>
+                            <textarea id="tambahAlamat" rows="3" required placeholder="Alamat domisili lengkap..."></textarea>
                         </div>
                     </div>
                 </div>
@@ -418,7 +471,8 @@
                         <div class="form-group">
                             <label for="editBankInput">Bank / E-Wallet</label>
                             <div class="combo" id="comboBankEdit">
-                                <input type="text" id="editBankInput" class="combo-input" placeholder="Ketik atau pilih bank/e-wallet..." maxlength="50" autocomplete="off">
+                                <input type="text" id="editBankInput" class="combo-input"
+                                    placeholder="Ketik atau pilih bank/e-wallet..." maxlength="50" autocomplete="off">
                                 <div class="combo-list" id="listBankEdit"></div>
                             </div>
                             <input type="hidden" id="editBank">
@@ -435,8 +489,13 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="editStatusRekening">Status Rekening</label>
-                            <select id="editStatusRekening">
+                            <label for="cari_editStatusRekening">Status Rekening</label>
+                            <div class="combo combo--arrow" id="combo_editStatusRekening">
+                                <input type="text" id="cari_editStatusRekening" class="combo-input"
+                                    autocomplete="off">
+                                <div class="combo-list" id="list_editStatusRekening"></div>
+                            </div>
+                            <select id="editStatusRekening" class="combo-hidden" tabindex="-1" aria-hidden="true">
                                 <option value="unverified">Belum Verifikasi</option>
                                 <option value="verified">Terverifikasi</option>
                             </select>
@@ -483,11 +542,8 @@
     <!-- STYLES -->
     <style>
         /* =========================================================
-           VARIABEL TEMA (Light / Dark)
-           Disamakan dengan Dashboard: memakai penamaan dan palet
-           warna --dashboard-* yang sama persis, supaya semua
-           halaman admin konsisten saat toggle data-theme.
-           ========================================================= */
+                       VARIABEL TEMA (Light / Dark)
+                       ========================================================= */
         :root {
             --dashboard-page: #f5f7fb;
             --dashboard-card: #ffffff;
@@ -525,8 +581,8 @@
         }
 
         /* =========================================================
-           TEMA BERSAMA
-           ========================================================= */
+                       TEMA BERSAMA
+                       ========================================================= */
 
         .card {
             background: var(--dashboard-card);
@@ -581,9 +637,30 @@
             border-color: var(--primary, #4338ca);
         }
 
+        /* Scrollbar Modern pada Tabel */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--dashboard-border) transparent;
+        }
+
+        .table-responsive::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+
+        .table-responsive::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: var(--dashboard-border);
+            border-radius: 4px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: var(--dashboard-text-muted);
         }
 
         .data-table {
@@ -592,6 +669,7 @@
             min-width: 1200px;
             background: var(--dashboard-table-row);
             color: var(--dashboard-text);
+            table-layout: auto;
         }
 
         .data-table th {
@@ -627,24 +705,68 @@
             font-size: 12px;
         }
 
-        .text-subtle { color: var(--dashboard-text-secondary); }
-
-        .user-name { font-weight: 700; color: var(--dashboard-text); }
-
-        .truncate-text {
-            max-width: 220px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .text-subtle {
+            color: var(--dashboard-text-secondary);
         }
 
-        .saldo-text { color: #15803d; white-space: nowrap; }
+        .user-name {
+            font-weight: 700;
+            color: var(--dashboard-text);
+        }
 
-        .bank-info { display: flex; flex-direction: column; gap: 1px; }
+        .truncate-text {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            line-height: 1.45;
+            max-height: 2.9em;
+            word-break: break-word;
+        }
+
+        .saldo-text {
+            color: #15803d;
+            white-space: nowrap;
+        }
+
+        .bank-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 3px;
+            line-height: 1.35;
+            min-width: 0;
+        }
+
+        .bank-main {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .bank-main > strong {
+            display: block;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bank-info .bank-number {
+            display: block;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-left: 31px;
+        }
 
         .table-actions {
             display: flex;
             gap: 6px;
+            white-space: nowrap;
         }
 
         .icon-btn {
@@ -681,7 +803,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
             padding: 16px 24px;
+            flex-wrap: wrap;
         }
 
         .table-info {
@@ -689,7 +813,62 @@
             color: var(--dashboard-text-secondary);
         }
 
-        .empty-desc { color: var(--dashboard-text-secondary); }
+        .table-pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .per-page {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .per-page label {
+            font-size: 13px;
+            color: var(--dashboard-text-secondary);
+        }
+
+        .per-page .combo {
+            width: 84px;
+        }
+
+        .per-page .combo-input {
+            padding-top: 6px;
+            padding-bottom: 6px;
+        }
+
+        .combo--up .combo-list {
+            top: auto;
+            bottom: calc(100% + 4px);
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .pagination-buttons .btn {
+            padding: 6px 12px;
+            min-width: 32px;
+        }
+
+        .pagination-buttons .btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .pagination-dots {
+            padding: 0 4px;
+            color: var(--dashboard-text-secondary);
+        }
+
+        .empty-desc {
+            color: var(--dashboard-text-secondary);
+        }
 
         .modal-overlay {
             display: none;
@@ -710,7 +889,9 @@
             width: 100%;
             max-width: 580px;
             max-height: 90vh;
-            overflow-y: auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
             background: var(--dashboard-card);
             border: 1px solid var(--dashboard-border);
             border-radius: 14px;
@@ -719,11 +900,27 @@
             transition: background-color .25s ease, border-color .25s ease, color .25s ease;
         }
 
-        .modal-box--sm { max-width: 420px; }
+        .modal-box--sm {
+            max-width: 420px;
+        }
 
         @keyframes modalPop {
-            from { opacity: 0; transform: translateY(8px) scale(.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            from {
+                opacity: 0;
+                transform: translateY(8px) scale(.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-box > form {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
         }
 
         .modal-head {
@@ -732,6 +929,7 @@
             justify-content: space-between;
             padding: 20px 24px;
             border-bottom: 1px solid var(--dashboard-border);
+            flex-shrink: 0;
         }
 
         .modal-title {
@@ -771,8 +969,36 @@
             color: var(--dashboard-text);
         }
 
-        .modal-body { padding: 22px 24px; }
-        .modal-body--center { text-align: center; padding-top: 28px; }
+        .modal-body {
+            padding: 22px 24px;
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--dashboard-border) transparent;
+        }
+
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: var(--dashboard-border);
+            border-radius: 4px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: var(--dashboard-text-muted);
+        }
+
+        .modal-body--center {
+            text-align: center;
+            padding-top: 28px;
+        }
 
         .modal-foot {
             display: flex;
@@ -780,9 +1006,12 @@
             gap: 10px;
             padding: 16px 24px;
             border-top: 1px solid var(--dashboard-border);
+            flex-shrink: 0;
         }
 
-        .modal-foot--center { justify-content: center; }
+        .modal-foot--center {
+            justify-content: center;
+        }
 
         .btn--danger {
             background: #dc2626;
@@ -818,8 +1047,16 @@
             flex-shrink: 0;
         }
 
-        .detail-nama { font-size: 16px; font-weight: 700; color: var(--dashboard-text); }
-        .detail-nik { margin-top: 3px; color: var(--dashboard-text-secondary); }
+        .detail-nama {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dashboard-text);
+        }
+
+        .detail-nik {
+            margin-top: 3px;
+            color: var(--dashboard-text-secondary);
+        }
 
         .detail-grid {
             display: grid;
@@ -827,8 +1064,15 @@
             gap: 14px 18px;
         }
 
-        .detail-item { display: flex; flex-direction: column; gap: 2px; }
-        .detail-item--full { grid-column: 1 / -1; }
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .detail-item--full {
+            grid-column: 1 / -1;
+        }
 
         .detail-label {
             font-size: 11px;
@@ -839,7 +1083,10 @@
             display: block;
         }
 
-        .detail-value { font-size: 14px; color: var(--dashboard-text); }
+        .detail-value {
+            font-size: 14px;
+            color: var(--dashboard-text);
+        }
 
         .form-grid {
             display: grid;
@@ -853,7 +1100,9 @@
             gap: 6px;
         }
 
-        .form-group--full { grid-column: 1 / -1; }
+        .form-group--full {
+            grid-column: 1 / -1;
+        }
 
         .form-group label {
             font-size: 12px;
@@ -874,15 +1123,19 @@
             width: 100%;
             background: var(--dashboard-input);
             color: var(--dashboard-text);
+            transition: border-color .2s ease, box-shadow .2s ease;
         }
 
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
-            border-color: var(--primary, #4338ca);
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
         }
 
-        .form-group textarea { resize: vertical; }
+        .form-group textarea {
+            resize: vertical;
+        }
 
         .toast-wrap {
             position: fixed;
@@ -911,7 +1164,9 @@
             animation: toastIn .18s ease-out;
         }
 
-        .toast.toast--error { border-left-color: #dc2626; }
+        .toast.toast--error {
+            border-left-color: #dc2626;
+        }
 
         .toast-icon {
             width: 22px;
@@ -925,21 +1180,85 @@
             justify-content: center;
         }
 
-        .toast.toast--error .toast-icon { background: rgba(239, 68, 68, .14); color: #f87171; }
-        .toast-icon svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-        .toast-body { flex: 1; }
-        .toast-title { font-size: 13px; font-weight: 700; color: var(--dashboard-text); margin: 0 0 2px; }
-        .toast-text { font-size: 12.5px; color: var(--dashboard-text-secondary); margin: 0; line-height: 1.5; }
-        .toast-close { border: none; background: transparent; color: var(--dashboard-text-muted); font-size: 16px; line-height: 1; cursor: pointer; padding: 0; flex-shrink: 0; }
-        .toast-close:hover { color: var(--dashboard-text); }
-        .toast.toast--leaving { animation: toastOut .18s ease-in forwards; }
+        .toast.toast--error .toast-icon {
+            background: rgba(239, 68, 68, .14);
+            color: #f87171;
+        }
 
-        @keyframes toastIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(16px); } }
+        .toast-icon svg {
+            width: 13px;
+            height: 13px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .toast-body {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--dashboard-text);
+            margin: 0 0 2px;
+        }
+
+        .toast-text {
+            font-size: 12.5px;
+            color: var(--dashboard-text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .toast-close {
+            border: none;
+            background: transparent;
+            color: var(--dashboard-text-muted);
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .toast-close:hover {
+            color: var(--dashboard-text);
+        }
+
+        .toast.toast--leaving {
+            animation: toastOut .18s ease-in forwards;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes toastOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateX(16px);
+            }
+        }
 
         /* =========================================================
-           TAMBAHAN KHUSUS DATA WARGA
-           ========================================================= */
+                       TAMBAHAN KHUSUS DATA WARGA
+                       ========================================================= */
 
         .hero-actions {
             display: flex;
@@ -987,11 +1306,25 @@
             stroke-linejoin: round;
         }
 
-        .stat-icon--blue { background: rgba(59, 130, 246, .14); color: #60a5fa; }
-        .stat-icon--green { background: rgba(34, 197, 94, .14); color: #4ade80; }
-        .stat-icon--amber { background: rgba(245, 158, 11, .14); color: #fbbf24; }
+        .stat-icon--blue {
+            background: rgba(59, 130, 246, .14);
+            color: #60a5fa;
+        }
 
-        .stat-info { display: flex; flex-direction: column; }
+        .stat-icon--green {
+            background: rgba(34, 197, 94, .14);
+            color: #4ade80;
+        }
+
+        .stat-icon--amber {
+            background: rgba(245, 158, 11, .14);
+            color: #fbbf24;
+        }
+
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
 
         .stat-info .stat-label {
             font-size: 12px;
@@ -1005,7 +1338,11 @@
             color: var(--dashboard-text);
         }
 
-        .filter-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
 
         .fpill {
             border: 1px solid var(--dashboard-border);
@@ -1020,8 +1357,8 @@
         }
 
         .fpill.active {
-            background: #16a34a;
-            border-color: #16a34a;
+            background: var(--primary);
+            border-color: var(--primary);
             color: #fff;
         }
 
@@ -1059,11 +1396,45 @@
             border: 1px solid #bfead0;
         }
 
-        .icon-btn--primary { border-color: #4338ca; color: #4338ca; }
-        .icon-btn--primary:hover { background: #eef2ff; }
+        .status-badge--icon {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
 
-        .icon-btn--danger { color: #f87171; }
-        .icon-btn--danger:hover { background: rgba(239, 68, 68, .12); border-color: rgba(239, 68, 68, .30); color: #f87171; }
+        .status-badge--icon svg {
+            width: 14px;
+            height: 14px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .icon-btn--primary {
+            border-color: #4338ca;
+            color: #4338ca;
+        }
+
+        .icon-btn--primary:hover {
+            background: #eef2ff;
+        }
+
+        .icon-btn--danger {
+            color: #f87171;
+        }
+
+        .icon-btn--danger:hover {
+            background: rgba(239, 68, 68, .12);
+            border-color: rgba(239, 68, 68, .30);
+            color: #f87171;
+        }
 
         .confirm-icon {
             width: 52px;
@@ -1077,15 +1448,37 @@
             justify-content: center;
         }
 
-        .confirm-icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-        .confirm-title { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: var(--dashboard-text); }
-        .confirm-text { margin: 0; font-size: 13px; color: var(--dashboard-text-secondary); line-height: 1.5; }
+        .confirm-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .confirm-title {
+            margin: 0 0 6px;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dashboard-text);
+        }
+
+        .confirm-text {
+            margin: 0;
+            font-size: 13px;
+            color: var(--dashboard-text-secondary);
+            line-height: 1.5;
+        }
 
         /* =========================================================
-           COMBOBOX (SEARCHABLE SELECT)
-           ========================================================= */
+                       COMBOBOX (SEARCHABLE SELECT)
+                       ========================================================= */
 
-        .combo { position: relative; }
+        .combo {
+            position: relative;
+        }
 
         .combo-input {
             width: 100%;
@@ -1098,9 +1491,30 @@
             box-sizing: border-box;
             background: var(--dashboard-input);
             color: var(--dashboard-text);
+            transition: border-color .2s ease, box-shadow .2s ease;
         }
 
-        .combo-input:focus { border-color: var(--primary, #4338ca); }
+        .combo-input:focus {
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
+        }
+
+        .combo-input::placeholder {
+            color: var(--dashboard-text-muted);
+        }
+
+        .combo-hidden {
+            display: none !important;
+        }
+
+        .combo--arrow .combo-input {
+            cursor: pointer;
+            padding-right: 30px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 9px center;
+            background-size: 14px;
+        }
 
         .combo-list {
             display: none;
@@ -1108,36 +1522,103 @@
             top: calc(100% + 4px);
             left: 0;
             right: 0;
-            max-height: 200px;
+            max-height: 180px;
             overflow-y: auto;
             background: var(--dashboard-card);
             border: 1px solid var(--dashboard-border);
             border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(15, 23, 42, .12);
-            z-index: 30;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, .22);
+            z-index: 60;
+            scrollbar-width: thin;
+            scrollbar-color: var(--dashboard-border) transparent;
         }
 
-        .combo-list.show { display: block; }
-        .combo-item { padding: 9px 12px; font-size: 13px; color: var(--dashboard-text); cursor: pointer; }
-        .combo-item:hover, .combo-item.is-active { background: var(--dashboard-table-hover); }
-        .combo-empty { padding: 10px; font-size: 12px; color: var(--dashboard-text-muted); text-align: center; }
+        .combo-list.show {
+            display: block;
+        }
+
+        .combo-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .combo-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .combo-list::-webkit-scrollbar-thumb {
+            background: var(--dashboard-border);
+            border-radius: 4px;
+        }
+
+        .combo-list::-webkit-scrollbar-thumb:hover {
+            background: var(--dashboard-text-muted);
+        }
+
+        .combo-item {
+            padding: 10px 14px;
+            font-size: 13px;
+            color: var(--dashboard-text);
+            cursor: pointer;
+            transition: background .1s ease, color .1s ease;
+        }
+
+        .combo-item.is-selected {
+            font-weight: 700;
+        }
+
+        .combo-item:hover,
+        .combo-item.is-active {
+            background: var(--dashboard-table-hover);
+            color: #22c55e;
+        }
+
+        .combo-empty {
+            padding: 10px;
+            font-size: 12px;
+            color: var(--dashboard-text-muted);
+            text-align: center;
+        }
+
+        @media (max-width: 900px) {
+            .data-table {
+                min-width: 1000px;
+            }
+        }
 
         @media (max-width: 640px) {
-            .hero { flex-direction: column; align-items: flex-start; gap: 12px; }
-            .hero-actions { width: 100%; }
-            .stat-chip { flex: 1; }
-            .detail-grid, .form-grid { grid-template-columns: 1fr; }
+            .hero {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .hero-actions {
+                width: 100%;
+            }
+
+            .detail-grid,
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 480px) {
-            .toast-wrap { left: 16px; right: 16px; top: 16px; }
-            .toast { min-width: 0; max-width: none; width: 100%; }
+            .toast-wrap {
+                left: 16px;
+                right: 16px;
+                top: 16px;
+            }
+
+            .toast {
+                min-width: 0;
+                max-width: none;
+                width: 100%;
+            }
         }
 
         /* =========================================================
-           DARK THEME — warna semantik yang butuh treatment khusus,
-           memakai palet yang sama seperti di Dashboard.
-           ========================================================= */
+                       DARK THEME — WARNA SEMANTIK & FORCE
+                       ========================================================= */
 
         [data-theme="dark"] .stat-icon--blue {
             background: rgba(37, 99, 235, .18);
@@ -1201,11 +1682,6 @@
             background: rgba(0, 0, 0, .65);
         }
 
-        /* =====================================================
-           DARK MODE — FORCE (belt-and-suspenders), mengikuti
-           pola yang sama seperti di Dashboard.
-        ===================================================== */
-
         [data-theme="dark"] .card,
         [data-theme="dark"] .stat-card,
         [data-theme="dark"] .modal-box,
@@ -1257,30 +1733,90 @@
 
             const searchInput = document.getElementById('searchWarga');
             const table = document.getElementById('wargaTable');
+            const perPageSelect = document.getElementById('perPageSelect');
+            const paginationContainer = document.getElementById('paginationButtons');
+            const tableInfo = document.getElementById('tableInfoPagination');
+
+            let currentPage = 1;
 
             function applyFilters() {
                 const keyword = (searchInput?.value || '').toLowerCase().trim();
                 const activePill = document.querySelector('.fpill.active');
                 const statusFilter = activePill ? activePill.dataset.filter : 'all';
 
-                table.querySelectorAll('tbody tr[data-status]').forEach(function(row) {
+                const allRows = Array.from(table.querySelectorAll('tbody tr[data-status]'));
+                const filtered = allRows.filter(function(row) {
                     const matchSearch = !keyword || row.textContent.toLowerCase().includes(keyword);
                     const matchStatus = statusFilter === 'all' || row.dataset.status === statusFilter;
-                    row.style.display = (matchSearch && matchStatus) ? '' : 'none';
+                    return matchSearch && matchStatus;
                 });
+
+                const perPage = parseInt(perPageSelect ? perPageSelect.value : 10, 10);
+                const totalPages = Math.ceil(filtered.length / perPage) || 1;
+                currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+
+                allRows.forEach(r => r.style.display = 'none');
+
+                const start = (currentPage - 1) * perPage;
+                const end = start + perPage;
+                filtered.slice(start, end).forEach(r => r.style.display = '');
+
+                if (tableInfo) {
+                    tableInfo.innerHTML = filtered.length === 0 ?
+                        'Tidak ada data yang ditampilkan' :
+                        `Menampilkan warga <strong>${start + 1}</strong> - <strong>${Math.min(end, filtered.length)}</strong> dari <strong>${filtered.length}</strong>`;
+                }
+
+                if (!paginationContainer) return;
+
+                let html =
+                    `<button class="btn btn--ghost" type="button" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                        html +=
+                            `<button class="btn ${i === currentPage ? 'btn--primary' : 'btn--ghost'}" type="button" data-page="${i}">${i}</button>`;
+                    } else if (i === currentPage - 2 || i === currentPage + 2) {
+                        html += '<span class="pagination-dots">…</span>';
+                    }
+                }
+
+                html +=
+                    `<button class="btn btn--ghost" type="button" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`;
+                paginationContainer.innerHTML = html;
             }
 
             if (searchInput) {
-                searchInput.addEventListener('keyup', applyFilters);
+                searchInput.addEventListener('keyup', function() {
+                    currentPage = 1;
+                    applyFilters();
+                });
             }
 
             document.querySelectorAll('.fpill').forEach(function(pill) {
                 pill.addEventListener('click', function() {
                     document.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
                     pill.classList.add('active');
+                    currentPage = 1;
                     applyFilters();
                 });
             });
+
+            if (perPageSelect) {
+                perPageSelect.addEventListener('change', function() {
+                    currentPage = 1;
+                    applyFilters();
+                });
+            }
+
+            if (paginationContainer) {
+                paginationContainer.addEventListener('click', function(e) {
+                    const btn = e.target.closest('button[data-page]');
+                    if (!btn || btn.disabled) return;
+                    currentPage = parseInt(btn.dataset.page, 10);
+                    applyFilters();
+                });
+            }
 
             document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
                 overlay.addEventListener('click', function(e) {
@@ -1298,10 +1834,24 @@
 
             initComboBank('tambahBankInput', 'tambahBank', 'listBankTambah', 'comboBankTambah');
             initComboBank('editBankInput', 'editBank', 'listBankEdit', 'comboBankEdit');
+            initComboSelect('editStatusRekening');
+            initComboSelect('perPageSelect');
+
+            applyFilters();
         });
 
-        function bukaModal(id) { document.getElementById(id).classList.add('active'); }
-        function tutupModal(id) { document.getElementById(id).classList.remove('active'); }
+        function bukaModal(id) {
+            if (id === 'modalTambah') {
+                const form = document.getElementById('formTambahWarga');
+                if (form) form.reset();
+                resetComboBank('tambahBankInput', 'tambahBank');
+            }
+            document.getElementById(id).classList.add('active');
+        }
+
+        function tutupModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
 
         function formatRupiah(angka) {
             return 'Rp ' + (Number(angka) || 0).toLocaleString('id-ID');
@@ -1311,7 +1861,11 @@
             if (!tgl) return '-';
             const d = new Date(tgl);
             if (isNaN(d)) return tgl;
-            return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            return d.toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
         }
 
         function formatStatusRekening(status) {
@@ -1328,7 +1882,13 @@
             let aktif = -1;
 
             function escapeHtml(s) {
-                return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+                return String(s).replace(/[&<>"']/g, c => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                } [c]));
             }
 
             function sanitize(v) {
@@ -1341,7 +1901,8 @@
                 aktif = -1;
 
                 list.innerHTML = hasil.length ?
-                    hasil.map(b => `<div class="combo-item" data-value="${escapeHtml(b)}">${escapeHtml(b)}</div>`).join('') :
+                    hasil.map(b => `<div class="combo-item" data-value="${escapeHtml(b)}">${escapeHtml(b)}</div>`).join(
+                        '') :
                     '<div class="combo-empty">Tekan Enter untuk pakai nama ini</div>';
             }
 
@@ -1365,29 +1926,169 @@
             });
 
             input.addEventListener('blur', function() {
-                setTimeout(() => { hidden.value = sanitize(input.value.trim()); }, 150);
+                setTimeout(() => {
+                    hidden.value = sanitize(input.value.trim());
+                }, 150);
             });
 
+            function sorot(arah) {
+                const items = list.querySelectorAll('.combo-item');
+                if (!items.length) return;
+                aktif = (aktif + arah + items.length) % items.length;
+                items.forEach((el, i) => el.classList.toggle('is-active', i === aktif));
+                items[aktif].scrollIntoView({
+                    block: 'nearest'
+                });
+            }
+
             input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
+                const items = list.querySelectorAll('.combo-item');
+
+                if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    hidden.value = sanitize(this.value.trim());
-                    list.classList.remove('show');
-                } else if (e.key === 'Escape') {
+                    if (!list.classList.contains('show')) {
+                        render(this.value);
+                        list.classList.add('show');
+                    }
+                    sorot(1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    sorot(-1);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (list.classList.contains('show') && aktif > -1 && items[aktif]) {
+                        pilih(items[aktif].dataset.value);
+                    } else {
+                        hidden.value = sanitize(this.value.trim());
+                        list.classList.remove('show');
+                    }
+                } else if (e.key === 'Escape' && list.classList.contains('show')) {
+                    e.stopPropagation();
                     list.classList.remove('show');
                 }
             });
 
-            list.addEventListener('mousedown', function(e) {
+            list.addEventListener('mouseover', function(e) {
                 const item = e.target.closest('.combo-item');
                 if (!item) return;
+                list.querySelectorAll('.combo-item').forEach((el, i) => {
+                    el.classList.toggle('is-active', el === item);
+                    if (el === item) aktif = i;
+                });
+            });
+
+            list.addEventListener('mousedown', function(e) {
                 e.preventDefault();
-                pilih(item.dataset.value);
+                const item = e.target.closest('.combo-item');
+                if (item) pilih(item.dataset.value);
             });
 
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('#' + wrapId)) list.classList.remove('show');
             });
+        }
+
+        const comboSelectRegistry = {};
+
+        function syncComboSelect(selectId) {
+            if (comboSelectRegistry[selectId]) comboSelectRegistry[selectId]();
+        }
+
+        function initComboSelect(selectId) {
+            const select = document.getElementById(selectId);
+            const input = document.getElementById('cari_' + selectId);
+            const list = document.getElementById('list_' + selectId);
+            if (!select || !input || !list) return;
+
+            input.readOnly = true;
+            let aktif = -1;
+
+            const teks = o => o.textContent.replace(/\s+/g, ' ').trim();
+            const esc = v => String(v).replace(/[&<>"']/g, c => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            } [c]));
+
+            function sync() {
+                const o = select.options[select.selectedIndex];
+                input.value = o ? teks(o) : '';
+            }
+
+            function buka() {
+                list.innerHTML = Array.from(select.options).map(o =>
+                    `<div class="combo-item${o.value === select.value ? ' is-selected' : ''}" data-value="${esc(o.value)}">${esc(teks(o))}</div>`
+                ).join('');
+                aktif = -1;
+                list.classList.add('show');
+            }
+
+            function tutup() {
+                list.classList.remove('show');
+            }
+
+            function pilih(value) {
+                const berubah = select.value !== String(value);
+                select.value = value;
+                sync();
+                tutup();
+                if (berubah) select.dispatchEvent(new Event('change', {
+                    bubbles: true
+                }));
+            }
+
+            function sorot(arah) {
+                const items = list.querySelectorAll('.combo-item');
+                if (!items.length) return;
+                aktif = (aktif + arah + items.length) % items.length;
+                items.forEach((el, i) => el.classList.toggle('is-active', i === aktif));
+            }
+
+            input.addEventListener('focus', buka);
+            input.addEventListener('click', () => {
+                if (!list.classList.contains('show')) buka();
+            });
+            input.addEventListener('blur', tutup);
+
+            input.addEventListener('keydown', function(e) {
+                const items = list.querySelectorAll('.combo-item');
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (!list.classList.contains('show')) buka();
+                    sorot(1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    sorot(-1);
+                } else if (e.key === 'Enter') {
+                    if (list.classList.contains('show') && aktif > -1 && items[aktif]) {
+                        e.preventDefault();
+                        pilih(items[aktif].dataset.value);
+                    }
+                } else if (e.key === 'Escape' && list.classList.contains('show')) {
+                    e.stopPropagation();
+                    tutup();
+                }
+            });
+
+            list.addEventListener('mouseover', function(e) {
+                const item = e.target.closest('.combo-item');
+                if (!item) return;
+                list.querySelectorAll('.combo-item').forEach((el, i) => {
+                    el.classList.toggle('is-active', el === item);
+                    if (el === item) aktif = i;
+                });
+            });
+
+            list.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                const item = e.target.closest('.combo-item');
+                if (item) pilih(item.dataset.value);
+            });
+
+            comboSelectRegistry[selectId] = sync;
+            sync();
         }
 
         function resetComboBank(inputId, hiddenId) {
@@ -1481,7 +2182,8 @@
             document.getElementById('detailBank').textContent = warga.nama_bank_ewallet || '-';
             document.getElementById('detailNoRekening').textContent = warga.nomor_rekening || '-';
             document.getElementById('detailPemilikRekening').textContent = warga.nama_pemilik_rekening || '-';
-            document.getElementById('detailStatusRekening').textContent = warga.nama_bank_ewallet ? formatStatusRekening(warga.status_rekening) : '-';
+            document.getElementById('detailStatusRekening').textContent = warga.nama_bank_ewallet ? formatStatusRekening(
+                warga.status_rekening) : '-';
 
             bukaModal('modalDetail');
         }
@@ -1493,13 +2195,15 @@
             document.getElementById('editHp').value = warga.no_hp || '';
             document.getElementById('editKeluarga').value = warga.jumlah_anggota_keluarga || 0;
             document.getElementById('editSaldo').value = warga.saldo || 0;
-            document.getElementById('editTanggal').value = warga.tanggal_daftar ? warga.tanggal_daftar.substring(0, 10) : '';
+            document.getElementById('editTanggal').value = warga.tanggal_daftar ? warga.tanggal_daftar.substring(0, 10) :
+                '';
             document.getElementById('editAlamat').value = warga.alamat || '';
             document.getElementById('editBankInput').value = warga.nama_bank_ewallet || '';
             document.getElementById('editBank').value = warga.nama_bank_ewallet || '';
             document.getElementById('editNoRekening').value = warga.nomor_rekening || '';
             document.getElementById('editPemilikRekening').value = warga.nama_pemilik_rekening || '';
             document.getElementById('editStatusRekening').value = warga.status_rekening || 'unverified';
+            syncComboSelect('editStatusRekening');
 
             bukaModal('modalEdit');
         }

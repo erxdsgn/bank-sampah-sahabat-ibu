@@ -115,26 +115,13 @@ class KategoriSampah extends Model
         );
 
         return match ($satuan) {
-            'g',
-            'gram' =>
-                'gram',
-
-            'kg',
-            'kilogram' =>
-                'kg',
-
-            'pcs',
-            'piece',
-            'pieces' =>
-                'pcs',
-
-            'l',
-            'liter',
-            'litre' =>
-                'liter',
-
-            default =>
-                'gram',
+            'g', 'gram' => 'gram',
+            'kg', 'kilogram' => 'kg',
+            'pcs', 'piece', 'pieces' => 'pcs',
+            'l', 'liter', 'litre' => 'liter',
+            'set' => 'set',
+            'unit' => 'unit',
+            default => 'gram',
         };
     }
 
@@ -143,23 +130,14 @@ class KategoriSampah extends Model
      */
     public function getSimbolSatuanAttribute(): string
     {
-        return match (
-            $this->satuan_normal
-        ) {
-            'gram' =>
-                'gram',
-
-            'kg' =>
-                'kg',
-
-            'pcs' =>
-                'pcs',
-
-            'liter' =>
-                'L',
-
-            default =>
-                'gram',
+        return match ($this->satuan_normal) {
+            'gram' => 'gram',
+            'kg' => 'kg',
+            'pcs' => 'pcs',
+            'liter' => 'L',
+            'set' => 'set',
+            'unit' => 'unit',
+            default => 'gram',
         };
     }
 
@@ -170,8 +148,8 @@ class KategoriSampah extends Model
     {
         return (float) (
             $this->hargaTerbaru
-                ->harga_satuan
-                ?? 0
+            ->harga_satuan
+            ?? 0
         );
     }
 
@@ -183,7 +161,7 @@ class KategoriSampah extends Model
     ): float {
         return round(
             $jumlah *
-            $this->harga_satuan_aktual,
+                $this->harga_satuan_aktual,
             2
         );
     }
@@ -205,17 +183,17 @@ class KategoriSampah extends Model
         ])->get();
 
         return $semua->first(
-            fn ($k) =>
-                mb_strtolower(
-                    $k->nama_lengkap
-                ) === $namaClean
+            fn($k) =>
+            mb_strtolower(
+                $k->nama_lengkap
+            ) === $namaClean
         )
-        ??
-        $semua->first(
-            fn ($k) =>
+            ??
+            $semua->first(
+                fn($k) =>
                 mb_strtolower(
                     $k->nama_kategori
                 ) === $namaClean
-        );
+            );
     }
 }

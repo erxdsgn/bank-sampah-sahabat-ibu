@@ -156,15 +156,25 @@
 
                     <div class="toolbar-right">
 
-                        <select id="kategoriArtikel" class="toolbar-select">
-                            <option value="semua">Semua Kategori</option>
+                        <div class="combo combo--arrow" id="combo_kategoriArtikel">
+                            <input type="text" id="cari_kategoriArtikel" class="combo-input" autocomplete="off"
+                                aria-label="Filter kategori">
+                            <div class="combo-list" id="list_kategoriArtikel"></div>
+                        </div>
+                        <select id="kategoriArtikel" class="combo-hidden" tabindex="-1" aria-hidden="true">
+                            <option value="semua" selected>Semua Kategori</option>
                             <option value="edukasi">Edukasi Sampah</option>
                             <option value="artikel">Artikel</option>
                             <option value="acara">Acara</option>
                         </select>
 
-                        <select id="statusArtikel" class="toolbar-select">
-                            <option value="semua">Semua Status</option>
+                        <div class="combo combo--arrow" id="combo_statusArtikel">
+                            <input type="text" id="cari_statusArtikel" class="combo-input" autocomplete="off"
+                                aria-label="Filter status">
+                            <div class="combo-list" id="list_statusArtikel"></div>
+                        </div>
+                        <select id="statusArtikel" class="combo-hidden" tabindex="-1" aria-hidden="true">
+                            <option value="semua" selected>Semua Status</option>
                             <option value="publish">Dipublikasikan</option>
                             <option value="draft">Draft</option>
                         </select>
@@ -347,12 +357,27 @@
 
                 <div class="table-footer">
 
-                    <div class="table-info">
-                        Menampilkan
-                        <strong id="jumlahTampil">{{ $artikel->count() }}</strong>
-                        dari
-                        <strong>{{ $artikel->count() }}</strong>
-                        konten
+                    <div class="table-info" id="tableInfoPagination">
+                        Menampilkan data...
+                    </div>
+
+                    <div class="table-pagination-controls">
+                        <div class="per-page">
+                            <label for="cari_perPageSelect">Konten per halaman:</label>
+                            <div class="combo combo--up combo--arrow" id="combo_perPageSelect">
+                                <input type="text" id="cari_perPageSelect" class="combo-input" placeholder=""
+                                    autocomplete="off">
+                                <div class="combo-list" id="list_perPageSelect"></div>
+                            </div>
+                            <select id="perPageSelect" class="combo-hidden" tabindex="-1" aria-hidden="true">
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+
+                        <div class="pagination-buttons" id="paginationButtons"></div>
                     </div>
 
                 </div>
@@ -586,7 +611,7 @@
                         </button>
 
 
-                        <button type="button" id="btnSimpanDraft" class="btn btn--outline">
+                        <button type="button" id="btnSimpanDraft" class="btn btn--outline" onclick="simpanArtikel('draft')">
 
                             Simpan sebagai Draft
 
@@ -745,6 +770,7 @@
                 --empty: #f8fafc;
                 --shadow: 0 8px 25px rgba(15, 23, 42, .06);
 
+
                 color: var(--text);
             }
 
@@ -758,7 +784,7 @@
                 --border: #29364d;
                 --table-head: #111a2c;
                 --table-row: #151d2f;
-                --table-hover: #202b40;
+                --table-hover: #071228;
                 --input-bg: #111a2c;
                 --empty: #111a2c;
                 --shadow: 0 8px 25px rgba(0, 0, 0, .25);
@@ -903,11 +929,13 @@
                 align-items: center;
                 gap: 12px;
                 padding: 16px 24px;
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
             }
 
             .artikel-page .table-search {
-                width: 360px;
+                flex: 1 1 auto;
+                width: auto;
+                min-width: 220px;
                 position: relative;
             }
 
@@ -950,34 +978,29 @@
                 display: flex;
                 align-items: center;
                 gap: 10px;
-                flex-wrap: wrap;
+                flex: 0 0 auto;
+                flex-wrap: nowrap;
             }
 
-            .artikel-page .toolbar-select {
+            .artikel-page .toolbar-right .combo {
+                width: 160px;
+                flex: 0 0 160px;
+            }
+
+            .artikel-page .toolbar-right .combo-input {
                 height: 40px;
-                padding: 0 12px;
-                border: 1px solid var(--border);
-                border-radius: 8px;
-                background: var(--input-bg);
-                font-family: inherit;
-                font-size: 13px;
-                color: var(--text);
-                outline: none;
-                cursor: pointer;
+                padding-top: 0;
+                padding-bottom: 0;
+                color: var(--text-secondary);
             }
 
-            .artikel-page .toolbar-select:focus {
-                border-color: #22c55e;
-                box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
-            }
-
-            .artikel-page .btn--ghost {
+            .artikel-page :not(.pagination-buttons)>.btn--ghost {
                 background: var(--surface-secondary);
                 color: var(--text-secondary);
                 border: 1px solid var(--border);
             }
 
-            .artikel-page .btn--ghost:hover {
+            .artikel-page :not(.pagination-buttons)>.btn--ghost:hover {
                 background: var(--table-hover);
                 color: var(--text);
                 border-color: var(--border);
@@ -991,6 +1014,26 @@
             .artikel-page .table-responsive {
                 width: 100%;
                 overflow-x: auto;
+                scrollbar-width: thin;
+                scrollbar-color: var(--border) transparent;
+            }
+
+            .artikel-page .table-responsive::-webkit-scrollbar {
+                height: 6px;
+                width: 6px;
+            }
+
+            .artikel-page .table-responsive::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .artikel-page .table-responsive::-webkit-scrollbar-thumb {
+                background: var(--border);
+                border-radius: 4px;
+            }
+
+            .artikel-page .table-responsive::-webkit-scrollbar-thumb:hover {
+                background: var(--text-muted);
             }
 
             .artikel-page .data-table {
@@ -1136,11 +1179,66 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                gap: 12px;
                 padding: 16px 24px;
+                flex-wrap: wrap;
             }
 
             .artikel-page .table-info {
                 font-size: 13px;
+                color: var(--text-secondary);
+            }
+
+            .artikel-page .table-pagination-controls {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            .artikel-page .per-page {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .artikel-page .per-page label {
+                font-size: 13px;
+                color: var(--text-secondary);
+            }
+
+            .artikel-page .per-page .combo {
+                width: 84px;
+            }
+
+            .artikel-page .per-page .combo-input {
+                padding-top: 6px;
+                padding-bottom: 6px;
+            }
+
+            .artikel-page .combo--up .combo-list {
+                top: auto;
+                bottom: calc(100% + 4px);
+            }
+
+            .artikel-page .pagination-buttons {
+                display: flex;
+                gap: 4px;
+                align-items: center;
+            }
+
+            .artikel-page .pagination-buttons .btn {
+                padding: 6px 12px;
+                min-width: 32px;
+            }
+
+            .artikel-page .pagination-buttons .btn:disabled {
+                opacity: .5;
+                cursor: not-allowed;
+            }
+
+            .artikel-page .pagination-dots {
+                padding: 0 4px;
                 color: var(--text-secondary);
             }
 
@@ -1239,6 +1337,16 @@
                 box-sizing: border-box;
                 background: var(--input-bg);
                 color: var(--text);
+                transition: border-color .2s ease, box-shadow .2s ease;
+            }
+
+            .artikel-page .combo--arrow .combo-input {
+                cursor: pointer;
+                padding-right: 30px;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 9px center;
+                background-size: 14px;
             }
 
             .artikel-page .combo-input::placeholder {
@@ -1262,13 +1370,33 @@
                 top: calc(100% + 4px);
                 left: 0;
                 right: 0;
-                max-height: 220px;
+                min-width: 84px;
+                max-height: 200px;
                 overflow-y: auto;
                 background: var(--surface);
                 border: 1px solid var(--border);
                 border-radius: 8px;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, .25);
-                z-index: 20;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, .22);
+                z-index: 60;
+                scrollbar-width: thin;
+                scrollbar-color: var(--border) transparent;
+            }
+
+            .artikel-page .combo-list::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .artikel-page .combo-list::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .artikel-page .combo-list::-webkit-scrollbar-thumb {
+                background: var(--border);
+                border-radius: 4px;
+            }
+
+            .artikel-page .combo-list::-webkit-scrollbar-thumb:hover {
+                background: var(--text-muted);
             }
 
             .artikel-page .combo-list.show {
@@ -1276,21 +1404,26 @@
             }
 
             .artikel-page .combo-item {
-                padding: 9px 12px;
+                padding: 10px 14px;
                 font-size: 13px;
-                color: var(--text-secondary);
+                color: var(--text);
                 cursor: pointer;
+                transition: background .1s ease, color .1s ease;
+            }
+
+            .artikel-page .combo-item.is-selected {
+                font-weight: 700;
             }
 
             .artikel-page .combo-item:hover,
             .artikel-page .combo-item.is-active {
                 background: var(--table-hover);
-                color: var(--text);
+                color: #22c55e;
             }
 
             .artikel-page .combo-empty {
-                padding: 12px;
-                font-size: 12.5px;
+                padding: 10px;
+                font-size: 12px;
                 color: var(--text-muted);
                 text-align: center;
             }
@@ -1325,6 +1458,25 @@
                 height: calc(100% - 46px);
                 overflow-y: auto;
                 background: #f8fafc;
+                scrollbar-width: thin;
+                scrollbar-color: #d1d5db transparent;
+            }
+
+            .artikel-page .phone-body::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .artikel-page .phone-body::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .artikel-page .phone-body::-webkit-scrollbar-thumb {
+                background: #d1d5db;
+                border-radius: 4px;
+            }
+
+            .artikel-page .phone-body::-webkit-scrollbar-thumb:hover {
+                background: #9ca3af;
             }
 
             .artikel-page .phone-image {
@@ -1420,6 +1572,25 @@
                 border-radius: 14px;
                 box-shadow: 0 20px 45px rgba(0, 0, 0, .35);
                 animation: artikelModalPop .15s ease-out;
+                scrollbar-width: thin;
+                scrollbar-color: var(--border) transparent;
+            }
+
+            .artikel-page .modal-box::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .artikel-page .modal-box::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .artikel-page .modal-box::-webkit-scrollbar-thumb {
+                background: var(--border);
+                border-radius: 4px;
+            }
+
+            .artikel-page .modal-box::-webkit-scrollbar-thumb:hover {
+                background: var(--text-muted);
             }
 
             .artikel-page .modal-box--sm {
@@ -1826,25 +1997,44 @@
             }
 
             @media (max-width: 760px) {
-
                 .artikel-page .table-toolbar {
-                    align-items: stretch;
+                    flex-wrap: wrap;
                 }
 
                 .artikel-page .table-search {
+                    flex: 1 1 100%;
+                    min-width: 0;
                     width: 100%;
                 }
 
                 .artikel-page .toolbar-right {
                     width: 100%;
+                    flex-wrap: wrap;
                 }
 
-                .artikel-page .toolbar-select {
-                    flex: 1 1 150px;
+                .artikel-page .toolbar-right .combo {
+                    flex: 1 1 140px;
+                    min-width: 130px;
+                    width: auto;
+                }
+
+                .artikel-page .toolbar-right .btn {
+                    flex: 0 0 auto;
                 }
             }
 
             @media (max-width: 560px) {
+
+                .artikel-page .toolbar-right {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                }
+
+                .artikel-page .toolbar-right .combo,
+                .artikel-page .toolbar-right .btn {
+                    width: 100%;
+                    min-width: 0;
+                }
 
                 .artikel-page .summary-grid {
                     grid-template-columns: 1fr;
@@ -1888,7 +2078,7 @@
         <script>
             const dataArtikel = @json($artikel);
 
-            const jsLabelJenis = @json(collect($labelJenis)->map(fn($v) => $v[0]));
+            const jsLabelJenis = @json(array_map(fn($v) => $v[0], $labelJenis));
 
             const urlArtikelStore = "{{ route('admin.artikel.store') }}";
 
@@ -2054,7 +2244,7 @@
 
             /*
             |--------------------------------------------------------------------------
-            | DOM READY
+            | DOM READY & FILTERS
             |--------------------------------------------------------------------------
             */
 
@@ -2079,7 +2269,9 @@
                     if (kategoriSelect) {
                         kategoriSelect.addEventListener(
                             'change',
-                            jalankanFilter
+                            function() {
+                                jalankanFilter(true);
+                            }
                         );
                     }
 
@@ -2098,7 +2290,9 @@
                     if (searchInput) {
                         searchInput.addEventListener(
                             'keyup',
-                            jalankanFilter
+                            function() {
+                                jalankanFilter(true);
+                            }
                         );
                     }
 
@@ -2106,9 +2300,61 @@
                     if (statusSelect) {
                         statusSelect.addEventListener(
                             'change',
-                            jalankanFilter
+                            function() {
+                                jalankanFilter(true);
+                            }
                         );
                     }
+
+                    const perPageSelect =
+                        document.getElementById(
+                            'perPageSelect'
+                        );
+
+                    const paginationContainer =
+                        document.getElementById(
+                            'paginationButtons'
+                        );
+
+                    if (perPageSelect) {
+                        perPageSelect.addEventListener(
+                            'change',
+                            function() {
+                                jalankanFilter(true);
+                            }
+                        );
+                    }
+
+                    if (paginationContainer) {
+                        paginationContainer.addEventListener(
+                            'click',
+                            function(e) {
+
+                                const button =
+                                    e.target.closest(
+                                        'button[data-page]'
+                                    );
+
+                                if (
+                                    !button ||
+                                    button.disabled
+                                ) {
+                                    return;
+                                }
+
+                                window.artikelCurrentPage =
+                                    parseInt(
+                                        button.dataset.page,
+                                        10
+                                    ) || 1;
+
+                                jalankanFilter(false);
+
+                            }
+                        );
+                    }
+
+                    jalankanFilter(true);
 
 
                     document
@@ -2181,6 +2427,11 @@
 
                     }
 
+                    initComboSelect('perPageSelect');
+                    initComboSelect('kategoriArtikel');
+                    initComboSelect('statusArtikel');
+                    initComboPreview();
+
                 }
             );
 
@@ -2191,7 +2442,7 @@
             |--------------------------------------------------------------------------
             */
 
-            function jalankanFilter() {
+            function jalankanFilter(resetPage = true) {
 
                 const searchElement =
                     document.getElementById(
@@ -2206,6 +2457,21 @@
                 const kategoriElement =
                     document.getElementById(
                         'kategoriArtikel'
+                    );
+
+                const perPageElement =
+                    document.getElementById(
+                        'perPageSelect'
+                    );
+
+                const paginationContainer =
+                    document.getElementById(
+                        'paginationButtons'
+                    );
+
+                const tableInfo =
+                    document.getElementById(
+                        'tableInfoPagination'
                     );
 
 
@@ -2229,53 +2495,105 @@
 
 
                 const rows =
-                    document.querySelectorAll(
-                        '#artikelTableBody tr[data-judul]'
+                    Array.from(
+                        document.querySelectorAll(
+                            '#artikelTableBody tr[data-judul]'
+                        )
                     );
 
 
-                let tampil = 0;
+                const filtered =
+                    rows.filter(function(row) {
+
+                        const judul =
+                            row.dataset.judul || '';
+
+                        const rowStatus =
+                            row.dataset.status || '';
+
+                        const rowKategori =
+                            row.dataset.kategori || '';
+
+
+                        const cocokJudul =
+                            !keyword ||
+                            judul.includes(keyword);
+
+                        const cocokStatus =
+                            status === 'semua' ||
+                            rowStatus === status;
+
+                        const cocokKategori =
+                            kategori === 'semua' ||
+                            rowKategori === kategori;
+
+
+                        return (
+                            cocokJudul &&
+                            cocokStatus &&
+                            cocokKategori
+                        );
+
+                    });
+
+
+                const perPage =
+                    parseInt(
+                        perPageElement ?
+                            perPageElement.value :
+                            10,
+                        10
+                    ) || 10;
+
+
+                if (typeof window.artikelCurrentPage !== 'number') {
+                    window.artikelCurrentPage = 1;
+                }
+
+                if (resetPage) {
+                    window.artikelCurrentPage = 1;
+                }
+
+
+                const totalPages =
+                    Math.ceil(
+                        filtered.length / perPage
+                    ) || 1;
+
+
+                window.artikelCurrentPage =
+                    Math.min(
+                        Math.max(
+                            window.artikelCurrentPage,
+                            1
+                        ),
+                        totalPages
+                    );
 
 
                 rows.forEach(function(row) {
-
-                    const judul =
-                        row.dataset.judul || '';
-
-                    const rowStatus =
-                        row.dataset.status || '';
-
-                    const rowKategori =
-                        row.dataset.kategori || '';
-
-
-                    const cocokJudul = !keyword ||
-                        judul.includes(keyword);
-
-                    const cocokStatus =
-                        status === 'semua' ||
-                        rowStatus === status;
-
-                    const cocokKategori =
-                        kategori === 'semua' ||
-                        rowKategori === kategori;
-
-
-                    const cocok =
-                        cocokJudul &&
-                        cocokStatus &&
-                        cocokKategori;
-
-
-                    row.style.display =
-                        cocok ? '' : 'none';
-
-
-                    if (cocok) {
-                        tampil++;
-                    }
-
+                    row.style.display = 'none';
                 });
+
+
+                const startRow =
+                    (
+                        window.artikelCurrentPage - 1
+                    ) * perPage;
+
+                const endRow =
+                    startRow + perPage;
+
+
+                filtered
+                    .slice(startRow, endRow)
+                    .forEach(function(row) {
+                        row.style.display = '';
+                    });
+
+
+                const tampil =
+                    filtered.length;
 
 
                 const kosong =
@@ -2306,6 +2624,68 @@
                 if (info) {
                     info.textContent = tampil;
                 }
+
+
+                if (tableInfo) {
+
+                    tableInfo.innerHTML =
+                        tampil === 0 ?
+                        'Tidak ada data yang ditampilkan' :
+                        `Menampilkan konten <strong>${startRow + 1}</strong> - <strong>${Math.min(endRow, filtered.length)}</strong> dari <strong>${filtered.length}</strong>`;
+
+                }
+
+
+                if (!paginationContainer) {
+                    return;
+                }
+
+
+                let html =
+                    `<button class="btn btn--ghost" type="button" data-page="${window.artikelCurrentPage - 1}" ${window.artikelCurrentPage === 1 ? 'disabled' : ''}>‹</button>`;
+
+
+                for (
+                    let i = 1;
+                    i <= totalPages;
+                    i++
+                ) {
+
+                    if (
+                        i === 1 ||
+                        i === totalPages ||
+                        (
+                            i >=
+                            window.artikelCurrentPage - 1 &&
+                            i <=
+                            window.artikelCurrentPage + 1
+                        )
+                    ) {
+
+                        html +=
+                            `<button class="btn ${i === window.artikelCurrentPage ? 'btn--primary' : 'btn--ghost'}" type="button" data-page="${i}">${i}</button>`;
+
+                    } else if (
+                        i ===
+                        window.artikelCurrentPage - 2 ||
+                        i ===
+                        window.artikelCurrentPage + 2
+                    ) {
+
+                        html +=
+                            '<span class="pagination-dots">…</span>';
+
+                    }
+
+                }
+
+
+                html +=
+                    `<button class="btn btn--ghost" type="button" data-page="${window.artikelCurrentPage + 1}" ${window.artikelCurrentPage === totalPages ? 'disabled' : ''}>›</button>`;
+
+
+                paginationContainer.innerHTML =
+                    html;
 
             }
 
@@ -2418,7 +2798,8 @@
 
 
                 const jenisLabel =
-                    jsLabelJenis[item.jenis] ||
+                    (typeof jsLabelJenis === 'object' && jsLabelJenis[item.jenis]) ?
+                    jsLabelJenis[item.jenis] :
                     'Edukasi Sampah';
 
 
@@ -2427,21 +2808,18 @@
                     escapeHtml(jenisLabel);
 
 
-                if (item.tanggal_publish) {
+                if (item.tanggal_publish && item.tanggal_publish.trim() !== '') {
+                    const cleanDate = item.tanggal_publish.split('T')[0].split(' ')[0];
+                    const parts = cleanDate.split('-');
 
-                    // Format tanggal menggunakan angka saja (DD/MM/YYYY)
-                    const parts = item.tanggal_publish.split('-');
-                    const formattedDate = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : item.tanggal_publish;
-
-                    metaHtml +=
-                        ' &nbsp;•&nbsp; ' +
-                        formattedDate;
-
+                    if (parts.length === 3) {
+                        const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        metaHtml += ' &nbsp;•&nbsp; ' + formattedDate;
+                    } else {
+                        metaHtml += ' &nbsp;•&nbsp; ' + cleanDate;
+                    }
                 } else {
-
-                    metaHtml +=
-                        ' <span class="phone-badge-draft">Draft</span>';
-
+                    metaHtml += ' <span class="phone-badge-draft">Draft</span>';
                 }
 
 
@@ -2481,6 +2859,122 @@
                         Pilah sampah organik dan anorganik mulai dari rumah sebelum disetorkan ke Bank Sampah.
                     </div>
                 `;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | COMBO SELECT
+            |--------------------------------------------------------------------------
+            */
+
+            const comboSelectRegistry = {};
+
+            function syncComboSelect(selectId) {
+                if (comboSelectRegistry[selectId]) comboSelectRegistry[selectId]();
+            }
+
+            function initComboSelect(selectId) {
+                const select = document.getElementById(selectId);
+                const input = document.getElementById('cari_' + selectId);
+                const list = document.getElementById('list_' + selectId);
+                if (!select || !input || !list) return;
+
+                input.readOnly = true;
+                let aktif = -1;
+
+                const teks = o => o.textContent.replace(/\s+/g, ' ').trim();
+                const esc = v => String(v).replace(/[&<>"']/g, c => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                } [c]));
+
+                function sync() {
+                    const o = select.options[select.selectedIndex];
+                    input.value = o ? teks(o) : '';
+                }
+
+                function buka() {
+                    list.innerHTML = Array.from(select.options).map(o =>
+                        `<div class="combo-item${o.value === select.value ? ' is-selected' : ''}" data-value="${esc(o.value)}">${esc(teks(o))}</div>`
+                    ).join('');
+                    aktif = -1;
+                    list.classList.add('show');
+                }
+
+                function tutup() {
+                    list.classList.remove('show');
+                }
+
+                function pilih(value) {
+                    const berubah = select.value !== String(value);
+                    select.value = value;
+                    sync();
+                    tutup();
+                    if (berubah) select.dispatchEvent(new Event('change', {
+                        bubbles: true
+                    }));
+                }
+
+                function sorot(arah) {
+                    const items = list.querySelectorAll('.combo-item');
+                    if (!items.length) return;
+                    aktif = (aktif + arah + items.length) % items.length;
+                    items.forEach((el, i) => el.classList.toggle('is-active', i === aktif));
+                }
+
+                input.addEventListener('focus', buka);
+                input.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!list.classList.contains('show')) buka();
+                });
+
+                input.addEventListener('keydown', function(e) {
+                    const items = list.querySelectorAll('.combo-item');
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (!list.classList.contains('show')) buka();
+                        sorot(1);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        sorot(-1);
+                    } else if (e.key === 'Enter') {
+                        if (list.classList.contains('show') && aktif > -1 && items[aktif]) {
+                            e.preventDefault();
+                            pilih(items[aktif].dataset.value);
+                        }
+                    } else if (e.key === 'Escape' && list.classList.contains('show')) {
+                        e.stopPropagation();
+                        tutup();
+                    }
+                });
+
+                list.addEventListener('mouseover', function(e) {
+                    const item = e.target.closest('.combo-item');
+                    if (!item) return;
+                    list.querySelectorAll('.combo-item').forEach((el, i) => {
+                        el.classList.toggle('is-active', el === item);
+                        if (el === item) aktif = i;
+                    });
+                });
+
+                list.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    const item = e.target.closest('.combo-item');
+                    if (item) pilih(item.dataset.value);
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!document.getElementById('combo_' + selectId)?.contains(e.target)) {
+                        tutup();
+                    }
+                });
+
+                comboSelectRegistry[selectId] = sync;
+                sync();
             }
 
 
@@ -3314,36 +3808,42 @@
                 }
 
 
-                if (artikel.tanggal_publish) {
+                if (artikel.tanggal_publish && artikel.tanggal_publish.trim() !== '') {
+                    const cleanDate = artikel.tanggal_publish.split('T')[0].split(' ')[0];
+                    const parts = cleanDate.split('-');
 
-                    const tanggal =
-                        new Date(
-                            artikel.tanggal_publish +
-                            'T00:00:00'
-                        );
+                    if (parts.length === 3) {
+                        const tahun = parts[0];
+                        const bulanIndex = parseInt(parts[1], 10) - 1;
+                        const hari = parts[2];
 
+                        const namaBulan = [
+                            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+                        ];
 
-                    document.getElementById(
-                            'detailTanggal'
-                        ).textContent =
-                        jenisText +
-                        ' • Dipublikasikan pada ' +
-                        tanggal.toLocaleDateString(
-                            'id-ID', {
-                                day: '2-digit',
-                                month: 'long',
-                                year: 'numeric'
-                            }
-                        );
+                        const tanggalFormatted = `${hari} ${namaBulan[bulanIndex]} ${tahun}`;
 
+                        document.getElementById(
+                                'detailTanggal'
+                            ).textContent =
+                            jenisText +
+                            ' • Dipublikasikan pada ' +
+                            tanggalFormatted;
+                    } else {
+                        document.getElementById(
+                                'detailTanggal'
+                            ).textContent =
+                            jenisText +
+                            ' • Dipublikasikan pada ' +
+                            cleanDate;
+                    }
                 } else {
-
                     document.getElementById(
                             'detailTanggal'
                         ).textContent =
                         jenisText +
                         ' • Status: Draft';
-
                 }
 
 
@@ -3532,69 +4032,6 @@
                     );
 
             }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | INIT DRAFT + COMBO PREVIEW
-            |--------------------------------------------------------------------------
-            */
-
-            document.addEventListener(
-                'DOMContentLoaded',
-                function() {
-
-                    const btnDraft =
-                        document.getElementById(
-                            'btnSimpanDraft'
-                        );
-
-
-                    if (btnDraft) {
-
-                        btnDraft.addEventListener(
-                            'click',
-                            function(e) {
-
-                                e.preventDefault();
-                                e.stopPropagation();
-
-                                simpanArtikel(
-                                    'draft'
-                                );
-
-                            }
-                        );
-
-                    }
-
-
-                    initComboPreview();
-
-
-                    const previewSelector =
-                        document.getElementById(
-                            'previewSelector'
-                        );
-
-
-                    if (
-                        previewSelector &&
-                        previewSelector.value
-                    ) {
-
-                        renderPreview(
-                            previewSelector.value
-                        );
-
-                    } else {
-
-                        renderPreview('');
-
-                    }
-
-                }
-            );
         </script>
 
     </div>
