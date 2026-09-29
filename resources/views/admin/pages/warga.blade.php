@@ -100,7 +100,6 @@
                     <tr>
                         <th style="width: 50px;">No</th>
                         <th>Warga</th>
-                        <th>NIK</th>
                         <th>No. HP</th>
                         <th>Alamat</th>
                         <th>Anggota</th>
@@ -116,14 +115,10 @@
                             <!-- NO -->
                             <td class="text-subtle">{{ $index + 1 }}</td>
 
-                            <!-- NAMA WARGA -->
+                            <!-- NAMA WARGA & NIK -->
                             <td>
                                 <strong class="user-name">{{ $item->nama }}</strong>
-                            </td>
-
-                            <!-- NIK -->
-                            <td>
-                                <span class="mono">{{ $item->nik }}</span>
+                                <div class="mono text-subtle" style="margin-top: 2px;">{{ $item->nik }}</div>
                             </td>
 
                             <!-- NO HP -->
@@ -139,7 +134,7 @@
                             <!-- JUMLAH ANGGOTA KELUARGA -->
                             <td>
                                 <span class="kategori-tag">
-                                    {{ $item->jumlah_anggota_keluarga ?? 0 }} orang
+                                    {{ $item->jumlah_anggota_keluarga ?? 0 }} org
                                 </span>
                             </td>
 
@@ -184,7 +179,7 @@
                             <!-- TANGGAL DAFTAR -->
                             <td class="text-subtle">
                                 @if ($item->tanggal_daftar)
-                                    {{ \Carbon\Carbon::parse($item->tanggal_daftar)->translatedFormat('d M Y') }}
+                                    {{ \Carbon\Carbon::parse($item->tanggal_daftar)->translatedFormat('d/m/y') }}
                                 @else
                                     -
                                 @endif
@@ -222,7 +217,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" style="text-align: center; padding: 40px;">
+                            <td colspan="9" style="text-align: center; padding: 40px;">
                                 <div style="font-size: 30px; margin-bottom: 10px;">📋</div>
                                 <strong>Belum Ada Data Warga</strong>
                                 <p class="empty-desc" style="margin: 5px 0 0;">

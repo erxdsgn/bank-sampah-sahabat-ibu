@@ -270,30 +270,30 @@ class HomeController extends Controller
      */
     public function updateProfil(Request $request): RedirectResponse
     {
+        /** @var Admin $admin */
+        $admin = Auth::user();
+
         $request->validate([
             'nama'     => ['required', 'string', 'max:100'],
-            'username' => ['required', 'string', 'max:50'],
+            'username' => ['required', 'string', 'max:50', 'unique:admin,username,' . $admin->id_admin . ',id_admin'],
             'alamat'   => ['nullable', 'string', 'max:255'],
             'password' => ['nullable', 'string', 'min:6'],
         ]);
 
-        /** @var Admin $admin */
-        $admin = Auth::user();
+        // Update data dasar profil satu per satu
+        $admin->nama     = $request->nama;
+        $admin->username = $request->username;
+        $admin->alamat   = $request->alamat;
 
-        $data = [
-            'nama'     => $request->nama,
-            'username' => $request->username,
-            'alamat'   => $request->alamat,
-        ];
-
-        // Password hanya diperbarui jika diisi
+        // Jika password diisi, tetapkan ke properti langsung agar casts 'hashed' aktif secara otomatis
         if ($request->filled('password')) {
-            $data['password'] = $request->password;
+            $admin->password = $request->password;
         }
 
-        $admin->update($data);
+        // Simpan menggunakan ->save() agar enkripsi Bcrypt otomatis diterapkan oleh model
+        $admin->save();
 
-        return back()->with('success', 'Profil admin berhasil diperbarui.');
+        return back()->with('success', 'Profil admin dan password berhasil diperbarui.');
     }
 
     /**

@@ -21,28 +21,20 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | Hapus sesi lama dari perangkat/browser yang sama
-            |--------------------------------------------------------------------------
-            |
-            | User-Agent digunakan untuk mengenali browser/perangkat.
-            | Jika perangkat/browser yang sama login kembali,
-            | sesi lama akan dihapus.
-            |
-            */
             $admin = Auth::user();
+
+            /*
+         * Hapus session lama dari perangkat/browser yang sama,
+         * TAPI jangan hapus session yang baru saja dibuat.
+         */
+            $currentSessionId = $request->session()->getId();
 
             DB::table('sessions')
                 ->where('user_id', $admin->id_admin)
                 ->where('user_agent', $request->userAgent())
+                ->where('id', '!=', $currentSessionId) // ← KUNCI
                 ->delete();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Buat session login baru
-            |--------------------------------------------------------------------------
-            */
             $request->session()->regenerate();
 
             return redirect()
