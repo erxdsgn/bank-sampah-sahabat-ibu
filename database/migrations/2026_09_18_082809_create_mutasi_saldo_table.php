@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('mutasi_saldo', function (Blueprint $table) {
-            $table->integer('id_mutasi', true);
-            $table->integer('id_warga')->index('fk_mutasi_warga');
-            $table->integer('id_setoran')->nullable()->index('fk_mutasi_setoran');
+            $table->id('id_mutasi');
+            $table->unsignedBigInteger('id_warga')->index('fk_mutasi_warga');
+            $table->unsignedBigInteger('id_setoran')->nullable()->index('fk_mutasi_setoran');
             $table->string('jenis_mutasi', 20);
-            $table->decimal('jumlah', 15);
+            $table->decimal('jumlah', 15, 2);
             $table->date('tanggal');
             $table->text('keterangan')->nullable();
             $table->timestamps();

@@ -11,7 +11,6 @@ class Setoran extends Model
     protected $primaryKey = 'id_setoran';
 
     protected $fillable = [
-        'kode_transaksi',
         'id_warga',
         'id_admin',
         'tanggal_setoran',
@@ -27,6 +26,39 @@ class Setoran extends Model
         'total_berat' => 'decimal:2',
         'total_nilai' => 'decimal:2',
     ];
+
+    /**
+     * Generate kode transaksi otomatis saat setoran dibuat.
+     */
+    protected static function booted()
+    {
+        static::creating(function ($setoran) {
+            if (empty($setoran->kode_transaksi)) {
+                $setoran->kode_transaksi = self::generateKodeTransaksi();
+            }
+        });
+    }
+
+    /**
+     * Format: BS-YYYYMMDD-0001 (urutan reset setiap hari).
+     *
+     * Urutan dihitung dari kode terbesar pada prefix hari ini, bukan dari
+     * "baris terakhir", sehingga data lama tanpa kode tidak merusak urutan.
+     * lockForUpdate() efektif bila pembuatan setoran berada di DB::transaction().
+     */
+    public static function generateKodeTransaksi(): string
+    {
+        $prefix = 'BS-' . now()->format('Ymd') . '-';
+
+        $terakhir = self::where('kode_transaksi', 'like', $prefix . '%')
+            ->lockForUpdate()
+            ->orderBy('kode_transaksi', 'desc')
+            ->value('kode_transaksi');
+
+        $urutan = $terakhir ? ((int) substr($terakhir, -4)) + 1 : 1;
+
+        return $prefix . str_pad($urutan, 4, '0', STR_PAD_LEFT);
+    }
 
     /**
      * Warga pemilik setoran.

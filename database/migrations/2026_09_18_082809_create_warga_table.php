@@ -12,13 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('warga', function (Blueprint $table) {
-            $table->integer('id_warga', true);
+            $table->id('id_warga');
+            // Relasi ke tabel users
+            $table->foreignId('id_user')->constrained('users')->onDelete('cascade');
             $table->string('nik', 20)->unique('nik');
             $table->string('nama');
             $table->string('no_hp', 20)->nullable();
             $table->text('alamat')->nullable();
             $table->integer('jumlah_anggota_keluarga')->nullable()->default(0);
-            $table->decimal('saldo', 15)->nullable()->default(0);
+            $table->decimal('saldo', 15, 2)->nullable()->default(0);
             $table->date('tanggal_daftar');
             $table->timestamps();
         });

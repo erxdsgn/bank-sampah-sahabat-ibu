@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('detail_setoran', function (Blueprint $table) {
-            $table->integer('id_detail', true);
-            $table->integer('id_setoran')->index('fk_detail_setoran');
-            $table->integer('id_kategori')->index('fk_detail_kategori');
-            $table->decimal('berat_gram', 10);      // Diubah dari berat_kg
-            $table->decimal('harga_per_gram', 15);  // Diubah dari harga_per_kg
-            $table->decimal('subtotal', 15);
+            $table->id('id_detail');
+            $table->unsignedBigInteger('id_setoran')->index('fk_detail_setoran');
+            $table->unsignedBigInteger('id_kategori')->index('fk_detail_kategori');
+            $table->decimal('berat_gram', 10, 2);
+            $table->decimal('harga_per_gram', 15, 2);
+            $table->decimal('subtotal', 15, 2);
             $table->timestamps();
         });
     }

@@ -82,8 +82,7 @@
                     <circle cx="11" cy="11" r="7"></circle>
                     <path d="m21 21-4.3-4.3"></path>
                 </svg>
-                <input type="text" id="searchWarga" placeholder="Cari NIK, nama, nomor HP, atau alamat..."
-                    autocomplete="off">
+                <input type="text" id="searchWarga" placeholder="Cari ID Warga, NIK, nama, HP, atau alamat..." autocomplete="off">
             </div>
 
             <div class="filter-pills" id="filterPills">
@@ -99,6 +98,7 @@
                 <thead>
                     <tr>
                         <th style="width: 50px;">No</th>
+                        <th>ID Warga</th>
                         <th>Warga</th>
                         <th>No. HP</th>
                         <th>Alamat</th>
@@ -114,6 +114,12 @@
                         <tr data-status="{{ $item->nama_bank_ewallet ? $item->status_rekening : 'none' }}">
                             <!-- NO -->
                             <td class="text-subtle">{{ $index + 1 }}</td>
+
+                            <td>
+                                <span class="kategori-tag" style="font-family: monospace; font-weight: 700;">
+                                    {{ $item->id_warga }}
+                                </span>
+                            </td>
 
                             <!-- NAMA WARGA & NIK -->
                             <td>
@@ -219,7 +225,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" style="text-align: center; padding: 40px;">
+                            <td colspan="10" style="text-align: center; padding: 40px;">
                                 <div style="font-size: 30px; margin-bottom: 10px;">📋</div>
                                 <strong>Belum Ada Data Warga</strong>
                                 <p class="empty-desc" style="margin: 5px 0 0;">
@@ -279,7 +285,11 @@
                     <div class="detail-avatar" id="detailAvatar">-</div>
                     <div>
                         <div class="detail-nama" id="detailNama">-</div>
-                        <div class="detail-nik mono" id="detailNik">-</div>
+                        <div style="display: flex; gap: 8px; margin-top: 3px; align-items: center;">
+                            <span class="kategori-tag" id="detailIdWarga"
+                                style="font-family: monospace; font-size: 11px;">-</span>
+                            <span class="detail-nik mono" id="detailNik">-</span>
+                        </div>
                     </div>
                 </div>
 
@@ -362,6 +372,17 @@
                         <div class="form-group">
                             <label for="tambahNama">Nama Lengkap</label>
                             <input type="text" id="tambahNama" required placeholder="Nama lengkap warga">
+                        </div>
+
+                        <!-- INPUT EMAIL & PASSWORD DITAMBAHKAN -->
+                        <div class="form-group">
+                            <label for="tambahEmail">Email Login</label>
+                            <input type="email" id="tambahEmail" required placeholder="contoh@domain.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tambahPassword">Password Login</label>
+                            <input type="password" id="tambahPassword" minlength="8" required placeholder="Minimal 8 karakter">
                         </div>
 
                         <div class="form-group">
@@ -538,9 +559,7 @@
 
     <!-- STYLES -->
     <style>
-        /* =========================================================
-                           VARIABEL TEMA (Light / Dark)
-                           ========================================================= */
+        /* CSS tetap sesuai struktur asli */
         :root {
             --dashboard-page: #f5f7fb;
             --dashboard-card: #ffffff;
@@ -576,10 +595,6 @@
             color: var(--dashboard-text);
             transition: background-color .25s ease, color .25s ease;
         }
-
-        /* =========================================================
-                           TEMA BERSAMA
-                           ========================================================= */
 
         .card {
             background: var(--dashboard-card);
@@ -634,7 +649,6 @@
             border-color: var(--primary, #4338ca);
         }
 
-        /* Scrollbar Modern pada Tabel */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -654,10 +668,6 @@
         .table-responsive::-webkit-scrollbar-thumb {
             background: var(--dashboard-border);
             border-radius: 4px;
-        }
-
-        .table-responsive::-webkit-scrollbar-thumb:hover {
-            background: var(--dashboard-text-muted);
         }
 
         .data-table {
@@ -680,7 +690,6 @@
             border-top: 1px solid var(--dashboard-border);
             border-bottom: 1px solid var(--dashboard-border);
             white-space: nowrap;
-            transition: background-color .25s ease, color .25s ease, border-color .25s ease;
         }
 
         .data-table td {
@@ -690,7 +699,6 @@
             color: var(--dashboard-text);
             vertical-align: middle;
             background: var(--dashboard-table-row);
-            transition: background-color .25s ease, color .25s ease, border-color .25s ease;
         }
 
         .data-table tbody tr:hover td {
@@ -777,7 +785,6 @@
             justify-content: center;
             cursor: pointer;
             color: var(--dashboard-text-secondary);
-            transition: background-color .2s ease, color .2s ease, border-color .2s ease;
         }
 
         .icon-btn svg {
@@ -894,7 +901,6 @@
             border-radius: 14px;
             box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
             animation: modalPop .15s ease-out;
-            transition: background-color .25s ease, border-color .25s ease, color .25s ease;
         }
 
         .modal-box--sm {
@@ -973,23 +979,6 @@
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: var(--dashboard-border) transparent;
-        }
-
-        .modal-body::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .modal-body::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .modal-body::-webkit-scrollbar-thumb {
-            background: var(--dashboard-border);
-            border-radius: 4px;
-        }
-
-        .modal-body::-webkit-scrollbar-thumb:hover {
-            background: var(--dashboard-text-muted);
         }
 
         .modal-body--center {
@@ -1120,7 +1109,6 @@
             width: 100%;
             background: var(--dashboard-input);
             color: var(--dashboard-text);
-            transition: border-color .2s ease, box-shadow .2s ease;
         }
 
         .form-group input:focus,
@@ -1221,42 +1209,6 @@
             flex-shrink: 0;
         }
 
-        .toast-close:hover {
-            color: var(--dashboard-text);
-        }
-
-        .toast.toast--leaving {
-            animation: toastOut .18s ease-in forwards;
-        }
-
-        @keyframes toastIn {
-            from {
-                opacity: 0;
-                transform: translateX(16px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes toastOut {
-            from {
-                opacity: 1;
-                transform: translateX(0);
-            }
-
-            to {
-                opacity: 0;
-                transform: translateX(16px);
-            }
-        }
-
-        /* =========================================================
-                           TAMBAHAN KHUSUS DATA WARGA
-                           ========================================================= */
-
         .hero-actions {
             display: flex;
             gap: 12px;
@@ -1280,7 +1232,6 @@
             align-items: center;
             gap: 16px;
             box-shadow: var(--dashboard-shadow);
-            transition: background-color .25s ease, border-color .25s ease, color .25s ease, box-shadow .25s ease;
         }
 
         .stat-icon {
@@ -1469,10 +1420,6 @@
             line-height: 1.5;
         }
 
-        /* =========================================================
-                           COMBOBOX (SEARCHABLE SELECT)
-                           ========================================================= */
-
         .combo {
             position: relative;
         }
@@ -1488,16 +1435,6 @@
             box-sizing: border-box;
             background: var(--dashboard-input);
             color: var(--dashboard-text);
-            transition: border-color .2s ease, box-shadow .2s ease;
-        }
-
-        .combo-input:focus {
-            border-color: #22c55e;
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
-        }
-
-        .combo-input::placeholder {
-            color: var(--dashboard-text-muted);
         }
 
         .combo-hidden {
@@ -1526,29 +1463,10 @@
             border-radius: 8px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, .22);
             z-index: 60;
-            scrollbar-width: thin;
-            scrollbar-color: var(--dashboard-border) transparent;
         }
 
         .combo-list.show {
             display: block;
-        }
-
-        .combo-list::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .combo-list::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .combo-list::-webkit-scrollbar-thumb {
-            background: var(--dashboard-border);
-            border-radius: 4px;
-        }
-
-        .combo-list::-webkit-scrollbar-thumb:hover {
-            background: var(--dashboard-text-muted);
         }
 
         .combo-item {
@@ -1556,11 +1474,6 @@
             font-size: 13px;
             color: var(--dashboard-text);
             cursor: pointer;
-            transition: background .1s ease, color .1s ease;
-        }
-
-        .combo-item.is-selected {
-            font-weight: 700;
         }
 
         .combo-item:hover,
@@ -1597,118 +1510,6 @@
             .form-grid {
                 grid-template-columns: 1fr;
             }
-        }
-
-        @media (max-width: 480px) {
-            .toast-wrap {
-                left: 16px;
-                right: 16px;
-                top: 16px;
-            }
-
-            .toast {
-                min-width: 0;
-                max-width: none;
-                width: 100%;
-            }
-        }
-
-        /* =========================================================
-                           DARK THEME — WARNA SEMANTIK & FORCE
-                           ========================================================= */
-
-        [data-theme="dark"] .stat-icon--blue {
-            background: rgba(37, 99, 235, .18);
-            color: #93c5fd;
-        }
-
-        [data-theme="dark"] .stat-icon--green {
-            background: rgba(34, 197, 94, .16);
-            color: #4ade80;
-        }
-
-        [data-theme="dark"] .stat-icon--amber {
-            background: rgba(217, 119, 6, .18);
-            color: #fbbf24;
-        }
-
-        [data-theme="dark"] .detail-avatar {
-            background: rgba(99, 102, 241, .18);
-            color: #a5b4fc;
-        }
-
-        [data-theme="dark"] .saldo-text {
-            color: #4ade80;
-        }
-
-        [data-theme="dark"] .kategori-tag {
-            background: rgba(99, 102, 241, .16);
-            color: #a5b4fc;
-            border-color: rgba(99, 102, 241, .35);
-        }
-
-        [data-theme="dark"] .status-badge--pending {
-            background: rgba(245, 158, 11, .18);
-            color: #fbbf24;
-            border-color: rgba(245, 158, 11, .35);
-        }
-
-        [data-theme="dark"] .status-badge--approved {
-            background: rgba(34, 197, 94, .16);
-            color: #4ade80;
-            border-color: rgba(34, 197, 94, .35);
-        }
-
-        [data-theme="dark"] .icon-btn--primary {
-            border-color: rgba(99, 102, 241, .35);
-            color: #a5b4fc;
-        }
-
-        [data-theme="dark"] .icon-btn--primary:hover {
-            background: rgba(99, 102, 241, .16);
-        }
-
-        [data-theme="dark"] .form-group input::placeholder,
-        [data-theme="dark"] .form-group textarea::placeholder,
-        [data-theme="dark"] .combo-input::placeholder,
-        [data-theme="dark"] .table-search input::placeholder {
-            color: rgba(255, 255, 255, .35);
-        }
-
-        [data-theme="dark"] .modal-overlay {
-            background: rgba(0, 0, 0, .65);
-        }
-
-        [data-theme="dark"] .card,
-        [data-theme="dark"] .stat-card,
-        [data-theme="dark"] .modal-box,
-        [data-theme="dark"] .toast,
-        [data-theme="dark"] .combo-list {
-            background: #151d2f;
-            color: #f1f5f9;
-            border-color: #29364d;
-        }
-
-        [data-theme="dark"] .data-table,
-        [data-theme="dark"] .data-table tbody,
-        [data-theme="dark"] .data-table tr,
-        [data-theme="dark"] .data-table td {
-            background: #151d2f;
-            color: #f1f5f9;
-        }
-
-        [data-theme="dark"] .data-table th {
-            background: #111a2c;
-            color: #aab6c8;
-            border-color: #29364d;
-        }
-
-        [data-theme="dark"] .data-table td {
-            border-color: #29364d;
-        }
-
-        [data-theme="dark"] .data-table tbody tr:hover td {
-            background: #202b40;
         }
     </style>
 
@@ -2123,11 +1924,14 @@
             setTimeout(hapusToast, 3500);
         }
 
+        // FUNGSI SIMPAN TAMBAH WARGA (DENGAN EMAIL & PASSWORD)
         function simpanTambahWarga(event) {
             event.preventDefault();
             const payload = {
                 nik: document.getElementById('tambahNik').value,
                 nama: document.getElementById('tambahNama').value,
+                email: document.getElementById('tambahEmail').value,
+                password: document.getElementById('tambahPassword').value,
                 no_hp: document.getElementById('tambahHp').value,
                 jumlah_anggota_keluarga: document.getElementById('tambahKeluarga').value,
                 alamat: document.getElementById('tambahAlamat').value,
@@ -2146,11 +1950,18 @@
                     body: JSON.stringify(payload)
                 })
                 .then(async (res) => {
+                    const data = await res.json().catch(() => ({}));
                     if (!res.ok) {
-                        const err = await res.json().catch(() => ({}));
-                        throw new Error(err.message || 'Gagal menyimpan data warga.');
+                        let errorMsg = data.message || 'Gagal menyimpan data warga.';
+                        if (data.errors) {
+                            const firstKey = Object.keys(data.errors)[0];
+                            if (firstKey && data.errors[firstKey][0]) {
+                                errorMsg = data.errors[firstKey][0];
+                            }
+                        }
+                        throw new Error(errorMsg);
                     }
-                    return res.json();
+                    return data;
                 })
                 .then(() => {
                     tutupModal('modalTambah');
@@ -2170,6 +1981,7 @@
             const nama = warga.nama || '-';
             document.getElementById('detailAvatar').textContent = nama.trim().charAt(0).toUpperCase();
             document.getElementById('detailNama').textContent = nama;
+            document.getElementById('detailIdWarga').textContent = warga.id_warga || '-';
             document.getElementById('detailNik').textContent = warga.nik || '-';
             document.getElementById('detailHp').textContent = warga.no_hp || '-';
             document.getElementById('detailKeluarga').textContent = (warga.jumlah_anggota_keluarga ?? 0) + ' orang';
@@ -2234,7 +2046,6 @@
                 .then(async (res) => {
                     const data = await res.json().catch(() => ({}));
                     if (!res.ok) {
-                        // Tangkap pesan error validasi dari Laravel (jika ada errors bagikan pesan pertamanya)
                         let errorMsg = data.message || 'Gagal memperbarui data warga.';
                         if (data.errors) {
                             const firstKey = Object.keys(data.errors)[0];

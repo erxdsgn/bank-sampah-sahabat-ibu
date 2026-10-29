@@ -13,7 +13,7 @@ class AdminSeeder extends Seeder
             ['username' => 'adminBSSI'],
             [
                 'nama'     => 'Admin Bank Sampah Sahabat Ibu',
-                'password' => '121212', // JANGAN pakai Hash::make() — cast 'hashed' yang urus
+                'password' => '121212', 
                 'alamat'   => null,
             ]
         );

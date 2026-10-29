@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Models\User;
 use App\Models\Warga;
 use App\Support\RingkasanKeuangan;
 use Carbon\Carbon;
@@ -11,6 +12,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Jenssegers\Agent\Agent;
 
@@ -109,6 +112,7 @@ class HomeController extends Controller
             ->keys()
             ->map(fn($grup) => ['key' => $grup, 'label' => $this->labelSatuan($grup)])
             ->values();
+
         // ---------------------------------------------------------
         // Riwayat Setoran
         // ---------------------------------------------------------
@@ -235,15 +239,24 @@ class HomeController extends Controller
      */
     public function pengaturan(Request $request): View
     {
-        // 1. Ambil data Admin yang sedang login
-        $admin = Auth::user();
+        // 1. Ambil ID akun auth yang sedang login
+        $primaryId = Auth::id();
 
-        // 2. Ambil ID admin (fallback ke id_admin atau id)
-        $adminId = $admin->id_admin ?? $admin->id ?? Auth::id();
+        // 2. Ambil data spesifik sesuai primary key masing-masing tabel
+        $userRecord  = DB::table('users')->where('id', $primaryId)->first();
+        $adminRecord = DB::table('admin')->where('id_admin', $primaryId)->first();
 
-        // 3. Ambil data sesi perangkat login user dari tabel 'sessions'
+        // 3. Gabungkan data agar $admin->nama dan $admin->username terisi sempurna di View
+        $admin = (object) [
+            'id_admin' => $adminRecord->id_admin ?? $primaryId,
+            'nama'     => $adminRecord->nama ?? '',
+            'username' => $userRecord->username ?? '',
+            'alamat'   => $adminRecord->alamat ?? '',
+        ];
+
+        // 4. Ambil data sesi perangkat login user dari tabel 'sessions'
         $sessions = DB::table('sessions')
-            ->where('user_id', $adminId)
+            ->where('user_id', $primaryId)
             ->orderBy('last_activity', 'desc')
             ->get();
 
@@ -270,28 +283,44 @@ class HomeController extends Controller
      */
     public function updateProfil(Request $request): RedirectResponse
     {
-        /** @var Admin $admin */
-        $admin = Auth::user();
+        $primaryId = Auth::id();
 
+        // 1. Validasi Input
         $request->validate([
             'nama'     => ['required', 'string', 'max:100'],
-            'username' => ['required', 'string', 'max:50', 'unique:admin,username,' . $admin->id_admin . ',id_admin'],
+            'username' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('users', 'username')->ignore($primaryId, 'id'),
+            ],
             'alamat'   => ['nullable', 'string', 'max:100'],
             'password' => ['nullable', 'string', 'min:6'],
         ]);
 
-        // Update data dasar profil satu per satu
-        $admin->nama     = $request->nama;
-        $admin->username = $request->username;
-        $admin->alamat   = $request->alamat;
-
-        // Jika password diisi, tetapkan ke properti langsung agar casts 'hashed' aktif secara otomatis
+        // 2. Perbarui data pada tabel 'users' (username & password)
+        $userData = ['username' => $request->username];
         if ($request->filled('password')) {
-            $admin->password = $request->password;
+            $userData['password'] = Hash::make($request->password);
         }
 
-        // Simpan menggunakan ->save() agar enkripsi Bcrypt otomatis diterapkan oleh model
-        $admin->save();
+        DB::table('users')->where('id', $primaryId)->update($userData);
+
+        // 3. Perbarui data pada tabel 'admin' (nama & alamat)
+        $adminUpdated = DB::table('admin')
+            ->where('id_admin', $primaryId)
+            ->update([
+                'nama'   => $request->nama,
+                'alamat' => $request->alamat,
+            ]);
+
+        if (!$adminUpdated) {
+            DB::table('admin')->insert([
+                'id_admin' => $primaryId,
+                'nama'     => $request->nama,
+                'alamat'   => $request->alamat,
+            ]);
+        }
 
         return back()->with('success', 'Profil admin dan password berhasil diperbarui.');
     }

@@ -97,9 +97,12 @@
                                                     </svg>
                                                 @endif
                                             </span>
-                                            <strong title="{{ $item->warga->nama_bank_ewallet }}">{{ $item->warga->nama_bank_ewallet }}</strong>
+                                            <strong
+                                                title="{{ $item->warga->nama_bank_ewallet }}">{{ $item->warga->nama_bank_ewallet }}</strong>
                                         </div>
-                                        <div class="mono rekening-number" title="{{ $item->warga->nomor_rekening ?? '-' }}">{{ $item->warga->nomor_rekening ?? '-' }}</div>
+                                        <div class="mono rekening-number"
+                                            title="{{ $item->warga->nomor_rekening ?? '-' }}">
+                                            {{ $item->warga->nomor_rekening ?? '-' }}</div>
                                     </div>
                                 @else
                                     <span class="muted-text">Tunai / Lainnya</span>
@@ -167,8 +170,7 @@
                 <div class="per-page">
                     <label for="cari_perPageSelect">Permohonan per halaman:</label>
                     <div class="combo combo--up combo--arrow" id="combo_perPageSelect">
-                        <input type="text" id="cari_perPageSelect" class="combo-input" placeholder=""
-                            autocomplete="off">
+                        <input type="text" id="cari_perPageSelect" class="combo-input" placeholder="" autocomplete="off">
                         <div class="combo-list" id="list_perPageSelect"></div>
                     </div>
                     <select id="perPageSelect" class="combo-hidden" tabindex="-1" aria-hidden="true">
@@ -326,7 +328,7 @@
 
                         <div class="form-group form-group--full">
                             <label for="tambahTanggal">Tanggal Pencairan</label>
-                            <input type="date" id="tambahTanggal" required>
+                            <input type="date" id="tambahTanggal" readonly required>
                         </div>
                     </div>
                 </div>
@@ -560,7 +562,7 @@
             max-width: 100%;
         }
 
-        .bank-main > strong {
+        .bank-main>strong {
             display: block;
             max-width: 160px;
             overflow: hidden;
@@ -574,7 +576,8 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            padding-left: 27px; /* Menjajarkan nomor rekening/HP agar rapi di bawah teks nama bank */
+            padding-left: 27px;
+            /* Menjajarkan nomor rekening/HP agar rapi di bawah teks nama bank */
         }
 
         .muted-text {
@@ -1246,16 +1249,16 @@
         }
 
         /* =========================================================
-           MODAL & COMBOBOX — konsisten dengan halaman lain
-           (header/footer diam, hanya isi form yang scroll)
-           ========================================================= */
+                   MODAL & COMBOBOX — konsisten dengan halaman lain
+                   (header/footer diam, hanya isi form yang scroll)
+                   ========================================================= */
         .modal-box {
             overflow: hidden;
             display: flex;
             flex-direction: column;
         }
 
-        .modal-box > form {
+        .modal-box>form {
             display: flex;
             flex-direction: column;
             flex: 1;
@@ -1275,10 +1278,22 @@
             scrollbar-color: var(--pencairan-border) transparent;
         }
 
-        .modal-body::-webkit-scrollbar { width: 6px; }
-        .modal-body::-webkit-scrollbar-track { background: transparent; }
-        .modal-body::-webkit-scrollbar-thumb { background: var(--pencairan-border); border-radius: 4px; }
-        .modal-body::-webkit-scrollbar-thumb:hover { background: var(--pencairan-text-muted); }
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: var(--pencairan-border);
+            border-radius: 4px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: var(--pencairan-text-muted);
+        }
 
         .combo--arrow .combo-input {
             cursor: pointer;
@@ -1295,15 +1310,34 @@
             scrollbar-color: var(--pencairan-border) transparent;
         }
 
-        .combo-list::-webkit-scrollbar { width: 6px; }
-        .combo-list::-webkit-scrollbar-track { background: transparent; }
-        .combo-list::-webkit-scrollbar-thumb { background: var(--pencairan-border); border-radius: 4px; }
-        .combo-list::-webkit-scrollbar-thumb:hover { background: var(--pencairan-text-muted); }
+        .combo-list::-webkit-scrollbar {
+            width: 6px;
+        }
 
-        .combo-item { padding: 10px 14px; }
-        .combo-item.is-selected { font-weight: 700; }
+        .combo-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
 
-        .combo-list { min-width: 84px; }
+        .combo-list::-webkit-scrollbar-thumb {
+            background: var(--pencairan-border);
+            border-radius: 4px;
+        }
+
+        .combo-list::-webkit-scrollbar-thumb:hover {
+            background: var(--pencairan-text-muted);
+        }
+
+        .combo-item {
+            padding: 10px 14px;
+        }
+
+        .combo-item.is-selected {
+            font-weight: 700;
+        }
+
+        .combo-list {
+            min-width: 84px;
+        }
 
         .combo--up .combo-list {
             top: auto;
@@ -1434,7 +1468,13 @@
             let aktif = -1;
 
             const teks = o => o.textContent.replace(/\s+/g, ' ').trim();
-            const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const esc = v => String(v).replace(/[&<>"']/g, c => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            } [c]));
 
             const kosong = Array.from(select.options).find(o => o.value === '');
             if (kosong) input.placeholder = teks(kosong);
@@ -1452,7 +1492,9 @@
                 list.classList.add('show');
             }
 
-            function tutup() { list.classList.remove('show'); }
+            function tutup() {
+                list.classList.remove('show');
+            }
 
             function pilih(value) {
                 const berubah = select.value !== String(value);
@@ -1470,7 +1512,9 @@
             }
 
             input.addEventListener('focus', buka);
-            input.addEventListener('click', () => { if (!list.classList.contains('show')) buka(); });
+            input.addEventListener('click', () => {
+                if (!list.classList.contains('show')) buka();
+            });
             input.addEventListener('blur', tutup);
 
             input.addEventListener('keydown', function(e) {
@@ -1665,6 +1709,13 @@
                 if (form) form.reset();
                 resetComboWarga();
                 syncComboSelect('tambahMetode');
+
+                // Otomatis isi tanggal hari ini dan kunci (readonly)
+                const inputTanggal = document.getElementById('tambahTanggal');
+                if (inputTanggal) {
+                    const today = new Date().toISOString().split('T')[0];
+                    inputTanggal.value = today;
+                }
             }
             document.getElementById(id).classList.add('active');
         }

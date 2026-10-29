@@ -12,10 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('admin', function (Blueprint $table) {
-            $table->integer('id_admin', true);
+            $table->id('id_admin');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Disamakan ke id_user
             $table->string('nama');
-            $table->string('username', 100)->unique('username');
-            $table->string('password');
+            $table->string('no_hp')->nullable(); // Ditambahkan agar seeder tidak error
+            $table->text('alamat')->nullable();
             $table->timestamps();
         });
     }

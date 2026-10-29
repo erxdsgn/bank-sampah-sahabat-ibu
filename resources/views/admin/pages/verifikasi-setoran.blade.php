@@ -13,7 +13,6 @@
     |--------------------------------------------------------------------------
     */
         $fmtHarga = fn($n) => rtrim(rtrim(number_format((float) $n, 2, ',', '.'), '0'), ',');
-
         $fmtJumlah = fn($n) => rtrim(rtrim(number_format((float) $n, 3, ',', '.'), '0'), ',');
 
         /*
@@ -173,7 +172,7 @@
 
                 <thead>
                     <tr>
-                        <th>No</th>
+                        <th>ID Transaksi</th>
                         <th>Warga</th>
                         <th>Kategori Sampah</th>
                         <th>Jumlah</th>
@@ -283,6 +282,8 @@
                             $row = [
                                 'id' => $item->getKey(),
 
+                                'kode_transaksi' => $item->kode_transaksi ?? '-',
+
                                 'status' => $item->status,
 
                                 'warga' => [
@@ -316,9 +317,9 @@
 
                         <tr data-status="{{ $item->status }}">
 
-                            <!-- NO -->
+                            <!-- ID TRANSAKSI -->
                             <td>
-                                {{ $index + 1 }}
+                                <span class="mono kode-trx">{{ $row['kode_transaksi'] }}</span>
                             </td>
 
 
@@ -542,6 +543,10 @@
                             </div>
 
                             <div class="detail-nik mono" id="verifNik">
+                                -
+                            </div>
+
+                            <div class="detail-nik mono" id="verifKode">
                                 -
                             </div>
 
@@ -859,7 +864,7 @@
                                 Tanggal Setoran
                             </label>
 
-                            <input type="date" id="tambahTanggal" required>
+                            <input type="date" id="tambahTanggal" required disabled>
 
                         </div>
 
@@ -1129,7 +1134,7 @@
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1050px;
+            min-width: 1100px;
             color: var(--vs-text);
         }
 
@@ -1171,6 +1176,12 @@
             font-family: monospace;
             font-size: 12px;
             color: var(--vs-text-secondary);
+        }
+
+        .kode-trx {
+            white-space: nowrap;
+            font-weight: 600;
+            color: var(--vs-text);
         }
 
         .unit {
@@ -2437,6 +2448,7 @@
             document.getElementById('verifAvatar').textContent = nama.trim().charAt(0).toUpperCase();
             document.getElementById('verifNama').textContent = nama;
             document.getElementById('verifNik').textContent = item.warga?.nik || '-';
+            document.getElementById('verifKode').textContent = 'ID Transaksi: ' + (item.kode_transaksi || '-');
             document.getElementById('verifJudul').textContent = item.status === 'pending' ? 'Verifikasi Setoran' : 'Detail Setoran';
             document.getElementById('verifId').value = item.id;
 
@@ -2575,7 +2587,11 @@
             resetCombo('tambahKategori', 'cariKategori', 'listKategori');
 
             document.getElementById('tambahSatuan').value = '-';
-            const today = new Date().toISOString().substring(0, 10);
+            // Tanggal otomatis hari ini (waktu lokal) dan tidak bisa diubah
+            const now = new Date();
+            const today = now.getFullYear() + '-' +
+                String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                String(now.getDate()).padStart(2, '0');
             document.getElementById('tambahTanggal').value = today;
 
             updateEstimasiTambah();

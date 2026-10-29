@@ -11,9 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('harga_sampah', function (Blueprint $table) {
-            $table->renameColumn('harga_per_gram', 'harga_satuan');
-        });
+        // Hanya rename jika kolom harga_per_gram masih ada
+        if (Schema::hasColumn('harga_sampah', 'harga_per_gram')) {
+            Schema::table('harga_sampah', function (Blueprint $table) {
+                $table->renameColumn('harga_per_gram', 'harga_satuan');
+            });
+        }
     }
 
     /**
@@ -21,8 +24,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('harga_sampah', function (Blueprint $table) {
-            $table->renameColumn('harga_satuan', 'harga_per_gram');
-        });
+        if (Schema::hasColumn('harga_sampah', 'harga_satuan')) {
+            Schema::table('harga_sampah', function (Blueprint $table) {
+                $table->renameColumn('harga_satuan', 'harga_per_gram');
+            });
+        }
     }
 };

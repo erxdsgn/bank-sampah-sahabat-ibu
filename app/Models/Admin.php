@@ -3,39 +3,32 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Model;
 
-class Admin extends Authenticatable
+class Admin extends Model
 {
-    use HasFactory, Notifiable;
+    use HasFactory;
 
-    // Tetapkan nama jadual secara khusus
     protected $table = 'admin';
-
-    // Tetapkan kunci utama (primary key)
     protected $primaryKey = 'id_admin';
 
-    // Kolum yang boleh diisi secara pukal (mass assignment)
     protected $fillable = [
+        'user_id', // FK ke tabel users
         'nama',
-        'username',
-        'password',
+        'no_hp',
         'alamat',
     ];
 
-    // Sembunyikan ruangan sensitif semasa penukaran ke Array/JSON
-    protected $hidden = [
-        'password',
-    ];
+    /**
+     * Relasi balik ke akun pusat (User)
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
 
     public function hargaSampah()
     {
         return $this->hasMany(HargaSampah::class, 'id_admin', 'id_admin');
     }
-
-    // Cast jenis data untuk ruangan tertentu jika perlu
-    protected $casts = [
-        'password' => 'hashed',
-    ];
 }

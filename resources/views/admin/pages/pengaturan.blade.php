@@ -82,7 +82,7 @@
                                 <div class="form-group form-group--full">
 
                                     <label for="profilNama">
-                                        Nama Lengkap
+                                        Nama Admin
                                     </label>
 
                                     <input
@@ -90,7 +90,7 @@
                                         id="profilNama"
                                         name="nama"
                                         value="{{ old('nama', $admin->nama) }}"
-                                        placeholder="Masukkan nama lengkap"
+                                        placeholder="Masukkan nama admin"
                                         required
                                     >
 

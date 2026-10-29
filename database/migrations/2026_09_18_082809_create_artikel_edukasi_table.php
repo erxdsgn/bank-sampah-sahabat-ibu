@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('artikel_edukasi', function (Blueprint $table) {
-            $table->integer('id_artikel', true);
-            $table->integer('id_admin')->index('fk_artikel_admin');
+            $table->id('id_artikel'); // Diubah menjadi id() agar bertipe BigInt
+            $table->unsignedBigInteger('id_admin')->index('fk_artikel_admin'); // Diubah ke unsignedBigInteger
             $table->string('judul');
             $table->text('konten');
             $table->string('gambar')->nullable();

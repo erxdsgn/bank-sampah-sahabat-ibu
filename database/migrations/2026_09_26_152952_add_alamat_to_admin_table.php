@@ -6,19 +6,28 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::table('admin', function (Blueprint $table) {
-            // Gunakan text() untuk alamat panjang, atau string('alamat', 255) untuk alamat pendek
-            // nullable() membenarkan ruangan ini dibiarkan kosong jika tidak wajib
-            $table->text('alamat')->nullable()->after('password');
-        });
+        // Cek dulu apakah kolom 'alamat' belum ada sebelum menambahkannya
+        if (!Schema::hasColumn('admin', 'alamat')) {
+            Schema::table('admin', function (Blueprint $table) {
+                $table->text('alamat')->nullable()->after('nama');
+            });
+        }
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::table('admin', function (Blueprint $table) {
-            $table->dropColumn('alamat');
-        });
+        if (Schema::hasColumn('admin', 'alamat')) {
+            Schema::table('admin', function (Blueprint $table) {
+                $table->dropColumn('alamat');
+            });
+        }
     }
 };

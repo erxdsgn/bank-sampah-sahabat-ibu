@@ -15,12 +15,20 @@ class KeuanganController extends Controller
     {
         $transaksi = RingkasanKeuangan::transaksi();
 
-        $totalPemasukan   = (float) $transaksi->where('jenis', 'Pemasukan')->sum('jumlah');
-        $totalPengeluaran = (float) $transaksi->where('jenis', 'Pengeluaran')->sum('jumlah');
-        $saldoKas         = $totalPemasukan - $totalPengeluaran;
-        $jumlahTransaksi  = $transaksi->count();
+        // Hitung pemasukan dan pengeluaran secara case-insensitive
+        $totalPemasukan = (float) $transaksi->filter(function ($item) {
+            $jenis = is_array($item) ? ($item['jenis'] ?? '') : ($item->jenis ?? '');
+            return strtolower($jenis) === 'pemasukan';
+        })->sum('jumlah');
 
-        // Daftar periode unik (Bulan Tahun), urut dari yang terbaru
+        $totalPengeluaran = (float) $transaksi->filter(function ($item) {
+            $jenis = is_array($item) ? ($item['jenis'] ?? '') : ($item->jenis ?? '');
+            return strtolower($jenis) === 'pengeluaran';
+        })->sum('jumlah');
+
+        $saldoKas        = $totalPemasukan - $totalPengeluaran;
+        $jumlahTransaksi = $transaksi->count();
+
         $periodeList = $transaksi
             ->pluck('periode')
             ->filter()
@@ -37,9 +45,6 @@ class KeuanganController extends Controller
         ));
     }
 
-    /**
-     * Simpan transaksi baru (manual oleh admin).
-     */
     public function store(Request $request)
     {
         $data = $this->validasi($request);
@@ -60,21 +65,11 @@ class KeuanganController extends Controller
             ->with('success', 'Transaksi berhasil ditambahkan.');
     }
 
-    /**
-     * Tampilkan detail satu transaksi (dipakai untuk modal detail via AJAX/JSON).
-     */
     public function show(Keuangan $keuangan)
     {
         return response()->json($keuangan);
     }
 
-    /**
-     * Perbarui transaksi.
-     *
-     * DINONAKTIFKAN: transaksi yang sudah tersimpan tidak boleh diedit sama sekali,
-     * baik transaksi kas manual maupun transaksi otomatis dari modul lain.
-     * Transaksi hanya bisa dilihat (show) atau dihapus (destroy).
-     */
     public function update(Request $request, Keuangan $keuangan)
     {
         $pesan = 'Transaksi yang sudah tersimpan tidak dapat diedit. '
@@ -89,9 +84,6 @@ class KeuanganController extends Controller
             ->with('error', $pesan);
     }
 
-    /**
-     * Hapus transaksi.
-     */
     public function destroy(Keuangan $keuangan)
     {
         if ($keuangan->tipe_referensi) {
@@ -122,9 +114,6 @@ class KeuanganController extends Controller
             ->with('success', 'Transaksi berhasil dihapus.');
     }
 
-    /**
-     * Aturan validasi untuk store (transaksi manual saja).
-     */
     private function validasi(Request $request): array
     {
         $validated = $request->validate([
@@ -136,7 +125,7 @@ class KeuanganController extends Controller
         ]);
 
         return [
-            'jenis'              => strtolower($validated['jenis']),
+            'jenis'              => ucfirst(strtolower($validated['jenis'])),
             'tanggal'            => $validated['tanggal'],
             'kategori_transaksi' => $validated['kategori'],
             'keterangan'         => $validated['keterangan'] ?? null,

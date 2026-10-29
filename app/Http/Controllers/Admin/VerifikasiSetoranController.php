@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\KategoriSampah;
+use App\Models\Keuangan;
 use App\Models\Setoran;
 use App\Models\Warga;
 use Illuminate\Http\Request;
@@ -181,7 +182,7 @@ class VerifikasiSetoranController extends Controller
         );
 
         return response()->json([
-            'message' => 'Setoran disetujui dan saldo warga berhasil diperbarui.',
+            'message' => 'Setoran disetujui, saldo warga dan keuangan berhasil diperbarui.',
         ]);
     }
 
@@ -277,16 +278,16 @@ class VerifikasiSetoranController extends Controller
                 ],
             ],
             [
-                'id_warga.required'             => 'Warga wajib dipilih.',
-                'id_warga.exists'               => 'Data warga tidak ditemukan.',
-                'id_kategori.required'          => 'Kategori sampah wajib dipilih.',
-                'id_kategori.exists'            => 'Kategori sampah tidak ditemukan.',
-                'jumlah.required'               => 'Jumlah wajib diisi.',
-                'jumlah.numeric'                => 'Jumlah harus berupa angka.',
-                'jumlah.min'                    => 'Jumlah minimal 0,01.',
-                'tanggal_setoran.required'      => 'Tanggal setoran wajib diisi.',
+                'id_warga.required'               => 'Warga wajib dipilih.',
+                'id_warga.exists'                 => 'Data warga tidak ditemukan.',
+                'id_kategori.required'            => 'Kategori sampah wajib dipilih.',
+                'id_kategori.exists'              => 'Kategori sampah tidak ditemukan.',
+                'jumlah.required'                 => 'Jumlah wajib diisi.',
+                'jumlah.numeric'                  => 'Jumlah harus berupa angka.',
+                'jumlah.min'                      => 'Jumlah minimal 0,01.',
+                'tanggal_setoran.required'        => 'Tanggal setoran wajib diisi.',
                 'tanggal_setoran.before_or_equal' => 'Tanggal setoran tidak boleh melebihi hari ini.',
-                'catatan_admin.regex'           => 'Catatan hanya boleh berisi huruf, angka, spasi, titik, koma, tanda tanya, tanda seru, dan tanda hubung.',
+                'catatan_admin.regex'             => 'Catatan hanya boleh berisi huruf, angka, spasi, titik, koma, tanda tanya, tanda seru, dan tanda hubung.',
             ]
         );
 
@@ -355,12 +356,12 @@ class VerifikasiSetoranController extends Controller
         );
 
         return response()->json([
-            'message' => 'Setoran berhasil ditambahkan dan saldo warga diperbarui.',
+            'message' => 'Setoran berhasil ditambahkan, saldo warga dan keuangan diperbarui.',
         ]);
     }
 
     /**
-     * Simpan detail setoran, saldo, dan mutasi.
+     * Simpan detail setoran, saldo, mutasi, dan transaksi keuangan.
      */
     private function simpanDetailDanSaldo(
         Setoran $setoran,
@@ -417,8 +418,10 @@ class VerifikasiSetoranController extends Controller
             DB::table('detail_setoran')->insert($data);
         }
 
+        // 1. Update Saldo Warga
         $setoran->warga()->increment('saldo', $totalNilai);
 
+        // 2. Catat Mutasi Saldo
         $dataMutasi = [
             'id_warga'     => $setoran->id_warga,
             'id_setoran'   => $idSetoran,
@@ -426,7 +429,7 @@ class VerifikasiSetoranController extends Controller
             'jumlah'       => $totalNilai,
             'tanggal'      => now()->toDateString(),
             'keterangan'   => 'Setoran sampah: '
-                . $kategori->nama_lengkap
+                . ($kategori->nama_lengkap ?? $kategori->nama_kategori)
                 . ' ('
                 . $jumlah
                 . ' '
@@ -435,5 +438,21 @@ class VerifikasiSetoranController extends Controller
         ];
 
         DB::table('mutasi_saldo')->insert($dataMutasi);
+
+        // 3. Catat Transaksi Otomatis ke Tabel Keuangan
+        Keuangan::updateOrCreate(
+            [
+                'tipe_referensi' => 'setoran',
+                'id_referensi'   => $idSetoran,
+            ],
+            [
+                'id_admin'           => Auth::id() ?? $setoran->id_admin ?? 1,
+                'jenis'              => 'Pemasukan',
+                'tanggal'            => $setoran->tanggal_setoran ?? now()->toDateString(),
+                'kategori_transaksi' => 'Setoran Sampah',
+                'keterangan'         => 'Setoran sampah ' . ($kategori->nama_kategori ?? 'Sampah') . ' (' . $jumlah . ' ' . $satuan . ')',
+                'jumlah'             => $totalNilai,
+            ]
+        );
     }
 }
