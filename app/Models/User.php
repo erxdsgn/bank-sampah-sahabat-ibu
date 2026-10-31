@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens; // 1. Ditambahkan
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable; // 2. Ditambahkan HasApiTokens
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $table = 'users';
     protected $primaryKey = 'id';
@@ -35,7 +35,6 @@ class User extends Authenticatable
      */
     public function admin()
     {
-        // PERBAIKAN: Diubah dari 'id_user' menjadi 'user_id' agar sesuai dengan Admin.php
         return $this->hasOne(Admin::class, 'user_id', 'id');
     }
 

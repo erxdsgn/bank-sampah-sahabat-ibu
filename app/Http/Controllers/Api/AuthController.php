@@ -211,7 +211,7 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Username/Email atau password salah.',
+                'message' => 'Anda masih belum memiliki akun atau password salah.',
             ], 401);
         }
 
