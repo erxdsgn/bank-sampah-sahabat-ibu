@@ -203,7 +203,8 @@
                         <!-- TANGGAL TRANSAKSI -->
                         <div class="form-group form-group--full">
                             <label for="tambahTanggal">Tanggal Transaksi</label>
-                            <input type="date" id="tambahTanggal" required>
+                            <input type="date" id="tambahTanggal" class="input-locked" readonly tabindex="-1" aria-readonly="true">
+                            <span class="lock-hint">Otomatis hari ini, tidak dapat diubah.</span>
                         </div>
 
                     </div>
@@ -521,6 +522,17 @@
             transition: border-color .2s ease, box-shadow .2s ease;
         }
 
+        .input-locked {
+            pointer-events: none;
+            opacity: .7;
+            user-select: none;
+        }
+
+        .lock-hint {
+            font-size: 12px;
+            color: var(--dashboard-text-secondary);
+        }
+
         .form-group input:focus,
         .form-group select:focus {
             border-color: #22c55e;
@@ -806,9 +818,15 @@
 
     <!-- JAVASCRIPT SYSTEM -->
     <script>
+        // Tanggal lokal perangkat (bukan UTC, supaya tidak mundur sehari sebelum jam 07:00 WIB)
+        function tanggalLokalHariIni() {
+            const d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             /* TANGGAL DEFAULT HARI INI */
-            const today = new Date().toISOString().split('T')[0];
+            const today = tanggalLokalHariIni();
             const inputTanggal = document.getElementById('tambahTanggal');
             if (inputTanggal) inputTanggal.value = today;
 
@@ -1171,7 +1189,7 @@
                 const totalDisplay = document.getElementById('totalHargaDisplay');
                 if (totalDisplay) totalDisplay.textContent = 'Rp 0';
 
-                const today = new Date().toISOString().split('T')[0];
+                const today = tanggalLokalHariIni();
                 setVal('tambahTanggal', today);
             }
             const modal = document.getElementById(id);
@@ -1219,7 +1237,6 @@
             const idKategori = document.getElementById('tambahKategori')?.value;
             const kuantitas = document.getElementById('tambahKuantitas')?.value;
             const hargaSatuan = document.getElementById('tambahHargaSatuan')?.value;
-            const tanggal = document.getElementById('tambahTanggal')?.value;
 
             if (!namaPembeli) {
                 showToast('Gagal menyimpan', 'Silakan masukkan nama pengepul terlebih dahulu.', 'error');
@@ -1243,8 +1260,7 @@
                 pembeli: namaPembeli,
                 id_kategori: idKategori,
                 kuantitas: kuantitas,
-                harga_satuan: hargaSatuan,
-                tanggal_transaksi: tanggal
+                harga_satuan: hargaSatuan
             };
 
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;

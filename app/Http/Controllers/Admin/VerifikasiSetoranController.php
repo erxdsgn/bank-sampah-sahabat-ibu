@@ -84,25 +84,17 @@ class VerifikasiSetoranController extends Controller
         $validator = Validator::make(
             $request->all(),
             [
-                'id_kategori' => [
-                    'required',
-                    'exists:kategori_sampah,id_kategori',
-                ],
-
-                'jumlah' => [
-                    'required',
-                    'numeric',
-                    'min:0.01',
-                    'max:100000000',
-                ],
+                'items' => ['required', 'array', 'min:1'],
+                'items.*.id_kategori' => ['required', 'exists:kategori_sampah,id_kategori'],
+                'items.*.jumlah' => ['required', 'numeric', 'min:0.01', 'max:100000000'],
             ],
             [
-                'id_kategori.required' => 'Kategori sampah wajib dipilih.',
-                'id_kategori.exists'   => 'Kategori sampah tidak ditemukan.',
-                'jumlah.required'      => 'Jumlah wajib diisi.',
-                'jumlah.numeric'       => 'Jumlah harus berupa angka.',
-                'jumlah.min'           => 'Jumlah minimal 0,01.',
-                'jumlah.max'           => 'Jumlah terlalu besar.',
+                'items.required' => 'Rincian sampah wajib diisi.',
+                'items.*.id_kategori.required' => 'Kategori sampah wajib dipilih.',
+                'items.*.id_kategori.exists'   => 'Kategori sampah tidak ditemukan.',
+                'items.*.jumlah.required'      => 'Jumlah wajib diisi.',
+                'items.*.jumlah.numeric'       => 'Jumlah harus berupa angka.',
+                'items.*.jumlah.min'           => 'Jumlah minimal 0,01.',
             ]
         );
 
@@ -118,68 +110,100 @@ class VerifikasiSetoranController extends Controller
             ], 409);
         }
 
-        $jumlahDetail = DB::table('detail_setoran')
-            ->where('id_setoran', $setoran->getKey())
-            ->count();
+        DB::transaction(function () use ($request, $setoran) {
+            $totalSemuaNilai = 0;
+            $totalBeratGram = 0;
 
-        if ($jumlahDetail > 1) {
-            return response()->json([
-                'message' => 'Setoran ini berisi lebih dari satu kategori. Form verifikasi saat ini baru mendukung satu kategori per setoran.',
-            ], 422);
-        }
+            // Hapus detail lama jika ada sebelum dimasukkan ulang yang baru
+            DB::table('detail_setoran')->where('id_setoran', $setoran->getKey())->delete();
 
-        $kategori = KategoriSampah::with('hargaTerbaru')->find($request->id_kategori);
+            foreach ($request->items as $itemData) {
+                // Memuat kategori beserta harga terbaru agar accessor getPoinPerSatuanAttribute aktif
+                $kategori = KategoriSampah::with('hargaTerbaru')->find($itemData['id_kategori']);
 
-        if (! $kategori) {
-            return response()->json([
-                'message' => 'Kategori sampah tidak ditemukan.',
-            ], 422);
-        }
+                if (!$kategori || !$kategori->hargaTerbaru) {
+                    throw new \Exception('Kategori atau harga aktif tidak ditemukan.');
+                }
 
-        if (! $kategori->hargaTerbaru) {
-            return response()->json([
-                'message' => 'Kategori ini belum memiliki harga aktif. Atur harga terlebih dahulu di halaman Kategori & Harga Sampah.',
-            ], 422);
-        }
+                $satuan = strtolower(trim($kategori->satuan ?? 'gram'));
+                $jumlah = (float) $itemData['jumlah'];
+                $hargaSatuan = (float) $kategori->hargaTerbaru->harga_satuan;
+                $subtotal = round($jumlah * $hargaSatuan, 2);
 
-        $satuan = strtolower(trim($kategori->satuan ?? ''));
+                // --- PERHITUNGAN POIN OTOMATIS BERDASARKAN ACCESSOR MODEL ---
+                $poinPerSatuan = $kategori->poin_per_satuan; // Otomatis dari Model KategoriSampah
+                $totalPoinItem = round($jumlah * $poinPerSatuan);
 
-        if (! in_array($satuan, self::SATUAN_VALID, true)) {
-            return response()->json([
-                'message' => 'Satuan kategori tidak valid. Gunakan gram, kg, pcs, liter, unit, atau set.',
-            ], 422);
-        }
+                $totalSemuaNilai += $subtotal;
+                // (Opsional) Jika ingin warga juga punya kolom total poin akumulasi di tabel warga, bisa ditambahkan di sini.
 
-        $jumlah = (float) $request->jumlah;
-        $hargaSatuan = (float) $kategori->hargaTerbaru->harga_satuan;
-        $totalNilai = round($jumlah * $hargaSatuan, 2);
+                if ($satuan === 'gram') {
+                    $totalBeratGram += $jumlah;
+                } elseif ($satuan === 'kg') {
+                    $totalBeratGram += ($jumlah * 1000);
+                }
 
-        DB::transaction(
-            function () use (
-                $setoran,
-                $kategori,
-                $jumlah,
-                $satuan,
-                $hargaSatuan,
-                $totalNilai
-            ) {
-                $setoran->forceFill([
-                    'id_admin'    => Auth::id(),
-                    'total_berat' => $satuan === 'gram' ? $jumlah : null,
-                    'total_nilai' => $totalNilai,
-                    'status'      => 'approved',
-                ])->save();
+                $detailData = [
+                    'id_setoran' => $setoran->getKey(),
+                    'id_kategori' => $kategori->id_kategori,
+                    'jumlah' => $jumlah,
+                    'satuan' => $satuan,
+                    'subtotal' => $subtotal,
+                    'poin' => $totalPoinItem, // <-- Menyimpan poin otomatis per item sampah
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
 
-                $this->simpanDetailDanSaldo(
-                    $setoran,
-                    $kategori,
-                    $jumlah,
-                    $satuan,
-                    $hargaSatuan,
-                    $totalNilai
-                );
+                if (Schema::hasColumn('detail_setoran', 'harga_per_gram')) {
+                    $detailData['harga_per_gram'] = $hargaSatuan;
+                }
+
+                if (Schema::hasColumn('detail_setoran', 'berat_gram')) {
+                    // Konversi khusus satuan berat/volume ke unit terkecil (gram atau mililiter)
+                    if ($satuan === 'kg' || $satuan === 'liter') {
+                        $detailData['berat_gram'] = $jumlah * 1000;
+                    } else {
+                        $detailData['berat_gram'] = $jumlah;
+                    }
+                }
+
+                DB::table('detail_setoran')->insert($detailData);
             }
-        );
+
+            $setoran->forceFill([
+                'id_admin'    => Auth::id(),
+                'total_berat' => $totalBeratGram > 0 ? $totalBeratGram : null,
+                'total_nilai' => $totalSemuaNilai,
+                'status'      => 'approved',
+            ])->save();
+
+            // Update Saldo & Keuangan
+            $setoran->warga()->increment('saldo', $totalSemuaNilai);
+
+            DB::table('mutasi_saldo')->insert([
+                'id_warga'     => $setoran->id_warga,
+                'id_setoran'   => $setoran->getKey(),
+                'jenis_mutasi' => self::JENIS_MUTASI_MASUK,
+                'jumlah'       => $totalSemuaNilai,
+                'tanggal'      => now()->toDateString(),
+                'keterangan'   => 'Setoran sampah disetujui (Multi-item)',
+            ]);
+
+            Keuangan::updateOrCreate(
+                [
+                    'tipe_referensi' => 'setoran',
+                    'id_referensi'   => $setoran->getKey(),
+                ],
+                [
+                    'id_admin'           => Auth::id() ?? 1,
+                    'jenis'              => 'Pemasukan',
+                    'tanggal'            => $setoran->tanggal_setoran ?? now()->toDateString(),
+                    'kategori_transaksi' => 'Setoran Sampah',
+                    'keterangan'         => 'Setoran sampah warga (ID: ' . $setoran->getKey() . ')',
+                    'jumlah'             => $totalSemuaNilai,
+                ]
+            );
+        });
 
         return response()->json([
             'message' => 'Setoran disetujui, saldo warga dan keuangan berhasil diperbarui.',
@@ -247,47 +271,22 @@ class VerifikasiSetoranController extends Controller
         $validator = Validator::make(
             $request->all(),
             [
-                'id_warga' => [
-                    'required',
-                    'exists:warga,id_warga',
-                ],
-
-                'id_kategori' => [
-                    'required',
-                    'exists:kategori_sampah,id_kategori',
-                ],
-
-                'jumlah' => [
-                    'required',
-                    'numeric',
-                    'min:0.01',
-                    'max:100000000',
-                ],
-
-                'tanggal_setoran' => [
-                    'required',
-                    'date',
-                    'before_or_equal:today',
-                ],
-
-                'catatan_admin' => [
-                    'nullable',
-                    'string',
-                    'max:500',
-                    'regex:/^[a-zA-Z0-9\s\.\,\?\!\-]+$/',
-                ],
+                'id_warga' => ['required', 'exists:warga,id_warga'],
+                'tanggal_setoran' => ['required', 'date', 'before_or_equal:today'],
+                'catatan_admin' => ['nullable', 'string', 'max:500'],
+                'items' => ['required', 'array', 'min:1'],
+                'items.*.id_kategori' => ['required', 'exists:kategori_sampah,id_kategori'],
+                'items.*.jumlah' => ['required', 'numeric', 'min:0.01', 'max:100000000'],
             ],
             [
-                'id_warga.required'               => 'Warga wajib dipilih.',
-                'id_warga.exists'                 => 'Data warga tidak ditemukan.',
-                'id_kategori.required'            => 'Kategori sampah wajib dipilih.',
-                'id_kategori.exists'              => 'Kategori sampah tidak ditemukan.',
-                'jumlah.required'                 => 'Jumlah wajib diisi.',
-                'jumlah.numeric'                  => 'Jumlah harus berupa angka.',
-                'jumlah.min'                      => 'Jumlah minimal 0,01.',
-                'tanggal_setoran.required'        => 'Tanggal setoran wajib diisi.',
-                'tanggal_setoran.before_or_equal' => 'Tanggal setoran tidak boleh melebihi hari ini.',
-                'catatan_admin.regex'             => 'Catatan hanya boleh berisi huruf, angka, spasi, titik, koma, tanda tanya, tanda seru, dan tanda hubung.',
+                'id_warga.required' => 'Warga wajib dipilih.',
+                'id_warga.exists' => 'Data warga tidak ditemukan.',
+                'items.required' => 'Rincian sampah wajib diisi.',
+                'items.*.id_kategori.required' => 'Kategori sampah wajib dipilih.',
+                'items.*.id_kategori.exists' => 'Kategori sampah tidak ditemukan.',
+                'items.*.jumlah.required' => 'Jumlah wajib diisi.',
+                'items.*.jumlah.numeric' => 'Jumlah harus berupa angka.',
+                'items.*.jumlah.min' => 'Jumlah minimal 0,01.',
             ]
         );
 
@@ -297,162 +296,110 @@ class VerifikasiSetoranController extends Controller
             ], 422);
         }
 
-        $kategori = KategoriSampah::with('hargaTerbaru')->find($request->id_kategori);
+        DB::transaction(function () use ($request) {
+            $setoran = new Setoran();
+            $setoran->forceFill([
+                'id_warga'        => $request->id_warga,
+                'id_admin'        => Auth::id(),
+                'tanggal_setoran' => $request->tanggal_setoran,
+                'status'          => 'approved',
+                'catatan_admin'   => $request->catatan_admin,
+                'total_berat'     => null,
+                'total_nilai'     => 0,
+            ]);
+            $setoran->save();
 
-        if (! $kategori) {
-            return response()->json([
-                'message' => 'Kategori sampah tidak ditemukan.',
-            ], 422);
-        }
+            $totalSemuaNilai = 0;
+            $totalBeratGram = 0;
 
-        if (! $kategori->hargaTerbaru) {
-            return response()->json([
-                'message' => 'Kategori ini belum memiliki harga aktif.',
-            ], 422);
-        }
+            foreach ($request->items as $itemData) {
+                // Memuat kategori beserta harga terbaru agar accessor getPoinPerSatuanAttribute aktif
+                $kategori = KategoriSampah::with('hargaTerbaru')->find($itemData['id_kategori']);
 
-        $satuan = strtolower(trim($kategori->satuan ?? ''));
+                if (!$kategori || !$kategori->hargaTerbaru) {
+                    throw new \Exception('Kategori atau harga aktif tidak ditemukan.');
+                }
 
-        if (! in_array($satuan, self::SATUAN_VALID, true)) {
-            return response()->json([
-                'message' => 'Satuan kategori tidak valid. Gunakan gram, kg, pcs, liter, unit, atau set.',
-            ], 422);
-        }
+                $satuan = strtolower(trim($kategori->satuan ?? 'gram'));
+                $jumlah = (float) $itemData['jumlah'];
+                $hargaSatuan = (float) $kategori->hargaTerbaru->harga_satuan;
+                $subtotal = round($jumlah * $hargaSatuan, 2);
 
-        $jumlah = (float) $request->jumlah;
-        $hargaSatuan = (float) $kategori->hargaTerbaru->harga_satuan;
-        $totalNilai = round($jumlah * $hargaSatuan, 2);
+                // --- PERHITUNGAN POIN OTOMATIS TAMBAHAN UNTUK METHOD STORE ---
+                $poinPerSatuan = $kategori->poin_per_satuan;
+                $totalPoinItem = round($jumlah * $poinPerSatuan);
 
-        DB::transaction(
-            function () use (
-                $request,
-                $kategori,
-                $jumlah,
-                $satuan,
-                $hargaSatuan,
-                $totalNilai
-            ) {
-                $setoran = new Setoran();
+                $totalSemuaNilai += $subtotal;
 
-                $setoran->forceFill([
-                    'id_warga'        => $request->id_warga,
-                    'id_admin'        => Auth::id(),
-                    'tanggal_setoran' => $request->tanggal_setoran,
-                    'status'          => 'approved',
-                    'total_berat'     => $satuan === 'gram' ? $jumlah : null,
-                    'total_nilai'     => $totalNilai,
-                    'catatan_admin'   => $request->catatan_admin,
-                ])->save();
+                if ($satuan === 'gram') {
+                    $totalBeratGram += $jumlah;
+                } elseif ($satuan === 'kg') {
+                    $totalBeratGram += ($jumlah * 1000);
+                }
 
-                $this->simpanDetailDanSaldo(
-                    $setoran,
-                    $kategori,
-                    $jumlah,
-                    $satuan,
-                    $hargaSatuan,
-                    $totalNilai
-                );
+                $detailData = [
+                    'id_setoran' => $setoran->getKey(),
+                    'id_kategori' => $kategori->id_kategori,
+                    'jumlah' => $jumlah,
+                    'satuan' => $satuan,
+                    'subtotal' => $subtotal,
+                    'poin' => $totalPoinItem, // <-- Menambahkan penyimpanan poin otomatis per item
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+
+                if (Schema::hasColumn('detail_setoran', 'harga_per_gram')) {
+                    $detailData['harga_per_gram'] = $hargaSatuan;
+                }
+
+                if (Schema::hasColumn('detail_setoran', 'berat_gram')) {
+                    if ($satuan === 'kg' || $satuan === 'liter') {
+                        $detailData['berat_gram'] = $jumlah * 1000;
+                    } else {
+                        $detailData['berat_gram'] = $jumlah;
+                    }
+                }
+
+                DB::table('detail_setoran')->insert($detailData);
             }
-        );
+
+            $setoran->forceFill([
+                'total_berat' => $totalBeratGram > 0 ? $totalBeratGram : null,
+                'total_nilai' => $totalSemuaNilai,
+            ])->save();
+
+            // 1. Update Saldo Warga
+            $setoran->warga()->increment('saldo', $totalSemuaNilai);
+
+            // 2. Catat Mutasi Saldo
+            DB::table('mutasi_saldo')->insert([
+                'id_warga'     => $setoran->id_warga,
+                'id_setoran'   => $setoran->getKey(),
+                'jenis_mutasi' => self::JENIS_MUTASI_MASUK,
+                'jumlah'       => $totalSemuaNilai,
+                'tanggal'      => now()->toDateString(),
+                'keterangan'   => 'Setoran sampah manual oleh admin (Multi-item)',
+            ]);
+
+            // 3. Catat Keuangan
+            Keuangan::updateOrCreate(
+                [
+                    'tipe_referensi' => 'setoran',
+                    'id_referensi'   => $setoran->getKey(),
+                ],
+                [
+                    'id_admin'           => Auth::id() ?? 1,
+                    'jenis'              => 'Pemasukan',
+                    'tanggal'            => $setoran->tanggal_setoran ?? now()->toDateString(),
+                    'kategori_transaksi' => 'Setoran Sampah',
+                    'keterangan'         => 'Setoran sampah manual warga (ID: ' . $setoran->getKey() . ')',
+                    'jumlah'             => $totalSemuaNilai,
+                ]
+            );
+        });
 
         return response()->json([
             'message' => 'Setoran berhasil ditambahkan, saldo warga dan keuangan diperbarui.',
         ]);
-    }
-
-    /**
-     * Simpan detail setoran, saldo, mutasi, dan transaksi keuangan.
-     */
-    private function simpanDetailDanSaldo(
-        Setoran $setoran,
-        KategoriSampah $kategori,
-        float $jumlah,
-        string $satuan,
-        float $hargaSatuan,
-        float $totalNilai
-    ): void {
-        $idSetoran = $setoran->getKey();
-
-        $data = [
-            'id_kategori' => $kategori->id_kategori,
-            'jumlah'      => $jumlah,
-            'satuan'      => $satuan,
-            'subtotal'    => $totalNilai,
-            'updated_at'  => now(),
-        ];
-
-        if (Schema::hasColumn('detail_setoran', 'harga_per_gram')) {
-            $data['harga_per_gram'] = $hargaSatuan;
-        }
-
-        if (Schema::hasColumn('detail_setoran', 'berat_gram')) {
-            switch ($satuan) {
-                case 'kg':
-                    $data['berat_gram'] = $jumlah * 1000;
-                    break;
-                case 'gram':
-                    $data['berat_gram'] = $jumlah;
-                    break;
-                case 'liter':
-                case 'pcs':
-                case 'unit':
-                case 'set':
-                default:
-                    $data['berat_gram'] = $jumlah;
-                    break;
-            }
-        }
-
-        $detailLama = DB::table('detail_setoran')
-            ->where('id_setoran', $idSetoran)
-            ->first();
-
-        if ($detailLama) {
-            DB::table('detail_setoran')
-                ->where('id_setoran', $idSetoran)
-                ->update($data);
-        } else {
-            $data['id_setoran'] = $idSetoran;
-            $data['created_at'] = now();
-
-            DB::table('detail_setoran')->insert($data);
-        }
-
-        // 1. Update Saldo Warga
-        $setoran->warga()->increment('saldo', $totalNilai);
-
-        // 2. Catat Mutasi Saldo
-        $dataMutasi = [
-            'id_warga'     => $setoran->id_warga,
-            'id_setoran'   => $idSetoran,
-            'jenis_mutasi' => self::JENIS_MUTASI_MASUK,
-            'jumlah'       => $totalNilai,
-            'tanggal'      => now()->toDateString(),
-            'keterangan'   => 'Setoran sampah: '
-                . ($kategori->nama_lengkap ?? $kategori->nama_kategori)
-                . ' ('
-                . $jumlah
-                . ' '
-                . $satuan
-                . ')',
-        ];
-
-        DB::table('mutasi_saldo')->insert($dataMutasi);
-
-        // 3. Catat Transaksi Otomatis ke Tabel Keuangan
-        Keuangan::updateOrCreate(
-            [
-                'tipe_referensi' => 'setoran',
-                'id_referensi'   => $idSetoran,
-            ],
-            [
-                'id_admin'           => Auth::id() ?? $setoran->id_admin ?? 1,
-                'jenis'              => 'Pemasukan',
-                'tanggal'            => $setoran->tanggal_setoran ?? now()->toDateString(),
-                'kategori_transaksi' => 'Setoran Sampah',
-                'keterangan'         => 'Setoran sampah ' . ($kategori->nama_kategori ?? 'Sampah') . ' (' . $jumlah . ' ' . $satuan . ')',
-                'jumlah'             => $totalNilai,
-            ]
-        );
     }
 }

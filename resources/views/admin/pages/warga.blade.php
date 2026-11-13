@@ -19,6 +19,21 @@
         </div>
 
         <div class="hero-actions">
+            <!-- TOMBOL LEADERBOARD POIN (MEMBUKA MODAL) -->
+            <button class="btn btn--ghost" type="button" onclick="bukaModalLeaderboard('bulan_ini')"
+                style="display: inline-flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24"
+                    style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                    <path d="M4 22h16"></path>
+                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                    <path d="M14 14.66V17c0 .55-.47.98-.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                </svg>
+                Leaderboard Poin
+            </button>
+
             <button class="btn btn--primary" type="button" onclick="bukaModal('modalTambah')">
                 <svg viewBox="0 0 24 24">
                     <path d="M12 5v14M5 12h14"></path>
@@ -82,7 +97,7 @@
                     <circle cx="11" cy="11" r="7"></circle>
                     <path d="m21 21-4.3-4.3"></path>
                 </svg>
-                <input type="text" id="searchWarga" placeholder="Cari ID Warga, NIK, nama, HP, atau alamat..." autocomplete="off">
+                <input type="text" id="searchWarga" placeholder="Cari NIK, nama, atau HP..." autocomplete="off">
             </div>
 
             <div class="filter-pills" id="filterPills">
@@ -92,32 +107,27 @@
             </div>
         </div>
 
-        <!-- TABLE -->
-        <div class="table-responsive">
+        <!-- TABLE TANPA SCROLL KANAN-KIRI -->
+        <div class="table-no-scroll">
             <table class="data-table" id="wargaTable">
                 <thead>
                     <tr>
-                        <th style="width: 50px;">No</th>
-                        <th>ID Warga</th>
+                        <th style="width: 50px; text-align: center;">No</th>
                         <th>Warga</th>
                         <th>No. HP</th>
-                        <th>Alamat</th>
-                        <th>Anggota</th>
+                        <th>Kelompok</th>
                         <th>Saldo</th>
-                        <th>Rekening / E-Wallet</th>
-                        <th>Tgl Daftar</th>
+                        <th>Rekening</th>
                         <th style="text-align: center;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($warga as $index => $item)
                         <tr data-status="{{ $item->nama_bank_ewallet ? $item->status_rekening : 'none' }}">
-                            <!-- NO -->
-                            <td class="text-subtle">{{ $index + 1 }}</td>
-
-                            <td>
-                                <span class="kategori-tag" style="font-family: monospace; font-weight: 700;">
-                                    {{ $item->id_warga }}
+                            <!-- NOMOR URUT -->
+                            <td style="text-align: center;">
+                                <span class="text-subtle" style="font-weight: 600;">
+                                    {{ $index + 1 }}
                                 </span>
                             </td>
 
@@ -130,18 +140,13 @@
                             <!-- NO HP -->
                             <td>{{ $item->no_hp ?? '-' }}</td>
 
-                            <!-- ALAMAT -->
+                            <!-- KELOMPOK (SIMPEL, HANYA HURUF ATAU DASH JIKA KOSONG) -->
                             <td>
-                                <div class="truncate-text" title="{{ $item->alamat }}">
-                                    {{ Str::limit($item->alamat, 35, '...') }}
-                                </div>
-                            </td>
-
-                            <!-- JUMLAH ANGGOTA KELUARGA -->
-                            <td>
-                                <span class="kategori-tag">
-                                    {{ $item->jumlah_anggota_keluarga ?? 0 }} org
-                                </span>
+                                @if (!empty($item->kelompok))
+                                    <span style="font-weight: 600;">{{ $item->kelompok }}</span>
+                                @else
+                                    <span class="text-subtle">-</span>
+                                @endif
                             </td>
 
                             <!-- SALDO -->
@@ -158,14 +163,13 @@
                                         <div class="bank-main">
                                             <span
                                                 class="status-badge status-badge--icon {{ $item->status_rekening === 'verified' ? 'status-badge--approved' : 'status-badge--pending' }}"
-                                                title="{{ $item->status_rekening === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi' }}"
-                                                aria-label="{{ $item->status_rekening === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi' }}">
+                                                title="{{ $item->status_rekening === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi' }}">
                                                 @if ($item->status_rekening === 'verified')
-                                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                    <svg viewBox="0 0 24 24">
                                                         <path d="M20 6 9 17l-5-5"></path>
                                                     </svg>
                                                 @else
-                                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                    <svg viewBox="0 0 24 24">
                                                         <circle cx="12" cy="12" r="9"></circle>
                                                         <path d="M12 7v5l3 2"></path>
                                                     </svg>
@@ -174,22 +178,11 @@
                                             <strong
                                                 title="{{ $item->nama_bank_ewallet }}">{{ $item->nama_bank_ewallet }}</strong>
                                         </div>
-                                        <span class="mono text-subtle bank-number"
-                                            title="{{ $item->nomor_rekening ?? '-' }}">
-                                            {{ $item->nomor_rekening ?? '-' }}
-                                        </span>
+                                        <span
+                                            class="mono text-subtle bank-number">{{ $item->nomor_rekening ?? '-' }}</span>
                                     </div>
                                 @else
                                     <span class="text-subtle">-</span>
-                                @endif
-                            </td>
-
-                            <!-- TANGGAL DAFTAR -->
-                            <td class="text-subtle">
-                                @if ($item->tanggal_daftar)
-                                    {{ \Carbon\Carbon::parse($item->tanggal_daftar)->translatedFormat('d/m/y') }}
-                                @else
-                                    -
                                 @endif
                             </td>
 
@@ -204,7 +197,7 @@
                                         </svg>
                                     </button>
 
-                                    <button class="icon-btn icon-btn--primary" title="Edit Data" type="button"
+                                    <button class="icon-btn icon-btn--primary" title="Ubah Status Rekening" type="button"
                                         onclick='editWarga(@json($item))'>
                                         <svg viewBox="0 0 24 24">
                                             <path d="M12 20h9"></path>
@@ -225,12 +218,11 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" style="text-align: center; padding: 40px;">
+                            <td colspan="7" style="text-align: center; padding: 40px;">
                                 <div style="font-size: 30px; margin-bottom: 10px;">📋</div>
                                 <strong>Belum Ada Data Warga</strong>
-                                <p class="empty-desc" style="margin: 5px 0 0;">
-                                    Belum ada masyarakat yang terdaftar di Bank Sampah.
-                                </p>
+                                <p class="empty-desc" style="margin: 5px 0 0;">Belum ada masyarakat yang terdaftar di Bank
+                                    Sampah.</p>
                             </td>
                         </tr>
                     @endforelse
@@ -286,14 +278,19 @@
                     <div>
                         <div class="detail-nama" id="detailNama">-</div>
                         <div style="display: flex; gap: 8px; margin-top: 3px; align-items: center;">
-                            <span class="kategori-tag" id="detailIdWarga"
+                            <span class="kategori-tag" id="detailNik"
                                 style="font-family: monospace; font-size: 11px;">-</span>
-                            <span class="detail-nik mono" id="detailNik">-</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="detail-grid">
+                    <!-- KELOMPOK DALAM BENTUK TEKS BIASA -->
+                    <div class="detail-item">
+                        <span class="detail-label">Kelompok Domisili</span>
+                        <span class="detail-value" id="detailKelompok">-</span>
+                    </div>
+
                     <div class="detail-item">
                         <span class="detail-label">No. HP</span>
                         <span class="detail-value" id="detailHp">-</span>
@@ -374,20 +371,29 @@
                             <input type="text" id="tambahNama" required placeholder="Nama lengkap warga">
                         </div>
 
-                        <!-- INPUT EMAIL & PASSWORD DITAMBAHKAN -->
                         <div class="form-group">
-                            <label for="tambahEmail">Email Login</label>
+                            <label for="tambahEmail">Email Login (Wajib)</label>
                             <input type="email" id="tambahEmail" required placeholder="contoh@domain.com">
                         </div>
 
                         <div class="form-group">
                             <label for="tambahPassword">Password Login</label>
-                            <input type="password" id="tambahPassword" minlength="8" required placeholder="Minimal 8 karakter">
+                            <input type="password" id="tambahPassword" minlength="8" required
+                                placeholder="Minimal 8 karakter">
                         </div>
 
                         <div class="form-group">
                             <label for="tambahHp">No. HP</label>
                             <input type="text" id="tambahHp" maxlength="14" required placeholder="08xxxxxxxxxx">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tambahKelompok">Kelompok Warga</label>
+                            <select id="tambahKelompok" required>
+                                <option value="">Pilih Kelompok...</option>
+                                <option value="A">A (Perumahan)</option>
+                                <option value="B">Luar Perumahan</option>
+                            </select>
                         </div>
 
                         <div class="form-group">
@@ -434,14 +440,14 @@
 
     <!-- MODAL: EDIT WARGA -->
     <div class="modal-overlay" id="modalEdit">
-        <div class="modal-box">
+        <div class="modal-box modal-box--sm">
             <div class="modal-head">
                 <h3 class="modal-title">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 20h9"></path>
                         <path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"></path>
                     </svg>
-                    Edit Data Warga
+                    Status Rekening
                 </h3>
                 <button class="modal-close" type="button" onclick="tutupModal('modalEdit')">&times;</button>
             </div>
@@ -449,81 +455,22 @@
             <form id="formEditWarga" onsubmit="return simpanWarga(event)">
                 <div class="modal-body">
                     <input type="hidden" id="editId">
+                    <input type="hidden" id="editStatusRekening" value="unverified">
 
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="editNik">NIK</label>
-                            <input type="text" id="editNik" maxlength="16" required>
-                        </div>
+                    <div class="edit-ringkasan" id="editRingkasan"></div>
 
-                        <div class="form-group">
-                            <label for="editNama">Nama Lengkap</label>
-                            <input type="text" id="editNama" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="editHp">No. HP</label>
-                            <input type="text" id="editHp">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="editKeluarga">Anggota Keluarga</label>
-                            <input type="number" id="editKeluarga" min="0">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="editSaldo">Saldo (Rp)</label>
-                            <input type="number" id="editSaldo" min="0">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="editTanggal">Tanggal Daftar</label>
-                            <input type="date" id="editTanggal">
-                        </div>
-
-                        <div class="form-group form-group--full">
-                            <label for="editAlamat">Alamat</label>
-                            <textarea id="editAlamat" rows="3"></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="editBankInput">Bank / E-Wallet</label>
-                            <div class="combo" id="comboBankEdit">
-                                <input type="text" id="editBankInput" class="combo-input"
-                                    placeholder="Ketik atau pilih bank/e-wallet..." maxlength="50" autocomplete="off">
-                                <div class="combo-list" id="listBankEdit"></div>
-                            </div>
-                            <input type="hidden" id="editBank">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="editNoRekening">No. Rekening / No. HP E-Wallet</label>
-                            <input type="text" id="editNoRekening" maxlength="30">
-                        </div>
-
-                        <div class="form-group form-group--full">
-                            <label for="editPemilikRekening">Nama Pemilik Rekening</label>
-                            <input type="text" id="editPemilikRekening">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="cari_editStatusRekening">Status Rekening</label>
-                            <div class="combo combo--arrow" id="combo_editStatusRekening">
-                                <input type="text" id="cari_editStatusRekening" class="combo-input"
-                                    autocomplete="off">
-                                <div class="combo-list" id="list_editStatusRekening"></div>
-                            </div>
-                            <select id="editStatusRekening" class="combo-hidden" tabindex="-1" aria-hidden="true">
-                                <option value="unverified">Belum Verifikasi</option>
-                                <option value="verified">Terverifikasi</option>
-                            </select>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>Status Rekening</label>
+                        <div class="seg" id="segStatusRekening">
+                            <button type="button" class="seg-btn" data-value="unverified">Belum Verifikasi</button>
+                            <button type="button" class="seg-btn" data-value="verified">Terverifikasi</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="modal-foot">
                     <button class="btn btn--ghost" type="button" onclick="tutupModal('modalEdit')">Batal</button>
-                    <button class="btn btn--primary" type="submit">Simpan Perubahan</button>
+                    <button class="btn btn--primary" type="submit" id="editSubmitBtn">Simpan Status</button>
                 </div>
             </form>
         </div>
@@ -557,9 +504,15 @@
         </div>
     </div>
 
+    <!-- MODAL: LEADERBOARD POIN (BARU) -->
+    <div class="modal-overlay" id="modalLeaderboard">
+        <div class="modal-box" id="modalLeaderboardContent">
+            <!-- Konten dimuat via AJAX -->
+        </div>
+    </div>
+
     <!-- STYLES -->
     <style>
-        /* CSS tetap sesuai struktur asli */
         :root {
             --dashboard-page: #f5f7fb;
             --dashboard-card: #ffffff;
@@ -649,34 +602,19 @@
             border-color: var(--primary, #4338ca);
         }
 
-        .table-responsive {
+        /* MEMATIKAN SCROLL KANAN KIRI */
+        .table-no-scroll {
             width: 100%;
-            overflow-x: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--dashboard-border) transparent;
-        }
-
-        .table-responsive::-webkit-scrollbar {
-            height: 6px;
-            width: 6px;
-        }
-
-        .table-responsive::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .table-responsive::-webkit-scrollbar-thumb {
-            background: var(--dashboard-border);
-            border-radius: 4px;
+            overflow-x: hidden !important;
         }
 
         .data-table {
-            width: 100%;
+            width: 100% !important;
+            min-width: unset !important;
+            table-layout: fixed;
             border-collapse: collapse;
-            min-width: 1200px;
             background: var(--dashboard-table-row);
             color: var(--dashboard-text);
-            table-layout: auto;
         }
 
         .data-table th {
@@ -699,6 +637,9 @@
             color: var(--dashboard-text);
             vertical-align: middle;
             background: var(--dashboard-table-row);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .data-table tbody tr:hover td {
@@ -717,16 +658,6 @@
         .user-name {
             font-weight: 700;
             color: var(--dashboard-text);
-        }
-
-        .truncate-text {
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-            overflow: hidden;
-            line-height: 1.45;
-            max-height: 2.9em;
-            word-break: break-word;
         }
 
         .saldo-text {
@@ -1037,11 +968,6 @@
             font-size: 16px;
             font-weight: 700;
             color: var(--dashboard-text);
-        }
-
-        .detail-nik {
-            margin-top: 3px;
-            color: var(--dashboard-text-secondary);
         }
 
         .detail-grid {
@@ -1489,12 +1415,6 @@
             text-align: center;
         }
 
-        @media (max-width: 900px) {
-            .data-table {
-                min-width: 1000px;
-            }
-        }
-
         @media (max-width: 640px) {
             .hero {
                 flex-direction: column;
@@ -1510,6 +1430,79 @@
             .form-grid {
                 grid-template-columns: 1fr;
             }
+        }
+
+        /* Edit status rekening */
+        .edit-ringkasan {
+            padding: 14px 16px;
+            border: 1px solid var(--dashboard-border);
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--dashboard-text);
+        }
+
+        .edit-ringkasan .er-nama {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .edit-ringkasan .er-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .edit-ringkasan .er-label {
+            color: var(--dashboard-text-secondary);
+            flex-shrink: 0;
+        }
+
+        .edit-ringkasan .er-value {
+            font-weight: 600;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .edit-ringkasan .er-note {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #b45309;
+        }
+
+        .seg {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .seg-btn {
+            border: 1px solid var(--dashboard-border);
+            background: var(--dashboard-input);
+            color: var(--dashboard-text-secondary);
+            border-radius: 10px;
+            padding: 12px 10px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .15s ease, border-color .15s ease, color .15s ease;
+        }
+
+        .seg-btn:hover {
+            border-color: var(--dashboard-text-secondary);
+        }
+
+        .seg-btn.is-active[data-value="verified"] {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, .12);
+            color: #16a34a;
+        }
+
+        .seg-btn.is-active[data-value="unverified"] {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, .14);
+            color: #b45309;
         }
     </style>
 
@@ -1632,7 +1625,7 @@
 
             initComboBank('tambahBankInput', 'tambahBank', 'listBankTambah', 'comboBankTambah');
             initComboBank('editBankInput', 'editBank', 'listBankEdit', 'comboBankEdit');
-            initComboSelect('editStatusRekening');
+            initSegStatusRekening();
             initComboSelect('perPageSelect');
 
             applyFilters();
@@ -1649,6 +1642,36 @@
 
         function tutupModal(id) {
             document.getElementById(id).classList.remove('active');
+        }
+
+        // FUNGSI AJAX UNTUK MODAL LEADERBOARD
+        // FUNGSI AJAX UNTUK MODAL LEADERBOARD
+        function bukaModalLeaderboard() {
+            loadLeaderboardPopup('season_ini');
+        }
+
+        function loadLeaderboardPopup(periode) {
+            fetch(`{{ route('admin.warga.leaderboard-popup') }}?periode=${periode}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(async res => {
+                    if (!res.ok) {
+                        const errJson = await res.json().catch(() => ({}));
+                        throw new Error(errJson.message || 'Gagal memuat dari server');
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    document.getElementById('modalLeaderboardContent').innerHTML = data.html;
+                    document.getElementById('modalLeaderboard').classList.add('active');
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast('Gagal', 'Gagal memuat data leaderboard.', 'error');
+                });
         }
 
         function formatRupiah(angka) {
@@ -1924,15 +1947,22 @@
             setTimeout(hapusToast, 3500);
         }
 
-        // FUNGSI SIMPAN TAMBAH WARGA (DENGAN EMAIL & PASSWORD)
+        // SIMPAN TAMBAH WARGA DENGAN CEK EMAIL
         function simpanTambahWarga(event) {
             event.preventDefault();
+            const emailInput = document.getElementById('tambahEmail').value.trim();
+            if (!emailInput) {
+                showToast('Peringatan', 'Email wajib diisi untuk melakukan verifikasi/pendaftaran akun.', 'error');
+                return false;
+            }
+
             const payload = {
                 nik: document.getElementById('tambahNik').value,
                 nama: document.getElementById('tambahNama').value,
-                email: document.getElementById('tambahEmail').value,
+                email: emailInput,
                 password: document.getElementById('tambahPassword').value,
                 no_hp: document.getElementById('tambahHp').value,
+                kelompok: document.getElementById('tambahKelompok').value,
                 jumlah_anggota_keluarga: document.getElementById('tambahKeluarga').value,
                 alamat: document.getElementById('tambahAlamat').value,
                 nama_bank_ewallet: document.getElementById('tambahBank').value,
@@ -1977,12 +2007,26 @@
             return false;
         }
 
+        // FUNGSI DETAIL WARGA DENGAN TEKS BIASA UNTUK KELOMPOK
         function lihatWarga(warga) {
             const nama = warga.nama || '-';
             document.getElementById('detailAvatar').textContent = nama.trim().charAt(0).toUpperCase();
             document.getElementById('detailNama').textContent = nama;
-            document.getElementById('detailIdWarga').textContent = warga.id_warga || '-';
             document.getElementById('detailNik').textContent = warga.nik || '-';
+
+            // Menampilkan kelompok sebagai teks biasa
+            let labelKelompok = '-';
+            if (warga.kelompok === 'A') {
+                labelKelompok = 'A (Perumahan)';
+            } else if (warga.kelompok === 'B') {
+                labelKelompok = 'B (Luar Perumahan)';
+            }
+
+            const elKelompok = document.getElementById('detailKelompok');
+            if (elKelompok) {
+                elKelompok.textContent = labelKelompok;
+            }
+
             document.getElementById('detailHp').textContent = warga.no_hp || '-';
             document.getElementById('detailKeluarga').textContent = (warga.jumlah_anggota_keluarga ?? 0) + ' orang';
             document.getElementById('detailSaldo').textContent = formatRupiah(warga.saldo);
@@ -1997,23 +2041,47 @@
             bukaModal('modalDetail');
         }
 
+        function escHtmlWarga(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            } [c]));
+        }
+
+        function setSegStatus(value) {
+            document.getElementById('editStatusRekening').value = value;
+            document.querySelectorAll('#segStatusRekening .seg-btn').forEach(function(b) {
+                b.classList.toggle('is-active', b.dataset.value === value);
+            });
+        }
+
+        function initSegStatusRekening() {
+            document.getElementById('segStatusRekening').addEventListener('click', function(e) {
+                const btn = e.target.closest('.seg-btn');
+                if (btn) setSegStatus(btn.dataset.value);
+            });
+        }
+
         function editWarga(warga) {
             document.getElementById('editId').value = warga.id_warga;
-            document.getElementById('editNik').value = warga.nik || '';
-            document.getElementById('editNama').value = warga.nama || '';
-            document.getElementById('editHp').value = warga.no_hp || '';
-            document.getElementById('editKeluarga').value = warga.jumlah_anggota_keluarga || 0;
-            document.getElementById('editSaldo').value = warga.saldo || 0;
-            document.getElementById('editTanggal').value = warga.tanggal_daftar ? warga.tanggal_daftar.substring(0, 10) :
-                '';
-            document.getElementById('editAlamat').value = warga.alamat || '';
-            document.getElementById('editBankInput').value = warga.nama_bank_ewallet || '';
-            document.getElementById('editBank').value = warga.nama_bank_ewallet || '';
-            document.getElementById('editNoRekening').value = warga.nomor_rekening || '';
-            document.getElementById('editPemilikRekening').value = warga.nama_pemilik_rekening || '';
-            document.getElementById('editStatusRekening').value = warga.status_rekening || 'unverified';
-            syncComboSelect('editStatusRekening');
+            setSegStatus(warga.status_rekening === 'verified' ? 'verified' : 'unverified');
 
+            const adaRekening = !!warga.nama_bank_ewallet;
+            const baris = (label, val) =>
+                `<div class="er-row"><span class="er-label">${label}</span><span class="er-value">${escHtmlWarga(val || '-')}</span></div>`;
+
+            document.getElementById('editRingkasan').innerHTML =
+                `<div class="er-nama">${escHtmlWarga(warga.nama || '-')}</div>` +
+                baris('Bank / E-Wallet', warga.nama_bank_ewallet) +
+                baris('No. Rekening', warga.nomor_rekening) +
+                baris('Pemilik', warga.nama_pemilik_rekening) +
+                (adaRekening ? '' :
+                    '<div class="er-note">Warga ini belum mengisi data rekening, status belum bisa diubah.</div>');
+
+            document.getElementById('editSubmitBtn').disabled = !adaRekening;
             bukaModal('modalEdit');
         }
 
@@ -2021,16 +2089,6 @@
             event.preventDefault();
             const id = document.getElementById('editId').value;
             const payload = {
-                nik: document.getElementById('editNik').value,
-                nama: document.getElementById('editNama').value,
-                no_hp: document.getElementById('editHp').value,
-                jumlah_anggota_keluarga: document.getElementById('editKeluarga').value,
-                saldo: document.getElementById('editSaldo').value,
-                tanggal_daftar: document.getElementById('editTanggal').value,
-                alamat: document.getElementById('editAlamat').value,
-                nama_bank_ewallet: document.getElementById('editBank').value,
-                nomor_rekening: document.getElementById('editNoRekening').value,
-                nama_pemilik_rekening: document.getElementById('editPemilikRekening').value,
                 status_rekening: document.getElementById('editStatusRekening').value,
             };
 
@@ -2046,7 +2104,7 @@
                 .then(async (res) => {
                     const data = await res.json().catch(() => ({}));
                     if (!res.ok) {
-                        let errorMsg = data.message || 'Gagal memperbarui data warga.';
+                        let errorMsg = data.message || 'Gagal memperbarui status rekening.';
                         if (data.errors) {
                             const firstKey = Object.keys(data.errors)[0];
                             if (firstKey && data.errors[firstKey][0]) {
@@ -2059,7 +2117,7 @@
                 })
                 .then(() => {
                     tutupModal('modalEdit');
-                    showToast('Berhasil disimpan', 'Perubahan data warga telah tersimpan.');
+                    showToast('Berhasil disimpan', 'Status rekening telah diperbarui.');
                     setTimeout(() => window.location.reload(), 800);
                 })
                 .catch((err) => {

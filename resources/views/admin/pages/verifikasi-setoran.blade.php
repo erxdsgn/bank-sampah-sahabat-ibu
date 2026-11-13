@@ -17,10 +17,12 @@
 
         /*
     |--------------------------------------------------------------------------
-    | MAP KATEGORI
+    | MAP KATEGORI (Mendukung ID dari id_kategori maupun id)
     |--------------------------------------------------------------------------
     */
-        $kategoriMap = $kategoriSampah->keyBy('id_kategori');
+        $kategoriMap = $kategoriSampah->keyBy(function ($k) {
+            return $k->id_kategori ?? $k->id;
+        });
 
         /*
     |--------------------------------------------------------------------------
@@ -172,7 +174,7 @@
 
                 <thead>
                     <tr>
-                        <th>ID Transaksi</th>
+                        <th class="col-no">No</th>
                         <th>Warga</th>
                         <th>Kategori Sampah</th>
                         <th>Jumlah</th>
@@ -188,126 +190,71 @@
                     @forelse($setoran as $index => $item)
                         @php
                             /*
-                        |--------------------------------------------------------------------------
-                        | DETAIL SETORAN
-                        |--------------------------------------------------------------------------
-                        */
+                            |--------------------------------------------------------------------------
+                            | DETAIL SETORAN (BISA LEBIH DARI SATU JENIS SAMPAH)
+                            |--------------------------------------------------------------------------
+                            */
                             $details = $detailMap[$item->getKey()] ?? collect();
 
-                            $detail = $details->first();
+                            $items = $details
+                                ->map(function ($d) use ($kategoriMap, $normalisasiSatuan) {
+                                    $katId = $d->id_kategori ?? $d->id_kategori_sampah;
+                                    $kat = $kategoriMap[$katId] ?? null;
 
-                            /*
-                        |--------------------------------------------------------------------------
-                        | KATEGORI
-                        |--------------------------------------------------------------------------
-                        */
-                            $namaKategori = $details
-                                ->map(fn($d) => optional($kategoriMap[$d->id_kategori] ?? null)->nama_lengkap)
-                                ->filter()
-                                ->implode(', ');
+                                    return [
+                                        'id_detail' => $d->id_detail_setoran ?? ($d->id_detail ?? ($d->id ?? null)),
+                                        'id_kategori' => $katId,
+                                        'nama_kategori' => optional($kat)->nama_kategori
+                                                            ?? optional($kat)->nama_lengkap
+                                                            ?? optional($kat)->nama
+                                                            ?? optional($d->kategori)->nama_kategori,
+                                        'satuan' => $normalisasiSatuan(
+                                            $d->satuan ?? (optional($kat)->satuan ?? 'gram'),
+                                        ),
+                                        'jumlah' => (float) ($d->jumlah_satuan ?? ($d->jumlah ?? ($d->berat_gram ?? 0))),
+                                        'subtotal' => isset($d->subtotal) ? (float) $d->subtotal : null,
+                                    ];
+                                })
+                                ->values()
+                                ->all();
 
-                            /*
-                        |--------------------------------------------------------------------------
-                        | KATEGORI UTAMA DARI DETAIL
-                        |--------------------------------------------------------------------------
-                        */
-                            $kategoriDetail = $detail ? $kategoriMap[$detail->id_kategori] ?? null : null;
-
-                            /*
-                        |--------------------------------------------------------------------------
-                        | SATUAN
-                        |
-                        | Prioritas:
-                        | 1. satuan pada detail_setoran jika tersedia
-                        | 2. satuan kategori
-                        | 3. gram sebagai fallback data lama
-                        |--------------------------------------------------------------------------
-                        */
-                            $satuanRow = $normalisasiSatuan(
-                                $detail->satuan ?? (optional($kategoriDetail)->satuan ?? 'gram'),
-                            );
-
-                            /*
-                        |--------------------------------------------------------------------------
-                        | JUMLAH
-                        |
-                        | Jika database sudah mempunyai jumlah_satuan/jumlah,
-                        | gunakan itu.
-                        |
-                        | Jika belum, gunakan berat_gram untuk data lama.
-                        |--------------------------------------------------------------------------
-                        */
-                            $jumlahDetail = null;
-
-                            if ($detail) {
-                                $jumlahDetail = $detail->jumlah_satuan ?? ($detail->jumlah ?? null);
+                            // Data lama tanpa detail: tampilkan satu baris dari data setoran
+                            if (empty($items)) {
+                                $katLamaId = $item->id_kategori ?? $item->id_kategori_sampah ?? null;
+                                $katLama = $kategoriMap[$katLamaId] ?? null;
+                                $items = [
+                                    [
+                                        'id_detail' => null,
+                                        'id_kategori' => $katLamaId,
+                                        'nama_kategori' => optional($katLama)->nama_kategori
+                                                            ?? optional($katLama)->nama_lengkap
+                                                            ?? optional($item->kategori)->nama_kategori
+                                                            ?? optional($item->kategori)->nama,
+                                        'satuan' => $normalisasiSatuan($item->satuan ?? 'gram'),
+                                        'jumlah' => (float) ($item->jumlah_satuan ?? ($item->jumlah ?? ($item->total_berat ?? 0))),
+                                    ],
+                                ];
                             }
 
-                            /*
-                        |--------------------------------------------------------------------------
-                        | FALLBACK DATA LAMA
-                        |--------------------------------------------------------------------------
-                        */
-                            if ($jumlahDetail === null) {
-                                $jumlahDetail = $details->sum(function ($d) {
-                                    return (float) ($d->berat_gram ?? 0);
-                                });
-                            }
+                            $namaList = collect($items)->pluck('nama_kategori')->filter()->unique()->values();
 
-                            /*
-                        |--------------------------------------------------------------------------
-                        | Jika tidak ada detail, ambil dari setoran
-                        |--------------------------------------------------------------------------
-                        */
-                            if (!$jumlahDetail) {
-                                $jumlahDetail = $item->jumlah_satuan ?? ($item->jumlah ?? ($item->total_berat ?? 0));
-                            }
-
-                            /*
-                        |--------------------------------------------------------------------------
-                        | TOTAL NILAI
-                        |--------------------------------------------------------------------------
-                        */
                             $totalNilai =
                                 $item->total_nilai ??
                                 $details->sum(function ($d) {
                                     return (float) ($d->subtotal ?? 0);
                                 });
 
-                            /*
-                        |--------------------------------------------------------------------------
-                        | DATA YANG DIKIRIM KE MODAL
-                        |--------------------------------------------------------------------------
-                        */
                             $row = [
                                 'id' => $item->getKey(),
-
                                 'kode_transaksi' => $item->kode_transaksi ?? '-',
-
                                 'status' => $item->status,
-
                                 'warga' => [
                                     'nama' => $item->warga->nama ?? '-',
                                     'nik' => $item->warga->nik ?? '-',
                                 ],
-
-                                'id_kategori' => $detail->id_kategori ?? null,
-
-                                'nama_kategori' => $namaKategori,
-
-                                'jumlah' => (float) $jumlahDetail,
-
-                                /*
-                            | Tetap dikirim agar kompatibel dengan data lama.
-                            */
-                                'total_berat' => (float) $jumlahDetail,
-
-                                'satuan' => $satuanRow,
-
+                                'items' => $items,
                                 'total_nilai' => (float) $totalNilai,
-
                                 'catatan_admin' => $item->catatan_admin ?? '',
-
                                 'foto_bukti' => $item->foto_sampah ?? null,
                             ];
 
@@ -317,9 +264,10 @@
 
                         <tr data-status="{{ $item->status }}">
 
-                            <!-- ID TRANSAKSI -->
-                            <td>
-                                <span class="mono kode-trx">{{ $row['kode_transaksi'] }}</span>
+                            <!-- NO -->
+                            <td class="col-no">
+                                <span class="mono no-urut">{{ $loop->iteration }}</span>
+                                <span class="sr-only">{{ $row['kode_transaksi'] }}</span>
                             </td>
 
 
@@ -335,23 +283,34 @@
 
                             <!-- KATEGORI -->
                             <td>
-                                <span class="kategori-tag">
-                                    {{ $row['nama_kategori'] ?: '-' }}
-                                </span>
+                                @if ($namaList->isEmpty())
+                                    <span class="kategori-tag">-</span>
+                                @else
+                                    <div class="kategori-stack">
+                                        @foreach ($namaList->take(2) as $nm)
+                                            <span class="kategori-tag">{{ $nm }}</span>
+                                        @endforeach
+
+                                        @if ($namaList->count() > 2)
+                                            <span class="kategori-tag kategori-tag--more"
+                                                title="{{ $namaList->slice(2)->implode(', ') }}">
+                                                +{{ $namaList->count() - 2 }} lainnya
+                                            </span>
+                                            <span class="sr-only">{{ $namaList->slice(2)->implode(', ') }}</span>
+                                        @endif
+                                    </div>
+                                @endif
                             </td>
 
 
                             <!-- JUMLAH -->
                             <td>
-
-                                <strong>
-                                    {{ $fmtJumlah($row['jumlah']) }}
-                                </strong>
-
-                                <span class="unit">
-                                    {{ $simbolSatuan($row['satuan']) }}
-                                </span>
-
+                                @if (count($row['items']) > 1)
+                                    <strong>{{ count($row['items']) }} jenis</strong>
+                                @else
+                                    <strong>{{ $fmtJumlah($row['items'][0]['jumlah'] ?? 0) }}</strong>
+                                    <span class="unit">{{ $row['items'][0]['satuan'] ?? 'gram' }}</span>
+                                @endif
                             </td>
 
 
@@ -401,21 +360,13 @@
                                 <div class="table-actions">
 
                                     <button class="icon-btn {{ $item->status === 'pending' ? 'icon-btn--primary' : '' }}"
-                                        title="{{ $item->status === 'pending' ? 'Verifikasi' : 'Lihat Detail' }}"
+                                        title="{{ $item->status === 'pending' ? 'Lihat Detail & Verifikasi' : 'Lihat Detail' }}"
                                         type="button" onclick="bukaVerifikasi({{ Js::from($row) }})">
 
-                                        @if ($item->status === 'pending')
-                                            <svg viewBox="0 0 24 24">
-                                                <path d="M9 11l3 3L22 4"></path>
-                                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11">
-                                                </path>
-                                            </svg>
-                                        @else
-                                            <svg viewBox="0 0 24 24">
-                                                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path>
-                                                <circle cx="12" cy="12" r="2.5"></circle>
-                                            </svg>
-                                        @endif
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path>
+                                            <circle cx="12" cy="12" r="2.5"></circle>
+                                        </svg>
 
                                     </button>
 
@@ -492,13 +443,40 @@
     <div class="toast-wrap" id="toastWrap"></div>
 
 
+    {{-- Sumber opsi kategori; disalin ke setiap baris rincian sampah --}}
+    <select id="masterKategori" class="combo-hidden" tabindex="-1" aria-hidden="true">
+        <option value="" data-harga="0" data-satuan="" disabled selected>
+            -- Pilih Kategori Sampah --
+        </option>
+
+        @foreach ($kategoriSampah as $kategori)
+            @php
+                $harga = $kategori->hargaTerbaru->harga_satuan ?? null;
+                $satuan = $normalisasiSatuan($kategori->satuan ?? 'gram');
+                $namaKat = $kategori->nama_kategori ?? $kategori->nama_lengkap ?? $kategori->nama ?? '-';
+                $idKat = $kategori->id_kategori ?? $kategori->id;
+            @endphp
+
+            <option value="{{ $idKat }}" data-harga="{{ $harga ?? 0 }}"
+                data-satuan="{{ $satuan }}">
+                {{ $namaKat }} —
+                @if ($harga !== null)
+                    Rp {{ $fmtHarga($harga) }} / {{ $simbolSatuan($satuan) }}
+                @else
+                    belum ada harga
+                @endif
+            </option>
+        @endforeach
+    </select>
+
+
     <!-- ========================================================= -->
     <!-- MODAL VERIFIKASI -->
     <!-- ========================================================= -->
 
     <div class="modal-overlay" id="modalVerifikasi">
 
-        <div class="modal-box">
+        <div class="modal-box modal-box--wide">
 
             <div class="modal-head">
 
@@ -550,6 +528,8 @@
                                 -
                             </div>
 
+                            <span class="status-badge" id="verifStatus" style="margin-top:6px;"></span>
+
                         </div>
 
                     </div>
@@ -575,107 +555,35 @@
                     </div>
 
 
+                    <!-- RINCIAN SAMPAH -->
+                    <div class="items-section">
+
+                        <div class="items-head">
+                            <div class="items-title">
+                                Rincian Sampah
+                                <span class="items-count" id="verifItemCount">0 jenis</span>
+                            </div>
+
+                            <button type="button" class="items-add" id="verifAddItem">
+                                + Tambah Jenis
+                            </button>
+                        </div>
+
+                        <div class="item-list" id="verifItemList"></div>
+
+                        <div class="estimate-box">
+                            <span class="lab">Estimasi total nilai setoran</span>
+                            <span class="val" id="verifEstimasi">Rp 0</span>
+                        </div>
+
+                        <span class="field-sub">
+                            Sesuaikan jenis dan jumlah dengan hasil pengecekan ulang jika berbeda.
+                        </span>
+
+                    </div>
+
+
                     <div class="form-grid">
-
-
-                        <!-- KATEGORI -->
-                        <div class="form-group">
-
-                            <label for="cariVerifKategori">
-                                Kategori Sampah
-                            </label>
-
-                            <div class="combo" id="comboVerifKategori">
-                                <input type="text" id="cariVerifKategori" class="combo-input"
-                                    placeholder="Ketik / pilih kategori sampah..." autocomplete="off">
-                                <div class="combo-list" id="listVerifKategori"></div>
-                            </div>
-
-                            {{-- Select asli disembunyikan; nilai & data-harga/satuan tetap dibaca dari sini --}}
-                            <select id="verifKategori" class="combo-hidden" tabindex="-1" aria-hidden="true">
-
-                                <option value="" data-harga="0" data-satuan="" disabled selected>
-                                    -- Pilih Kategori Sampah --
-                                </option>
-
-                                @foreach ($kategoriSampah as $kategori)
-                                    @php
-                                        $harga = $kategori->hargaTerbaru->harga_satuan ?? null;
-
-                                        $satuan = $normalisasiSatuan($kategori->satuan ?? 'gram');
-                                    @endphp
-
-                                    <option value="{{ $kategori->id_kategori }}" data-harga="{{ $harga ?? 0 }}"
-                                        data-satuan="{{ $satuan }}">
-
-                                        {{ $kategori->nama_lengkap }}
-                                        —
-
-                                        @if ($harga !== null)
-                                            Rp {{ $fmtHarga($harga) }}
-                                            /
-                                            {{ $simbolSatuan($satuan) }}
-                                        @else
-                                            belum ada harga
-                                        @endif
-
-                                    </option>
-                                @endforeach
-
-                            </select>
-
-
-                            <span class="field-sub" id="verifHargaInfo">
-                                Harga: -
-                            </span>
-
-                        </div>
-
-
-                        <!-- JUMLAH -->
-                        <div class="form-group">
-
-                            <label for="verifBerat">
-                                Jumlah
-                            </label>
-
-                            <div style="display:flex; gap:8px;">
-
-                                <input type="number" id="verifBerat" step="0.001" min="0.001" required
-                                    style="flex:1;">
-
-                                <input type="text" id="verifSatuan" value="-" readonly style="width:100px;">
-
-                            </div>
-
-
-                            <span class="field-sub" id="verifSatuanInfo">
-                                Satuan akan mengikuti kategori sampah.
-                            </span>
-
-                            <span class="field-sub">
-                                Sesuaikan dengan hasil pengecekan ulang jika berbeda.
-                            </span>
-
-                        </div>
-
-
-                        <!-- ESTIMASI -->
-                        <div class="form-group form-group--full">
-
-                            <div class="estimate-box">
-
-                                <span class="lab">
-                                    Estimasi nilai dari setoran ini
-                                </span>
-
-                                <span class="val" id="verifEstimasi">
-                                    Rp 0
-                                </span>
-
-                            </div>
-
-                        </div>
 
 
                         <!-- ALASAN PENOLAKAN -->
@@ -724,7 +632,7 @@
 
     <div class="modal-overlay" id="modalTambah">
 
-        <div class="modal-box">
+        <div class="modal-box modal-box--wide">
 
             <div class="modal-head">
 
@@ -789,76 +697,9 @@
                         </div>
 
 
-                        <!-- KATEGORI -->
-                        <div class="form-group form-group--full">
-
-                            <label for="cariKategori">
-                                Kategori Sampah
-                            </label>
-
-                            <div class="combo" id="comboKategori">
-                                <input type="text" id="cariKategori" class="combo-input"
-                                    placeholder="Ketik nama kategori sampah..." autocomplete="off">
-
-                                <div class="combo-list" id="listKategori">
-                                </div>
-                            </div>
-
-                            {{-- Sembunyikan select asli agar hanya UI custom combo yang terlihat --}}
-                            <select id="tambahKategori" name="kategori_id" style="display: none;" required>
-
-                                <option value="" data-harga="0" data-satuan="" disabled selected>
-                                    -- Pilih Kategori Sampah --
-                                </option>
-
-                                @foreach ($kategoriSampah as $kategori)
-                                    @php
-                                        $harga = $kategori->hargaTerbaru->harga_satuan ?? null;
-                                        $satuan = $normalisasiSatuan($kategori->satuan ?? 'gram');
-                                    @endphp
-
-                                    <option value="{{ $kategori->id_kategori }}" data-harga="{{ $harga ?? 0 }}"
-                                        data-satuan="{{ $satuan }}">
-
-                                        {{ $kategori->nama_lengkap }} —
-                                        @if ($harga !== null)
-                                            Rp {{ $fmtHarga($harga) }} / {{ $simbolSatuan($satuan) }}
-                                        @else
-                                            belum ada harga
-                                        @endif
-                                    </option>
-                                @endforeach
-
-                            </select>
-
-                        </div>
-
-
-                        <!-- JUMLAH -->
-                        <div class="form-group">
-
-                            <label for="tambahBerat">
-                                Jumlah
-                            </label>
-
-                            <div style="display:flex; gap:8px;">
-
-                                <input type="number" id="tambahBerat" step="0.001" min="0.001" required
-                                    style="flex:1;">
-
-                                <input type="text" id="tambahSatuan" value="-" readonly style="width:100px;">
-
-                            </div>
-
-                            <span class="field-sub">
-                                Satuan otomatis mengikuti kategori sampah.
-                            </span>
-
-                        </div>
-
 
                         <!-- TANGGAL -->
-                        <div class="form-group">
+                        <div class="form-group form-group--full">
 
                             <label for="tambahTanggal">
                                 Tanggal Setoran
@@ -869,18 +710,29 @@
                         </div>
 
 
-                        <!-- ESTIMASI -->
+
+                        <!-- RINCIAN SAMPAH -->
                         <div class="form-group form-group--full">
 
-                            <div class="estimate-box">
+                            <div class="items-section">
 
-                                <span class="lab">
-                                    Estimasi nilai
-                                </span>
+                                <div class="items-head">
+                                    <div class="items-title">
+                                        Rincian Sampah
+                                        <span class="items-count" id="tambahItemCount">0 jenis</span>
+                                    </div>
 
-                                <span class="val" id="tambahEstimasi">
-                                    Rp 0
-                                </span>
+                                    <button type="button" class="items-add" id="tambahAddItem">
+                                        + Tambah Jenis
+                                    </button>
+                                </div>
+
+                                <div class="item-list" id="tambahItemList"></div>
+
+                                <div class="estimate-box">
+                                    <span class="lab">Estimasi total nilai</span>
+                                    <span class="val" id="tambahEstimasi">Rp 0</span>
+                                </div>
 
                             </div>
 
@@ -1908,7 +1760,6 @@
 
         /* =========================================================
            MODAL & COMBOBOX — konsisten dengan halaman lain
-           (header/footer diam, hanya isi form yang scroll)
            ========================================================= */
         .modal-box {
             overflow: hidden;
@@ -1989,11 +1840,212 @@
             background: var(--vs-table-hover);
             color: #16a34a;
         }
+
+        /* =========================================================
+           RINCIAN BEBERAPA JENIS SAMPAH
+           ========================================================= */
+        .col-no {
+            width: 56px;
+            text-align: center;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+        }
+
+        .modal-box--wide {
+            max-width: 680px;
+        }
+
+        .kategori-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            max-width: 240px;
+        }
+
+        .kategori-tag--more {
+            background: var(--vs-surface-2);
+            color: var(--vs-text-secondary);
+            border-color: var(--vs-border);
+        }
+
+        .items-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .items-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .items-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--vs-text);
+        }
+
+        .items-count {
+            padding: 2px 9px;
+            border-radius: 999px;
+            font-size: 11.5px;
+            font-weight: 600;
+            background: rgba(22, 163, 74, .10);
+            color: #15803d;
+        }
+
+        [data-theme="dark"] .items-count {
+            background: rgba(74, 222, 128, .12);
+            color: #4ade80;
+        }
+
+        .items-add {
+            padding: 7px 12px;
+            border-radius: 8px;
+            border: 1px dashed #16a34a;
+            background: transparent;
+            color: #16a34a;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .12s;
+        }
+
+        .items-add:hover {
+            background: rgba(22, 163, 74, .08);
+        }
+
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .item-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px 14px;
+            border: 1px solid var(--vs-border);
+            border-radius: 12px;
+            background: var(--vs-surface-2);
+        }
+
+        .item-row.is-invalid {
+            border-color: #dc2626;
+        }
+
+        .item-row__head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .item-row__no {
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: var(--vs-text-secondary);
+        }
+
+        .item-row__remove {
+            width: 26px;
+            height: 26px;
+            border: none;
+            border-radius: 7px;
+            background: transparent;
+            color: var(--vs-text-muted);
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .item-row__remove:hover {
+            background: rgba(220, 38, 38, .10);
+            color: #dc2626;
+        }
+
+        .item-row__grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 190px;
+            gap: 12px;
+        }
+
+        .item-row__qty {
+            display: flex;
+            gap: 8px;
+        }
+
+        .item-row__qty .item-qty {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-row__qty .item-unit {
+            width: 72px;
+        }
+
+        .item-row__foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--vs-border);
+        }
+
+        .item-info {
+            font-size: 11.5px;
+            color: var(--vs-text-muted);
+        }
+
+        .item-sub {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--vs-text);
+            white-space: nowrap;
+        }
+
+        .combo-item.is-disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+
+        .combo-item.is-disabled:hover {
+            background: transparent;
+            color: var(--vs-text);
+        }
+
+        .combo-note {
+            font-size: 11.5px;
+            font-style: italic;
+        }
+
+        @media (max-width: 560px) {
+            .item-row__grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 
 
     <script>
         let verifItem = null;
+        let verifEditor = null;
+        let tambahEditor = null;
 
         /*
         |--------------------------------------------------------------------------
@@ -2046,7 +2098,11 @@
 
                 const start = (currentPage - 1) * perPage;
                 const end = start + perPage;
-                filtered.slice(start, end).forEach(r => r.style.display = '');
+                filtered.slice(start, end).forEach(function(r, i) {
+                    r.style.display = '';
+                    const no = r.querySelector('.no-urut');
+                    if (no) no.textContent = start + i + 1;
+                });
 
                 if (tableInfo) {
                     tableInfo.innerHTML = filtered.length === 0 ?
@@ -2145,8 +2201,21 @@
             | VERIFIKASI & TAMBAH EVENT LISTENERS
             |--------------------------------------------------------------------------
             */
-            document.getElementById('verifBerat')?.addEventListener('input', updateEstimasi);
-            document.getElementById('tambahBerat')?.addEventListener('input', updateEstimasiTambah);
+            verifEditor = createItemEditor({
+                prefix: 'verif',
+                listId: 'verifItemList',
+                totalId: 'verifEstimasi',
+                countId: 'verifItemCount',
+                addBtnId: 'verifAddItem'
+            });
+
+            tambahEditor = createItemEditor({
+                prefix: 'tambah',
+                listId: 'tambahItemList',
+                totalId: 'tambahEstimasi',
+                countId: 'tambahItemCount',
+                addBtnId: 'tambahAddItem'
+            });
 
             /*
             |--------------------------------------------------------------------------
@@ -2158,22 +2227,6 @@
                 selectId: 'tambahWarga',
                 inputId: 'cariWarga',
                 listId: 'listWarga'
-            });
-
-            initCombo({
-                comboId: 'comboVerifKategori',
-                selectId: 'verifKategori',
-                inputId: 'cariVerifKategori',
-                listId: 'listVerifKategori',
-                onChange: updateEstimasi
-            });
-
-            initCombo({
-                comboId: 'comboKategori',
-                selectId: 'tambahKategori',
-                inputId: 'cariKategori',
-                listId: 'listKategori',
-                onChange: updateEstimasiTambah
             });
         });
 
@@ -2194,6 +2247,7 @@
             const input = document.getElementById(cfg.inputId);
             const list = document.getElementById(cfg.listId);
             const onChange = cfg.onChange || function() {};
+            const isDisabled = cfg.isDisabled || function() { return false; };
 
             if (!select || !input || !list) return;
 
@@ -2221,7 +2275,6 @@
                 });
             }
 
-            // Samakan teks input dengan pilihan aktif (kosong jika belum ada pilihan)
             function sync() {
                 const d = data.find(x => x.value === String(select.value));
                 input.value = d ? d.label : '';
@@ -2235,7 +2288,10 @@
                 aktif = -1;
 
                 list.innerHTML = hasil.length
-                    ? hasil.map(d => `<div class="combo-item${d.value === String(select.value) ? ' is-selected' : ''}" data-value="${escapeHtml(d.value)}">${escapeHtml(d.label)}</div>`).join('')
+                    ? hasil.map(d => {
+                        const nonaktif = d.value !== String(select.value) && isDisabled(d.value);
+                        return `<div class="combo-item${d.value === String(select.value) ? ' is-selected' : ''}${nonaktif ? ' is-disabled' : ''}" data-value="${escapeHtml(d.value)}"${nonaktif ? ' aria-disabled="true"' : ''}>${escapeHtml(d.label)}${nonaktif ? ' <span class="combo-note">· sudah dipilih</span>' : ''}</div>`;
+                    }).join('')
                     : '<div class="combo-empty">Data tidak ditemukan</div>';
             }
 
@@ -2248,12 +2304,13 @@
 
             function tutup() {
                 list.classList.remove('show');
-                sync(); // buang ketikan pencarian, tampilkan pilihan yang aktif
+                sync();
             }
 
             function pilih(value) {
                 const d = data.find(x => x.value === String(value));
                 if (!d) return;
+                if (d.value !== String(select.value) && isDisabled(d.value)) return;
 
                 const berubah = select.value !== d.value;
                 select.value = d.value;
@@ -2262,7 +2319,7 @@
             }
 
             function sorot(arah) {
-                const items = list.querySelectorAll('.combo-item');
+                const items = list.querySelectorAll('.combo-item:not(.is-disabled)');
                 if (!items.length) return;
 
                 aktif = (aktif + arah + items.length) % items.length;
@@ -2283,7 +2340,6 @@
                 if (!list.classList.contains('show')) buka('');
             });
 
-            // Mengetik hanya menyaring daftar; nilai baru tersimpan setelah memilih item
             input.addEventListener('input', function() {
                 buka(this.value);
             });
@@ -2291,7 +2347,7 @@
             input.addEventListener('blur', tutup);
 
             input.addEventListener('keydown', function(e) {
-                const items = list.querySelectorAll('.combo-item');
+                const items = list.querySelectorAll('.combo-item:not(.is-disabled)');
 
                 if (e.key === 'ArrowDown') {
                     e.preventDefault();
@@ -2307,25 +2363,25 @@
                     }
                 } else if (e.key === 'Escape') {
                     if (list.classList.contains('show')) {
-                        e.stopPropagation(); // jangan ikut menutup modal
+                        e.stopPropagation();
                         tutup();
                     }
                 }
             });
 
             list.addEventListener('mouseover', function(e) {
-                const item = e.target.closest('.combo-item');
+                const item = e.target.closest('.combo-item:not(.is-disabled)');
                 if (!item) return;
 
-                list.querySelectorAll('.combo-item').forEach((el, i) => {
+                list.querySelectorAll('.combo-item:not(.is-disabled)').forEach((el, i) => {
                     el.classList.toggle('is-active', el === item);
                     if (el === item) aktif = i;
                 });
             });
 
             list.addEventListener('mousedown', function(e) {
-                e.preventDefault(); // jaga fokus agar list tidak tertutup saat scroll/klik
-                const item = e.target.closest('.combo-item');
+                e.preventDefault();
+                const item = e.target.closest('.combo-item:not(.is-disabled)');
                 if (item) pilih(item.dataset.value);
             });
 
@@ -2438,27 +2494,248 @@
 
         /*
         |--------------------------------------------------------------------------
+        | EDITOR RINCIAN SAMPAH (BANYAK JENIS DALAM SATU SETORAN)
+        |--------------------------------------------------------------------------
+        */
+        function createItemEditor(cfg) {
+            const listEl = document.getElementById(cfg.listId);
+            const totalEl = document.getElementById(cfg.totalId);
+            const countEl = document.getElementById(cfg.countId);
+            const addBtn = document.getElementById(cfg.addBtnId);
+            const master = document.getElementById('masterKategori');
+
+            let seq = 0;
+            let editable = true;
+
+            const rows = () => Array.from(listEl.querySelectorAll('.item-row'));
+
+            function updateRow(row) {
+                const select = row.querySelector('select');
+                const harga = hargaDariSelect(select);
+                const satuan = satuanDariSelect(select);
+                const jumlah = parseFloat(row.querySelector('.item-qty').value) || 0;
+                const tersimpan = !editable && row.dataset.subtotal !== '' ? Number(row.dataset.subtotal) : null;
+                const nilai = tersimpan !== null ? tersimpan : harga * jumlah;
+
+                row.querySelector('.item-unit').value = satuan || '-';
+
+                let info = 'Pilih kategori terlebih dahulu.';
+                if (select.value) {
+                    info = harga > 0 && satuan
+                        ? 'Harga aktif: ' + formatHarga(harga, satuan === 'liter' ? 'L' : satuan)
+                        : 'Kategori ini belum memiliki harga aktif.';
+                }
+                if (tersimpan !== null) info = 'Nilai tercatat saat transaksi.';
+
+                row.querySelector('.item-info').textContent = info;
+                row.querySelector('.item-sub').textContent = formatRupiah(nilai);
+
+                return nilai;
+            }
+
+            function recalc() {
+                const list = rows();
+                let total = 0;
+
+                list.forEach((row, i) => {
+                    total += updateRow(row);
+                    row.querySelector('.item-row__no').textContent = 'Jenis sampah ' + (i + 1);
+                    row.querySelector('.item-row__remove').style.display =
+                        editable && list.length > 1 ? '' : 'none';
+                });
+
+                totalEl.textContent = formatRupiah(total);
+                countEl.textContent = list.length + ' jenis';
+                if (addBtn) addBtn.style.display = editable ? '' : 'none';
+            }
+
+            function applyEditable(row) {
+                const select = row.querySelector('select');
+                select.disabled = !editable;
+                row.querySelector('.item-qty').disabled = !editable;
+                syncCombo(select.id);
+            }
+
+            function addRow(data = {}, focus = false) {
+                const uid = cfg.prefix + '_' + (++seq);
+                const row = document.createElement('div');
+
+                row.className = 'item-row';
+                row.dataset.idDetail = data.id_detail ?? '';
+                row.dataset.subtotal = data.subtotal ?? '';
+                row.innerHTML = `
+                    <div class="item-row__head">
+                        <span class="item-row__no"></span>
+                        <button type="button" class="item-row__remove" title="Hapus jenis ini" aria-label="Hapus jenis ini">&times;</button>
+                    </div>
+
+                    <div class="item-row__grid">
+                        <div class="form-group">
+                            <label for="${uid}_inp">Kategori Sampah</label>
+                            <div class="combo">
+                                <input type="text" id="${uid}_inp" class="combo-input"
+                                    placeholder="Ketik / pilih kategori sampah..." autocomplete="off">
+                                <div class="combo-list" id="${uid}_list"></div>
+                            </div>
+                            <select id="${uid}_sel" class="combo-hidden" tabindex="-1" aria-hidden="true"></select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="${uid}_qty">Jumlah</label>
+                            <div class="item-row__qty">
+                                <input type="number" id="${uid}_qty" class="item-qty" step="0.001" min="0.001" required>
+                                <input type="text" class="item-unit" value="-" readonly tabindex="-1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="item-row__foot">
+                        <span class="item-info">Pilih kategori terlebih dahulu.</span>
+                        <span class="item-sub">Rp 0</span>
+                    </div>
+                `;
+
+                listEl.appendChild(row);
+
+                const select = row.querySelector('select');
+                select.innerHTML = master.innerHTML;
+                pilihKategori(select, data.id_kategori);
+                select.disabled = !editable;
+
+                const qty = row.querySelector('.item-qty');
+                qty.value = data.jumlah ?? '';
+                qty.disabled = !editable;
+                qty.addEventListener('input', function() {
+                    row.classList.remove('is-invalid');
+                    recalc();
+                });
+
+                initCombo({
+                    selectId: select.id,
+                    inputId: uid + '_inp',
+                    listId: uid + '_list',
+                    isDisabled: function(value) {
+                        return rows().some(r => r !== row && r.querySelector('select').value === String(value));
+                    },
+                    onChange: function() {
+                        row.classList.remove('is-invalid');
+                        recalc();
+                    }
+                });
+
+                row.querySelector('.item-row__remove').addEventListener('click', function() {
+                    delete comboRegistry[select.id];
+                    row.remove();
+                    recalc();
+                });
+
+                recalc();
+
+                if (focus) {
+                    row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    row.querySelector('.combo-input').focus();
+                }
+
+                return row;
+            }
+
+            function clear() {
+                rows().forEach(r => delete comboRegistry[r.querySelector('select').id]);
+                listEl.innerHTML = '';
+            }
+
+            function setItems(items, canEdit) {
+                clear();
+                editable = !!canEdit;
+
+                const data = Array.isArray(items) && items.length ? items : [{}];
+                data.forEach(d => addRow(d));
+
+                rows().forEach(applyEditable);
+                recalc();
+            }
+
+            function getItems() {
+                return rows().map(row => ({
+                    id_detail: row.dataset.idDetail || null,
+                    id_kategori: row.querySelector('select').value,
+                    jumlah: row.querySelector('.item-qty').value
+                }));
+            }
+
+            function validate() {
+                const list = rows();
+                const dipakai = new Set();
+
+                for (const row of list) {
+                    row.classList.remove('is-invalid');
+                }
+
+                for (const row of list) {
+                    const kat = row.querySelector('select').value;
+                    const jml = Number(row.querySelector('.item-qty').value);
+
+                    if (!kat) {
+                        row.classList.add('is-invalid');
+                        row.querySelector('.combo-input').focus();
+                        return 'Silakan pilih kategori sampah pada setiap baris.';
+                    }
+
+                    if (!jml || jml <= 0) {
+                        row.classList.add('is-invalid');
+                        row.querySelector('.item-qty').focus();
+                        return 'Jumlah setiap jenis sampah harus lebih dari 0.';
+                    }
+
+                    if (dipakai.has(kat)) {
+                        row.classList.add('is-invalid');
+                        row.querySelector('.combo-input').focus();
+                        return 'Kategori yang sama dipilih lebih dari sekali. Gabungkan jumlahnya dalam satu baris.';
+                    }
+
+                    dipakai.add(kat);
+                }
+
+                return null;
+            }
+
+            if (addBtn) {
+                addBtn.addEventListener('click', function() {
+                    addRow({}, true);
+                });
+            }
+
+            return { setItems, getItems, validate, addRow };
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
         | BUKA MODAL VERIFIKASI
         |--------------------------------------------------------------------------
         */
         function bukaVerifikasi(item) {
             verifItem = item;
             const nama = item.warga?.nama || '-';
+            const bisaDiedit = item.status === 'pending';
 
             document.getElementById('verifAvatar').textContent = nama.trim().charAt(0).toUpperCase();
             document.getElementById('verifNama').textContent = nama;
             document.getElementById('verifNik').textContent = item.warga?.nik || '-';
             document.getElementById('verifKode').textContent = 'ID Transaksi: ' + (item.kode_transaksi || '-');
-            document.getElementById('verifJudul').textContent = item.status === 'pending' ? 'Verifikasi Setoran' : 'Detail Setoran';
+            document.getElementById('verifJudul').textContent = bisaDiedit ? 'Verifikasi Setoran' : 'Detail Setoran';
             document.getElementById('verifId').value = item.id;
 
-            const select = document.getElementById('verifKategori');
-            pilihKategori(select, item.id_kategori);
+            const statusEl = document.getElementById('verifStatus');
+            const statusMap = {
+                pending: ['Menunggu', 'status-badge--pending'],
+                approved: ['Disetujui', 'status-badge--approved'],
+                rejected: ['Ditolak', 'status-badge--rejected']
+            };
+            const [statusTeks, statusKelas] = statusMap[item.status] || statusMap.rejected;
+            statusEl.className = 'status-badge ' + statusKelas;
+            statusEl.textContent = statusTeks;
 
-            document.getElementById('verifBerat').value = item.jumlah ?? item.total_berat ?? 0;
-
-            const satuanItem = item.satuan || satuanDariSelect(select) || 'gram';
-            document.getElementById('verifSatuan').value = satuanItem;
             document.getElementById('verifAlasan').value = item.catatan_admin || '';
             document.getElementById('verifAlasanBlock').classList.remove('open');
 
@@ -2474,56 +2751,12 @@
                 fotoKosong.style.display = 'block';
             }
 
-            const bisaDiedit = item.status === 'pending';
-            select.disabled = !bisaDiedit;
-            syncCombo('verifKategori');
-            document.getElementById('verifBerat').disabled = !bisaDiedit;
+            verifEditor.setItems(item.items, bisaDiedit);
+
             document.getElementById('btnTolakSetoran').style.display = bisaDiedit ? 'inline-flex' : 'none';
             document.getElementById('btnSetujuiSetoran').style.display = bisaDiedit ? 'inline-flex' : 'none';
 
-            updateEstimasi();
             bukaModal('modalVerifikasi');
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE ESTIMASI VERIFIKASI
-        |--------------------------------------------------------------------------
-        */
-        function updateEstimasi() {
-            const select = document.getElementById('verifKategori');
-            const harga = hargaDariSelect(select);
-            const satuan = satuanDariSelect(select);
-            const jumlah = parseFloat(document.getElementById('verifBerat').value) || 0;
-
-            const hargaInfo = document.getElementById('verifHargaInfo');
-            const satuanInput = document.getElementById('verifSatuan');
-            const satuanInfo = document.getElementById('verifSatuanInfo');
-            const estimasi = document.getElementById('verifEstimasi');
-
-            satuanInput.value = satuan || '-';
-
-            const keteranganSatuan = {
-                gram: 'berat dalam gram',
-                kg: 'berat dalam kilogram',
-                pcs: 'jumlah barang',
-                liter: 'volume dalam liter',
-                set: 'jumlah set',
-                unit: 'jumlah unit'
-            };
-
-            satuanInfo.textContent = satuan && keteranganSatuan[satuan]
-                ? 'Jumlah berdasarkan ' + keteranganSatuan[satuan] + '.'
-                : 'Pilih kategori terlebih dahulu.';
-
-            if (harga > 0 && satuan) {
-                hargaInfo.textContent = 'Harga aktif: ' + formatHarga(harga, satuan === 'liter' ? 'L' : satuan);
-            } else {
-                hargaInfo.textContent = 'Kategori ini belum memiliki harga aktif.';
-            }
-
-            estimasi.textContent = formatRupiah(harga * jumlah);
         }
 
 
@@ -2535,17 +2768,14 @@
         function prosesVerifikasi(event) {
             event.preventDefault();
 
-            const id = document.getElementById('verifId').value;
-            const payload = {
-                id_kategori: document.getElementById('verifKategori').value,
-                jumlah: document.getElementById('verifBerat').value
-            };
-
-            if (!payload.id_kategori) {
-                showToast('Gagal memproses', 'Silakan pilih kategori sampah terlebih dahulu.', 'error');
-                document.getElementById('cariVerifKategori')?.focus();
+            const error = verifEditor.validate();
+            if (error) {
+                showToast('Gagal memproses', error, 'error');
                 return false;
             }
+
+            const id = document.getElementById('verifId').value;
+            const payload = { items: verifEditor.getItems() };
 
             fetch(`/admin/pages/verifikasi-setoran/${id}/setujui`, {
                 method: 'PATCH',
@@ -2584,38 +2814,15 @@
         function bukaTambahSetoran() {
             document.getElementById('formTambahSetoran').reset();
             resetCombo('tambahWarga', 'cariWarga', 'listWarga');
-            resetCombo('tambahKategori', 'cariKategori', 'listKategori');
 
-            document.getElementById('tambahSatuan').value = '-';
-            // Tanggal otomatis hari ini (waktu lokal) dan tidak bisa diubah
             const now = new Date();
             const today = now.getFullYear() + '-' +
                 String(now.getMonth() + 1).padStart(2, '0') + '-' +
                 String(now.getDate()).padStart(2, '0');
             document.getElementById('tambahTanggal').value = today;
 
-            updateEstimasiTambah();
+            tambahEditor.setItems([{}], true);
             bukaModal('modalTambah');
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE ESTIMASI TAMBAH
-        |--------------------------------------------------------------------------
-        */
-        function updateEstimasiTambah() {
-            const select = document.getElementById('tambahKategori');
-            const harga = hargaDariSelect(select);
-            const satuan = satuanDariSelect(select);
-            const jumlah = parseFloat(document.getElementById('tambahBerat').value) || 0;
-            const satuanInput = document.getElementById('tambahSatuan');
-
-            if (satuanInput) {
-                satuanInput.value = satuan || '-';
-            }
-
-            document.getElementById('tambahEstimasi').textContent = formatRupiah(harga * jumlah);
         }
 
 
@@ -2627,31 +2834,26 @@
         function simpanSetoranBaru(event) {
             event.preventDefault();
 
-            const payload = {
-                id_warga: document.getElementById('tambahWarga').value,
-                id_kategori: document.getElementById('tambahKategori').value,
-                jumlah: document.getElementById('tambahBerat').value,
-                tanggal_setoran: document.getElementById('tambahTanggal').value,
-                catatan_admin: document.getElementById('tambahCatatan')?.value || null
-            };
+            const idWarga = document.getElementById('tambahWarga').value;
 
-            if (!payload.id_warga) {
+            if (!idWarga) {
                 showToast('Gagal menyimpan', 'Silakan pilih warga terlebih dahulu.', 'error');
                 document.getElementById('cariWarga').focus();
                 return false;
             }
 
-            if (!payload.id_kategori) {
-                showToast('Gagal menyimpan', 'Silakan pilih kategori sampah terlebih dahulu.', 'error');
-                document.getElementById('cariKategori').focus();
+            const error = tambahEditor.validate();
+            if (error) {
+                showToast('Gagal menyimpan', error, 'error');
                 return false;
             }
 
-            if (!payload.jumlah || Number(payload.jumlah) <= 0) {
-                showToast('Gagal menyimpan', 'Jumlah setoran harus lebih dari 0.', 'error');
-                document.getElementById('tambahBerat').focus();
-                return false;
-            }
+            const payload = {
+                id_warga: idWarga,
+                tanggal_setoran: document.getElementById('tambahTanggal').value,
+                catatan_admin: document.getElementById('tambahCatatan')?.value || null,
+                items: tambahEditor.getItems().map(({ id_kategori, jumlah }) => ({ id_kategori, jumlah }))
+            };
 
             fetch(`/admin/pages/verifikasi-setoran`, {
                 method: 'POST',

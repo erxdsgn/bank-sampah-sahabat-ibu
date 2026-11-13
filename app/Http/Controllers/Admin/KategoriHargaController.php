@@ -70,6 +70,8 @@ class KategoriHargaController extends Controller
                     ]),
                 ],
 
+                // Validasi poin_per_satuan DIHAPUS dari sini
+
                 'harga_satuan' => [
                     'required',
                     'numeric',
@@ -91,6 +93,8 @@ class KategoriHargaController extends Controller
 
                 'satuan.in' =>
                     'Satuan harus salah satu dari: gram, kg, pcs, liter, unit, atau set.',
+
+                // Pesan error poin_per_satuan DIHAPUS dari sini
 
                 'harga_satuan.numeric' =>
                     'Harga hanya boleh berupa angka.',
@@ -120,6 +124,7 @@ class KategoriHargaController extends Controller
                 'id_induk'      => $data['id_induk'] ?? null,
                 'nama_kategori' => trim($data['nama_kategori']),
                 'satuan'        => $data['satuan'],
+                // poin_per_satuan DIHAPUS dari sini
             ]);
 
             HargaSampah::create([
@@ -182,6 +187,8 @@ class KategoriHargaController extends Controller
                         'set',
                     ]),
                 ],
+
+                // Validasi poin_per_satuan DIHAPUS dari sini
             ],
             [
                 'nama_kategori.regex' =>
@@ -192,6 +199,8 @@ class KategoriHargaController extends Controller
 
                 'satuan.in' =>
                     'Satuan harus salah satu dari: gram, kg, pcs, liter, unit, atau set.',
+
+                // Pesan error poin_per_satuan DIHAPUS dari sini
             ]
         );
 
@@ -246,6 +255,7 @@ class KategoriHargaController extends Controller
             'id_induk'      => $request->id_induk ?: null,
             'nama_kategori' => trim($request->nama_kategori),
             'satuan'        => $request->satuan,
+            // poin_per_satuan DIHAPUS dari sini
         ]);
 
         return response()->json([

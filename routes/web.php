@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\BarangKeluarController;
 use App\Http\Controllers\Admin\KategoriHargaController;
 use App\Http\Controllers\Admin\LaporanController;
 use App\Http\Controllers\Admin\ArtikelEdukasiController;
+use App\Http\Controllers\Admin\JadwalSetoranController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -49,9 +50,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/pages/pengaturan', [HomeController::class, 'pengaturan'])->name('pengaturan');
     Route::put('/pages/pengaturan/profil', [HomeController::class, 'updateProfil'])->name('pengaturan.profil.update');
 
-    // Data Warga
+    // Data Warga & Popup Leaderboard
     Route::prefix('pages/warga')->group(function () {
         Route::get('/', [WargaController::class, 'index'])->name('warga');
+        Route::get('/leaderboard-popup', [WargaController::class, 'leaderboardPopup'])->name('warga.leaderboard-popup');
         Route::post('/', [WargaController::class, 'store'])->name('warga.store');
         Route::get('/{id}', [WargaController::class, 'show'])->name('warga.show');
         Route::get('/{id}/edit', [WargaController::class, 'edit'])->name('warga.edit');
@@ -67,7 +69,15 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::patch('/{setoran}/tolak', [VerifikasiSetoranController::class, 'tolak'])->name('tolak');
     });
 
-    // Laporan & Riwayat (TAMBAHKAN DI SINI)
+    // Penjadwalan Setoran Sampah
+    Route::prefix('pages/penjadwalan-setoran')->name('penjadwalan-setoran.')->group(function () {
+        Route::get('/', [JadwalSetoranController::class, 'index'])->name('index');
+        Route::post('/', [JadwalSetoranController::class, 'store'])->name('store');
+        Route::put('/{id}', [JadwalSetoranController::class, 'update'])->name('update');
+        Route::delete('/{id}', [JadwalSetoranController::class, 'destroy'])->name('destroy');
+    });
+
+    // Laporan & Riwayat
     Route::prefix('pages/laporan')->name('laporan.')->group(function () {
         Route::get('/', [LaporanController::class, 'index'])->name('index');
     });
@@ -112,12 +122,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::delete('/{id}', [DeviceManagementController::class, 'logoutDevice'])->name('logout');
     });
 
-        Route::prefix('pages/artikel')->name('artikel.')->group(function () {
-            Route::get('/', [ArtikelEdukasiController::class,'index'])->name('index');
-            Route::post('/', [ArtikelEdukasiController::class,'store'])->name('store');
-            Route::put('/{id}', [ArtikelEdukasiController::class,'update'])->name('update');
-            Route::delete('/{id}', [ArtikelEdukasiController::class,'destroy'])->name('destroy');
-        });
+    // Artikel & Edukasi (Fitur Auto-Fetch / fetch-url sudah dihapus)
+    Route::prefix('pages/artikel')->name('artikel.')->group(function () {
+        Route::get('/', [ArtikelEdukasiController::class,'index'])->name('index');
+        Route::post('/', [ArtikelEdukasiController::class,'store'])->name('store');
+        Route::put('/{id}', [ArtikelEdukasiController::class,'update'])->name('update');
+        Route::delete('/{id}', [ArtikelEdukasiController::class,'destroy'])->name('destroy');
+    });
 
     // Kategori & Harga Sampah
     Route::prefix('pages/kategori-harga')->name('kategori-harga.')->group(function () {

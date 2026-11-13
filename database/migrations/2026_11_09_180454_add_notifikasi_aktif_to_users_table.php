@@ -1,0 +1,25 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up()
+    {
+        Schema::table('users', function (Blueprint $table) {
+            // Menambahkan kolom notifikasi_aktif, default true (1)
+            if (!Schema::hasColumn('users', 'notifikasi_aktif')) {
+                $table->boolean('notifikasi_aktif')->default(true)->after('avatar');
+            }
+        });
+    }
+
+    public function down()
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('notifikasi_aktif');
+        });
+    }
+};

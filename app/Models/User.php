@@ -18,7 +18,10 @@ class User extends Authenticatable
         'username',
         'email',
         'password',
-        'role', // 'admin' atau 'warga'
+        'role',
+        'avatar',
+        'fcm_token',
+        'notifikasi_aktif',
     ];
 
     protected $hidden = [

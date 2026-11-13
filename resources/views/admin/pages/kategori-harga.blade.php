@@ -367,12 +367,12 @@
                     <input type="hidden" id="kategoriId">
                     <div class="form-grid">
                         <div class="form-group form-group--full">
-                            <label for="cari_id_induk">Kategori Induk (opsional)</label>
+                            {{-- <label for="cari_id_induk">Kategori Induk (opsional)</label>
                             <div class="combo" id="combo_id_induk">
                                 <input type="text" id="cari_id_induk" class="combo-input"
                                     placeholder="Pilih / ketik kategori induk..." autocomplete="off">
                                 <div class="combo-list" id="list_id_induk"></div>
-                            </div>
+                            </div> --}}
                             <select id="id_induk" class="combo-hidden" tabindex="-1" aria-hidden="true">
                                 <option value="">— Tidak ada (kategori utama) —</option>
                                 @foreach ($kategoriInduk as $induk)

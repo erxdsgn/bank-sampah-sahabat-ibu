@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Warga;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -50,16 +52,13 @@ class AuthController extends Controller
 
         try {
             $result = DB::transaction(function () use ($request) {
-                // 1. Generasi username unik berbasis Nama + 4 angka acak
                 $baseUsername = Str::slug($request->nama, '_');
                 $username = $baseUsername . '_' . rand(1000, 9999);
 
-                // Perulangan untuk menjamin tidak ada duplikasi username
                 while (User::where('username', $username)->exists()) {
                     $username = $baseUsername . '_' . rand(1000, 9999);
                 }
 
-                // 2. Buat akun di tabel users
                 $user = User::create([
                     'username' => $username,
                     'email'    => $request->email,
@@ -67,10 +66,8 @@ class AuthController extends Controller
                     'role'     => 'warga',
                 ]);
 
-                // 3. Generate ID Warga kustom
                 $idWarga = 'WRG' . date('Ymd') . rand(1000, 9999);
 
-                // 4. Buat profil lengkap di tabel warga
                 $warga = Warga::create([
                     'id_warga'                => $idWarga,
                     'id_user'                 => $user->id,
@@ -82,22 +79,25 @@ class AuthController extends Controller
                     'nomor_rekening'          => $request->nomor_rekening,
                     'nama_pemilik_rekening'   => $request->nama_pemilik_rekening,
                     'alamat'                  => $request->alamat,
+                    'kelompok'                => null,
+                    'kelompok_updated_at'     => null,
                     'saldo'                   => 0,
                     'tanggal_daftar'          => now(),
                     'status_rekening'         => 'unverified',
                 ]);
 
-                // 5. Buat token Sanctum untuk login langsung dari mobile
                 $token = $user->createToken('flutter_auth_token')->plainTextToken;
 
                 return [
                     'token' => $token,
                     'user'  => [
-                        'id'       => $user->id,
-                        'username' => $user->username,
-                        'email'    => $user->email,
-                        'role'     => 'warga',
-                        'profil'   => $warga,
+                        'id'               => $user->id,
+                        'username'         => $user->username,
+                        'email'            => $user->email,
+                        'avatar_url'       => null,
+                        'notifikasi_aktif' => true, // Default notif aktif
+                        'role'             => 'warga',
+                        'profil'           => $warga,
                     ],
                 ];
             });
@@ -117,16 +117,32 @@ class AuthController extends Controller
     }
 
     /**
-     * API Edit Profil & Mengubah Username
+     * API Edit Profil, Username & Pemilihan/Perubahan Kelompok (Jeda 30 Hari)
      */
     public function updateProfile(Request $request)
     {
         /** @var User $user */
         $user = $request->user();
+        $warga = $user->warga;
+
+        if ($request->filled('kelompok') && $warga->kelompok !== null && $warga->kelompok !== $request->kelompok) {
+            if ($warga->kelompok_updated_at) {
+                $lastUpdated = Carbon::parse($warga->kelompok_updated_at);
+                $nextAllowedDate = $lastUpdated->copy()->addDays(30);
+
+                if (Carbon::now()->lt($nextAllowedDate)) {
+                    return response()->json([
+                        'status'  => 'error',
+                        'message' => 'Kelompok hanya dapat diubah 1 kali sebulan. Anda dapat mengubahnya kembali pada ' . $nextAllowedDate->translatedFormat('d F Y') . '.',
+                    ], 422);
+                }
+            }
+        }
 
         $validator = Validator::make($request->all(), [
             'username'                => 'required|string|max:50|unique:users,username,' . $user->id,
             'nama'                    => 'required|string|max:100',
+            'kelompok'                => 'nullable|string|max:50',
             'no_hp'                   => 'nullable|string|max:20',
             'jumlah_anggota_keluarga' => 'nullable|integer|min:1',
             'nama_bank_ewallet'       => 'nullable|string|max:50',
@@ -147,12 +163,12 @@ class AuthController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($user, $request) {
+            DB::transaction(function () use ($user, $warga, $request) {
                 $user->update([
                     'username' => $request->username,
                 ]);
 
-                $user->warga()->update([
+                $dataWarga = [
                     'nama'                    => $request->nama,
                     'no_hp'                   => $request->no_hp,
                     'jumlah_anggota_keluarga' => $request->jumlah_anggota_keluarga,
@@ -160,18 +176,27 @@ class AuthController extends Controller
                     'nomor_rekening'          => $request->nomor_rekening,
                     'nama_pemilik_rekening'   => $request->nama_pemilik_rekening,
                     'alamat'                  => $request->alamat,
-                ]);
+                ];
+
+                if ($request->filled('kelompok') && $request->kelompok !== $warga->kelompok) {
+                    $dataWarga['kelompok'] = $request->kelompok;
+                    $dataWarga['kelompok_updated_at'] = now();
+                }
+
+                $warga->update($dataWarga);
             });
 
             return response()->json([
                 'status'  => 'success',
                 'message' => 'Profil berhasil diperbarui.',
                 'data'    => [
-                    'id'       => $user->id,
-                    'username' => $user->username,
-                    'email'    => $user->email,
-                    'role'     => 'warga',
-                    'profil'   => $user->warga()->first(),
+                    'id'               => $user->id,
+                    'username'         => $user->username,
+                    'email'            => $user->email,
+                    'avatar_url'       => $user->avatar ? asset('storage/' . $user->avatar) : null,
+                    'notifikasi_aktif' => $user->notifikasi_aktif ?? true,
+                    'role'             => 'warga',
+                    'profil'           => $user->warga()->first(),
                 ],
             ], 200);
 
@@ -181,6 +206,117 @@ class AuthController extends Controller
                 'message' => 'Gagal memperbarui profil: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * API Ubah Password Warga
+     */
+    public function changePassword(Request $request)
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required|string',
+            'new_password'     => 'required|string|min:8|confirmed',
+        ], [
+            'current_password.required' => 'Password saat ini wajib diisi.',
+            'new_password.required'     => 'Password baru wajib diisi.',
+            'new_password.min'          => 'Password baru minimal 8 karakter.',
+            'new_password.confirmed'    => 'Konfirmasi password baru tidak cocok.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Password saat ini salah.',
+            ], 400);
+        }
+
+        try {
+            $user->update([
+                'password' => Hash::make($request->new_password),
+            ]);
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Password berhasil diperbarui.',
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Gagal memperbarui password: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * API Upload / Ubah Foto Profil Warga
+     */
+    public function updateAvatar(Request $request)
+    {
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        $user = $request->user();
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar && Storage::exists('public/' . $user->avatar)) {
+                Storage::delete('public/' . $user->avatar);
+            }
+
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->update(['avatar' => $path]);
+
+            return response()->json([
+                'status'     => 'success',
+                'message'    => 'Foto profil berhasil diubah',
+                'avatar_url' => asset('storage/' . $path)
+            ], 200);
+        }
+
+        return response()->json(['status' => 'error', 'message' => 'File tidak ditemukan'], 400);
+    }
+
+    /**
+     * API Simpan FCM Token (Untuk Notifikasi)
+     */
+    public function updateFcmToken(Request $request)
+    {
+        $request->validate(['fcm_token' => 'required|string']);
+
+        $user = $request->user();
+        $user->update(['fcm_token' => $request->fcm_token]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Token notifikasi berhasil disimpan'
+        ], 200);
+    }
+
+    /**
+     * API Toggle Preferensi Notifikasi
+     */
+    public function updateNotifikasi(Request $request)
+    {
+        $request->validate(['notifikasi_aktif' => 'required|boolean']);
+
+        $user = $request->user();
+        $user->update(['notifikasi_aktif' => $request->notifikasi_aktif]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Pengaturan notifikasi diperbarui',
+        ], 200);
     }
 
     /**
@@ -230,11 +366,13 @@ class AuthController extends Controller
             'data'    => [
                 'token' => $token,
                 'user'  => [
-                    'id'       => $user->id,
-                    'username' => $user->username,
-                    'email'    => $user->email,
-                    'role'     => 'warga',
-                    'profil'   => $user->warga,
+                    'id'               => $user->id,
+                    'username'         => $user->username,
+                    'email'            => $user->email,
+                    'avatar_url'       => $user->avatar ? asset('storage/' . $user->avatar) : null,
+                    'notifikasi_aktif' => $user->notifikasi_aktif ?? true,
+                    'role'             => 'warga',
+                    'profil'           => $user->warga,
                 ],
             ],
         ], 200);
@@ -258,11 +396,13 @@ class AuthController extends Controller
         return response()->json([
             'status' => 'success',
             'data'   => [
-                'id'       => $user->id,
-                'username' => $user->username,
-                'email'    => $user->email,
-                'role'     => 'warga',
-                'profil'   => $user->warga,
+                'id'               => $user->id,
+                'username'         => $user->username,
+                'email'            => $user->email,
+                'avatar_url'       => $user->avatar ? asset('storage/' . $user->avatar) : null,
+                'notifikasi_aktif' => $user->notifikasi_aktif ?? true,
+                'role'             => 'warga',
+                'profil'           => $user->warga,
             ],
         ], 200);
     }

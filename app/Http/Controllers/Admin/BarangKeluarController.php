@@ -74,7 +74,6 @@ class BarangKeluarController extends Controller
         $validated = $request->validate([
             'pembeli'           => 'required|string|regex:/^[a-zA-Z\s]+$/|max:50',
             'id_kategori'       => 'required|exists:kategori_sampah,id_kategori',
-            'tanggal_transaksi' => 'required|date',
             'kuantitas'         => 'required|numeric|min:1',
             'harga_satuan'      => 'required|numeric|min:1',
         ], [
@@ -112,7 +111,7 @@ class BarangKeluarController extends Controller
 
         $dataInsert = [
             'id_kategori'         => $validated['id_kategori'],
-            'tanggal'             => $validated['tanggal_transaksi'],
+            'tanggal'             => now()->toDateString(), // Tanggal otomatis hari ini, tidak bisa diatur dari form
             'berat_gram'          => $kuantitasSimpan, // Kolom database tetap menggunakan 'berat_gram' sebagai representatif nilai simpan sistem
             'harga_jual_per_gram' => $hargaJualSimpan,  // Representatif harga per unit sistem
             'total'               => $totalHarga,
@@ -160,7 +159,6 @@ class BarangKeluarController extends Controller
     {
         $validated = $request->validate([
             'id_kategori'         => 'required|exists:kategori_sampah,id_kategori',
-            'tanggal'             => 'required|date',
             'berat_gram'          => 'required|numeric|min:1',
             'harga_jual_per_gram' => 'required|numeric|min:1',
             'pembeli'             => 'required|string|regex:/^[a-zA-Z\s]+$/|max:50',
@@ -197,7 +195,6 @@ class BarangKeluarController extends Controller
 
         $updateData = [
             'id_kategori'         => $validated['id_kategori'],
-            'tanggal'             => $validated['tanggal'],
             'berat_gram'          => $kuantitasSimpan,
             'harga_jual_per_gram' => $hargaSatuanSimpan,
             'total'               => $totalHarga,

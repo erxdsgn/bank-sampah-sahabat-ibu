@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Warga;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str; // Ditambahkan untuk penanganan nama ke username
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class WargaController extends Controller
 {
@@ -18,6 +18,47 @@ class WargaController extends Controller
         $warga = Warga::orderBy('created_at', 'desc')->get();
         return view('admin.pages.warga', compact('warga'));
     }
+
+    // === LEADERBOARD POPUP (RESET OTOMATIS SETIAP 3 BULAN / TRIWULAN) ===
+    public function leaderboardPopup(Request $request)
+    {
+        $sekarang = Carbon::now();
+        $periode = $request->query('periode', 'season_ini');
+
+        $query = Warga::select(
+            'warga.id_warga',
+            'warga.nama'
+        )
+            ->join('penyetoran', 'warga.id_warga', '=', 'penyetoran.id_warga')
+            ->join('detail_setoran', 'penyetoran.id_setoran', '=', 'detail_setoran.id_setoran')
+            ->where('penyetoran.status', 'approved');
+
+        // Filter berdasarkan periode
+        if ($periode === 'season_ini') {
+            $query->whereRaw(
+                'QUARTER(penyetoran.tanggal_setoran) = ?',
+                [$sekarang->quarter]
+            )->whereYear(
+                'penyetoran.tanggal_setoran',
+                $sekarang->year
+            );
+        }
+
+        $leaderboard = $query
+            ->selectRaw('SUM(detail_setoran.poin) as total_poin')
+            ->groupBy('warga.id_warga', 'warga.nama')
+            ->orderByDesc('total_poin')
+            ->take(10)
+            ->get();
+
+        return response()->json([
+            'html' => view(
+                'admin.partials.leaderboard-modal-content',
+                compact('leaderboard', 'periode')
+            )->render()
+        ]);
+    }
+    // =========================================
 
     public function create()
     {
@@ -39,6 +80,7 @@ class WargaController extends Controller
             'no_hp' => 'required|string|min:10|max:15|regex:/^[0-9]+$/',
             'jumlah_anggota_keluarga' => 'required|integer|min:1|max:15',
             'alamat' => 'required|string',
+            'kelompok' => 'required|in:A,B',
             'nama_bank_ewallet' => 'required|string|min:5|max:50|regex:/^[a-zA-Z\s\.\-]+$/',
             'nomor_rekening' => 'required|string|max:30|regex:/^[0-9]+$/',
             'nama_pemilik_rekening' => 'required|string|max:50|regex:/^[a-zA-Z\s\.\'\-]+$/',
@@ -49,6 +91,8 @@ class WargaController extends Controller
             'email.unique' => 'Email sudah terdaftar.',
             'no_hp.regex' => 'Nomor HP hanya boleh berisi angka.',
             'no_hp.max' => 'Nomor HP maksimal 15 digit.',
+            'kelompok.required' => 'Kelompok warga wajib dipilih.',
+            'kelompok.in' => 'Pilihan kelompok tidak valid.',
             'jumlah_anggota_keluarga.max' => 'Jumlah anggota keluarga maksimal 15 orang.',
             'nama_bank_ewallet.max' => 'Nama bank/e-wallet maksimal 50 karakter.',
             'nama_bank_ewallet.regex' => 'Nama bank/e-wallet tidak valid.',
@@ -56,35 +100,27 @@ class WargaController extends Controller
             'nama_pemilik_rekening.regex' => 'Nama pemilik rekening tidak valid.',
         ]);
 
-        // Menggunakan transaksi database untuk menjamin integritas data
         $warga = DB::transaction(function () use ($validated, $request) {
-            // 1. Generasi username unik berdasarkan Nama + 4 Angka Acak
             $baseUsername = Str::slug($validated['nama'], '_');
             $username = $baseUsername . '_' . rand(1000, 9999);
 
-            // Cek pencegahan duplikasi username
             while (User::where('username', $username)->exists()) {
                 $username = $baseUsername . '_' . rand(1000, 9999);
             }
 
-            // 2. Email otomatis jika tidak diisi admin
             $email = $request->filled('email')
                 ? $request->email
                 : $username . '@banksampah.id';
 
-            // 3. Buat akun User login pusat
             $user = User::create([
                 'username' => $username,
                 'email'    => $email,
-                'password' => Hash::make('password123'), // Password default
+                'password' => Hash::make('password123'),
                 'role'     => 'warga',
             ]);
 
-            // 4. Generate ID Warga kustom (contoh: BSSI001)
-            $nextNumber = Warga::count() + 1;
-            $idWarga = 'BSSI' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            $idWarga = 'WRG' . date('Ymd') . rand(1000, 9999);
 
-            // 5. Simpan data Profil Warga dengan menyertakan id_user dan id_warga
             return Warga::create([
                 'id_warga'                => $idWarga,
                 'id_user'                 => $user->id,
@@ -93,6 +129,7 @@ class WargaController extends Controller
                 'no_hp'                   => $validated['no_hp'] ?? null,
                 'jumlah_anggota_keluarga' => $validated['jumlah_anggota_keluarga'] ?? 1,
                 'alamat'                  => $validated['alamat'],
+                'kelompok'                => $validated['kelompok'],
                 'saldo'                   => 0,
                 'tanggal_daftar'          => now(),
                 'nama_bank_ewallet'       => $validated['nama_bank_ewallet'] ?? null,
@@ -129,43 +166,21 @@ class WargaController extends Controller
         $warga = Warga::findOrFail($id);
 
         $validated = $request->validate([
-            'nik' => [
-                'required',
-                'string',
-                'digits:16',
-                Rule::unique('warga', 'nik')->ignore($id, 'id_warga'),
-            ],
-            'nama' => 'required|string|max:50|regex:/^[a-zA-Z\s\.\'\-]+$/',
-            'no_hp' => 'required|string|min:10|max:15|regex:/^[0-9]+$/',
-            'alamat' => 'required|string',
-            'jumlah_anggota_keluarga' => 'required|integer|min:0|max:15',
-            'saldo' => 'required|numeric|min:0',
-            'tanggal_daftar' => 'required|date',
-            'nama_bank_ewallet' => 'required|string|min:5|max:50|regex:/^[a-zA-Z\s\.\-]+$/',
-            'nomor_rekening' => 'required|string|max:30|regex:/^[0-9]+$/',
-            'nama_pemilik_rekening' => 'required|string|max:50|regex:/^[a-zA-Z\s\.\'\-]+$/',
             'status_rekening' => 'required|in:verified,unverified',
+        ], [
+            'status_rekening.required' => 'Status rekening wajib dipilih.',
+            'status_rekening.in' => 'Status rekening tidak valid.',
         ]);
 
         $warga->update([
-            'nik' => $validated['nik'],
-            'nama' => $validated['nama'],
-            'no_hp' => $validated['no_hp'] ?? null,
-            'alamat' => $validated['alamat'] ?? null,
-            'jumlah_anggota_keluarga' => $validated['jumlah_anggota_keluarga'] ?? 0,
-            'saldo' => $validated['saldo'] ?? $warga->saldo,
-            'tanggal_daftar' => $validated['tanggal_daftar'] ?? $warga->tanggal_daftar,
-            'nama_bank_ewallet' => $validated['nama_bank_ewallet'] ?? null,
-            'nomor_rekening' => $validated['nomor_rekening'] ?? null,
-            'nama_pemilik_rekening' => $validated['nama_pemilik_rekening'] ?? null,
-            'status_rekening' => $validated['status_rekening'] ?? $warga->status_rekening,
+            'status_rekening' => $validated['status_rekening'],
         ]);
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'data' => $warga]);
         }
 
-        return redirect()->route('admin.warga')->with('success', 'Data warga berhasil diperbarui.');
+        return redirect()->route('admin.warga')->with('success', 'Status rekening berhasil diperbarui.');
     }
 
     public function destroy(Request $request, $id)
@@ -173,10 +188,8 @@ class WargaController extends Controller
         $warga = Warga::findOrFail($id);
 
         DB::transaction(function () use ($warga) {
-            // Hapus profil warga
             $warga->delete();
 
-            // Hapus akun user terkait jika ada
             if ($warga->user) {
                 $warga->user->delete();
             }

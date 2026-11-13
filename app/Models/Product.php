@@ -10,7 +10,7 @@ class Product extends Model
 
     protected $primaryKey = 'id_produk';
 
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $guarded = [];
 }

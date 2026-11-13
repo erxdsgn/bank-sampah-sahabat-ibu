@@ -17,8 +17,8 @@ class Warga extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'id_warga', // Tambahkan primary key kustom
-        'id_user',  // FK ke tabel users
+        'id_warga',
+        'id_user',
         'nik',
         'nama',
         'no_hp',
@@ -30,12 +30,15 @@ class Warga extends Model
         'nomor_rekening',
         'nama_pemilik_rekening',
         'status_rekening',
+        'kelompok',
+        'kelompok_updated_at',
     ];
 
     protected $casts = [
         'saldo' => 'decimal:2',
         'tanggal_daftar' => 'datetime',
         'jumlah_anggota_keluarga' => 'integer',
+        'kelompok_updated_at' => 'datetime',
     ];
 
     /**

@@ -6,7 +6,7 @@
 
 export const navigation = [
     {
-        label: "Utama",
+        label: "UTAMA",
         items: [
             {
                 key: "dashboard",
@@ -18,26 +18,32 @@ export const navigation = [
     },
 
     {
-        label: "Master Data",
+        label: "MASTER DATA",
         items: [
-            {
-                key: "kategori-harga",
-                text: "Kategori & Harga Sampah",
-                href: "/admin/pages/kategori-harga",
-                icon: '<path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"/><path d="M16 3h5v5"/><path d="m21 3-9 9"/><path d="M8 8h3M8 12h3M8 16h8"/>',
-            },
             {
                 key: "warga",
                 text: "Data Warga",
                 href: "/admin/pages/warga",
                 icon: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
             },
+            {
+                key: "kategori-harga",
+                text: "Kategori & Harga Sampah",
+                href: "/admin/pages/kategori-harga",
+                icon: '<path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"/><path d="M16 3h5v5"/><path d="m21 3-9 9"/><path d="M8 8h3M8 12h3M8 16h8"/>',
+            },
         ],
     },
 
     {
-        label: "Transaksi Sampah",
+        label: "TRANSAKSI SAMPAH",
         items: [
+            {
+                key: "penjadwalan-setoran",
+                text: "Jadwal Setoran",
+                href: "/admin/pages/penjadwalan-setoran",
+                icon: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+            },
             {
                 key: "verifikasi-setoran",
                 text: "Verifikasi Data Setoran",
@@ -60,25 +66,25 @@ export const navigation = [
     },
 
     {
-        label: "Keuangan & Produk",
+        label: "PRODUK & KEUANGAN",
         items: [
             {
-                key: "keuangan",
-                text: "Keuangan",
-                href: "/admin/pages/keuangan",
-                icon: '<path d="M3 10h18v10H3z"/><path d="M5 10V7l7-4 7 4v3"/><path d="M7 14h.01M12 14h.01M17 14h.01"/>',
-            },
-            {
                 key: "katalog",
-                text: "Katalog Barang",
+                text: "Katalog Barang Daur Ulang",
                 href: "/admin/pages/katalog",
                 icon: '<path d="M6 2h9l5 5v15H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/>',
+            },
+            {
+                key: "keuangan",
+                text: "Keuangan Kas",
+                href: "/admin/pages/keuangan",
+                icon: '<path d="M3 10h18v10H3z"/><path d="M5 10V7l7-4 7 4v3"/><path d="M7 14h.01M12 14h.01M17 14h.01"/>',
             },
         ],
     },
 
     {
-        label: "Konten & Laporan",
+        label: "KONTEN & LAPORAN",
         items: [
             {
                 key: "artikel",
@@ -96,11 +102,11 @@ export const navigation = [
     },
 
     {
-        label: "Akun",
+        label: "PENGATURAN",
         items: [
             {
                 key: "pengaturan",
-                text: "Pengaturan",
+                text: "Pengaturan Sistem",
                 href: "/admin/pages/pengaturan",
                 icon: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.4 1.4-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-2v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L9 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H7v-2h.8a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L9 9l1.4-1.4.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 9l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v2H21a1.7 1.7 0 0 0-1.6 1z"/>',
             },

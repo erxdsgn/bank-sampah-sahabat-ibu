@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Setoran extends Model
 {
@@ -48,16 +49,15 @@ class Setoran extends Model
      */
     public static function generateKodeTransaksi(): string
     {
-        $prefix = 'BS-' . now()->format('Ymd') . '-';
+        $prefix = 'BS-' . date('Ymd') . '-';
 
-        $terakhir = self::where('kode_transaksi', 'like', $prefix . '%')
-            ->lockForUpdate()
-            ->orderBy('kode_transaksi', 'desc')
-            ->value('kode_transaksi');
+        do {
+            // Generate 4 karakter acak alfanumerik (misal: A8F2, 9X1Z)
+            $kodeAcak = strtoupper(Str::random(4));
+            $kodeTransaksi = $prefix . $kodeAcak;
+        } while (self::where('kode_transaksi', $kodeTransaksi)->exists());
 
-        $urutan = $terakhir ? ((int) substr($terakhir, -4)) + 1 : 1;
-
-        return $prefix . str_pad($urutan, 4, '0', STR_PAD_LEFT);
+        return $kodeTransaksi;
     }
 
     /**
@@ -110,7 +110,7 @@ class Setoran extends Model
         }
 
         return (float)
-            $detail->jumlah_aktual;
+        $detail->jumlah_aktual;
     }
 
     /**
