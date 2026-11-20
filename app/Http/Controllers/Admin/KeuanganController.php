@@ -48,6 +48,40 @@ class KeuanganController extends Controller
     public function store(Request $request)
     {
         $data = $this->validasi($request);
+
+        // --- TAMBAHAN VALIDASI SALDO ---
+        if (strtolower($data['jenis']) === 'pengeluaran') {
+            $transaksi = RingkasanKeuangan::transaksi();
+
+            $totalPemasukan = (float) $transaksi->filter(function ($item) {
+                $jenis = is_array($item) ? ($item['jenis'] ?? '') : ($item->jenis ?? '');
+                return strtolower($jenis) === 'pemasukan';
+            })->sum('jumlah');
+
+            $totalPengeluaran = (float) $transaksi->filter(function ($item) {
+                $jenis = is_array($item) ? ($item['jenis'] ?? '') : ($item->jenis ?? '');
+                return strtolower($jenis) === 'pengeluaran';
+            })->sum('jumlah');
+
+            $saldoKas = $totalPemasukan - $totalPengeluaran;
+
+            if ($data['jumlah'] > $saldoKas) {
+                $pesan = 'Transaksi gagal. Saldo kas tidak mencukupi. Sisa saldo saat ini: Rp ' . number_format($saldoKas, 0, ',', '.');
+
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => $pesan
+                    ], 422);
+                }
+
+                return redirect()
+                    ->route('admin.keuangan.index')
+                    ->with('error', $pesan);
+            }
+        }
+        // --- AKHIR TAMBAHAN VALIDASI ---
+
         $data['id_admin'] = Auth::id() ?? 1;
 
         $transaksi = Keuangan::create($data);

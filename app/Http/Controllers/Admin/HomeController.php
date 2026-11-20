@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admin;
-use App\Models\User;
 use App\Models\Warga;
 use App\Support\RingkasanKeuangan;
 use Carbon\Carbon;
@@ -19,17 +17,12 @@ use Jenssegers\Agent\Agent;
 
 class HomeController extends Controller
 {
-    /**
-     * kg & gram digabung menjadi satu grup "kg".
-     */
     private function grupSatuan(?string $satuan): string
     {
         $satuan = strtolower(trim((string) $satuan));
-
         if ($satuan === 'gram') {
             return 'kg';
         }
-
         return $satuan !== '' ? $satuan : 'lainnya';
     }
 
@@ -44,10 +37,6 @@ class HomeController extends Controller
         ][$grup] ?? ucfirst($grup);
     }
 
-    /**
-     * Nilai mentah (kolom berat_gram) -> nilai tampil.
-     * Berat: gram -> Kg. Satuan lain: apa adanya.
-     */
     private function konversi(float $nilai, string $grup): float
     {
         return $grup === 'kg' ? $nilai / 1000 : $nilai;
@@ -56,66 +45,181 @@ class HomeController extends Controller
     private function formatJumlah(float $nilai, string $grup): string
     {
         $tampil = $this->konversi($nilai, $grup);
-
         $angka = $grup === 'kg'
             ? number_format($tampil, 2, ',', '.')
             : rtrim(rtrim(number_format($tampil, 2, ',', '.'), '0'), ',');
-
         return $angka . ' ' . $this->labelSatuan($grup);
     }
 
-    /**
-     * Dashboard Admin
-     */
-    public function index(): View
+    private function hitungSaldoKas(): float
     {
-        // Saldo Kas — sumber sama dengan halaman Keuangan
         $transaksiKeuangan = RingkasanKeuangan::transaksi();
-
         $totalPemasukan   = (float) $transaksiKeuangan->where('jenis', 'Pemasukan')->sum('jumlah');
         $totalPengeluaran = (float) $transaksiKeuangan->where('jenis', 'Pengeluaran')->sum('jumlah');
-        $saldoKas         = $totalPemasukan - $totalPengeluaran;
+        return $totalPemasukan - $totalPengeluaran;
+    }
 
-        // Stat ringkasan
-        $jumlahWarga            = DB::table('warga')->count();
-        $jumlahSetoran          = DB::table('penyetoran')->count();
-        $totalSaldoWarga        = DB::table('warga')->sum('saldo');
-        $totalPencairanSaldo    = DB::table('pencairan_saldo')->sum('jumlah');
-        $totalPenjualanPengepul = DB::table('barang_keluar')->sum('total');
-        $jumlahKategoriSampah   = DB::table('kategori_sampah')->count();
+    private function hitungStats(): array
+    {
+        return [
+            'jumlahWarga'            => (int) DB::table('warga')->count(),
+            'jumlahSetoran'          => (int) DB::table('penyetoran')->count(),
+            'totalSaldoWarga'        => (float) DB::table('warga')->sum('saldo'),
+            'totalPencairanSaldo'    => (float) DB::table('pencairan_saldo')->sum('jumlah'),
+            'totalPenjualanPengepul' => (float) DB::table('barang_keluar')->sum('total'),
+            'jumlahKategoriSampah'   => (int) DB::table('kategori_sampah')->count(),
+        ];
+    }
 
-        // Urutkan grup satuan: kg dulu, sisanya alfabetis
-        $urutGrup = fn($rows, $grup) => $grup === 'kg' ? '0' : $grup;
-
-        // ---------------------------------------------------------
-        // Total sampah disetor, per satuan
-        // ---------------------------------------------------------
-        $totalPerGrup = DB::table('detail_setoran')
+    private function hitungTotalPerGrup(): array
+    {
+        $grouped = DB::table('detail_setoran')
             ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
             ->select('kategori_sampah.satuan', DB::raw('SUM(detail_setoran.berat_gram) as total'))
             ->groupBy('kategori_sampah.satuan')
             ->get()
             ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
-            ->sortBy($urutGrup);
+            ->sortBy(fn($rows, $grup) => $grup === 'kg' ? '0' : $grup);
+
+        $result = [];
+        foreach ($grouped as $grup => $rows) {
+            $result[(string) $grup] = collect($rows)
+                ->map(fn($r) => [
+                    'satuan' => isset($r->satuan) ? (string) $r->satuan : null,
+                    'total'  => (float) ($r->total ?? 0),
+                ])
+                ->values()
+                ->all();
+        }
+
+        return $result;
+    }
+
+    private function hitungSetoranPerBulan(): array
+    {
+        $rowsAll = DB::table('detail_setoran')
+            ->join('penyetoran', 'detail_setoran.id_setoran', '=', 'penyetoran.id_setoran')
+            ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
+            ->whereYear('penyetoran.tanggal_setoran', now()->year)
+            ->select(
+                'kategori_sampah.satuan',
+                DB::raw('MONTH(penyetoran.tanggal_setoran) as bulan'),
+                DB::raw('SUM(detail_setoran.berat_gram) as total')
+            )
+            ->groupBy('kategori_sampah.satuan', DB::raw('MONTH(penyetoran.tanggal_setoran)'))
+            ->get()
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan));
+
+        $result = [];
+        foreach ($rowsAll as $grup => $rows) {
+            $grupKey = (string) $grup;
+            $perBulan = [];
+            foreach (collect($rows)->groupBy('bulan') as $bulan => $items) {
+                $perBulan[] = [
+                    'bulan' => (int) $bulan,
+                    'total' => $this->konversi((float) collect($items)->sum('total'), $grupKey),
+                ];
+            }
+            $result[$grupKey] = $perBulan;
+        }
+
+        return $result;
+    }
+
+    private function hitungStatistikJenisSampah(): array
+    {
+        $rowsAll = DB::table('detail_setoran')
+            ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
+            ->select(
+                'kategori_sampah.id_kategori',
+                'kategori_sampah.nama_kategori',
+                'kategori_sampah.satuan',
+                DB::raw('SUM(detail_setoran.berat_gram) as total')
+            )
+            ->groupBy(
+                'kategori_sampah.id_kategori',
+                'kategori_sampah.nama_kategori',
+                'kategori_sampah.satuan'
+            )
+            ->get()
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan));
+
+        $result = [];
+        foreach ($rowsAll as $grup => $rows) {
+            $grupKey = (string) $grup;
+            $items = collect($rows)
+                ->map(fn($r) => [
+                    'nama'  => (string) ($r->nama_kategori ?? 'Tanpa nama'),
+                    'total' => $this->konversi((float) ($r->total ?? 0), $grupKey),
+                ])
+                ->sortByDesc('total')
+                ->values()
+                ->all();
+
+            $result[$grupKey] = $items;
+        }
+
+        return $result;
+    }
+
+    public function index(): View
+    {
+        // ===== CACHE: saldo kas 5 menit =====
+        $rawSaldoKas = cache()->remember('dash.saldo_kas', 300, fn() => $this->hitungSaldoKas());
+        if (!is_numeric($rawSaldoKas)) {
+            cache()->forget('dash.saldo_kas');
+            $rawSaldoKas = $this->hitungSaldoKas();
+        }
+        $saldoKas = (float) $rawSaldoKas;
+
+        // ===== CACHE: statistik ringkasan 5 menit =====
+        $stats = cache()->remember('dash.stats', 300, fn() => $this->hitungStats());
+        if (!is_array($stats) || empty($stats)) {
+            cache()->forget('dash.stats');
+            $stats = $this->hitungStats();
+        }
+
+        $jumlahWarga            = (int) ($stats['jumlahWarga'] ?? 0);
+        $jumlahSetoran          = (int) ($stats['jumlahSetoran'] ?? 0);
+        $totalSaldoWarga        = (float) ($stats['totalSaldoWarga'] ?? 0);
+        $totalPencairanSaldo    = (float) ($stats['totalPencairanSaldo'] ?? 0);
+        $totalPenjualanPengepul = (float) ($stats['totalPenjualanPengepul'] ?? 0);
+        $jumlahKategoriSampah   = (int) ($stats['jumlahKategoriSampah'] ?? 0);
+
+        $urutGrup = fn($rows, $grup) => $grup === 'kg' ? '0' : $grup;
+
+        // ===== CACHE: total per satuan 5 menit =====
+        $rawTotalPerGrup = cache()->remember('dash.total_per_grup', 300, fn() => $this->hitungTotalPerGrup());
+        $isValidTotalPerGrup = is_array($rawTotalPerGrup)
+            && collect($rawTotalPerGrup)->every(fn($rows) => is_array($rows) && collect($rows)->every(fn($r) => is_array($r)));
+
+        if (!$isValidTotalPerGrup) {
+            cache()->forget('dash.total_per_grup');
+            $rawTotalPerGrup = $this->hitungTotalPerGrup();
+        }
+
+        $totalPerGrup = collect(is_array($rawTotalPerGrup) ? $rawTotalPerGrup : [])
+            ->map(fn($rows) => collect(is_array($rows) ? $rows : []));
 
         $totalJumlahSampah = $totalPerGrup
-            ->map(fn($rows, $grup) => $this->formatJumlah((float) $rows->sum('total'), $grup))
+            ->map(fn($rows, $grup) => $this->formatJumlah((float) $rows->sum('total'), (string) $grup))
             ->values();
 
-        // Data mentah nilai per satuan untuk kartu dropdown interaktif
         $totalJumlahSampahPerSatuan = $totalPerGrup
-            ->map(fn($rows, $grup) => $this->konversi((float) $rows->sum('total'), $grup))
+            ->mapWithKeys(fn($rows, $grup) => [(string) $grup => $this->konversi((float) $rows->sum('total'), (string) $grup)])
             ->all();
 
-        // Opsi satuan untuk pilihan di grafik
         $opsiSatuan = $totalPerGrup
             ->keys()
-            ->map(fn($grup) => ['key' => $grup, 'label' => $this->labelSatuan($grup)])
+            ->map(fn($grup) => ['key' => (string) $grup, 'label' => $this->labelSatuan((string) $grup)])
             ->values();
 
-        // ---------------------------------------------------------
-        // Riwayat Setoran
-        // ---------------------------------------------------------
+        if ($opsiSatuan->isEmpty()) {
+            $opsiSatuan = collect([['key' => 'kg', 'label' => $this->labelSatuan('kg')]]);
+            $totalJumlahSampahPerSatuan = ['kg' => 0];
+        }
+
+        // ===== Riwayat setoran (tidak di-cache karena butuh real-time) =====
         $riwayatSetoran = DB::table('penyetoran')
             ->leftJoin('warga', 'penyetoran.id_warga', '=', 'warga.id_warga')
             ->select(
@@ -148,64 +252,28 @@ class HomeController extends Controller
                 ->sortBy($urutGrup)
                 ->map(fn($rows, $grup) => $this->formatJumlah((float) $rows->sum('total'), $grup))
                 ->implode(', ') ?: '-';
-
             return $setoran;
         });
 
-        // ---------------------------------------------------------
-        // Grafik bulanan: [grup => [{bulan, total}, ...]]
-        // ---------------------------------------------------------
-        $setoranPerBulan = DB::table('detail_setoran')
-            ->join('penyetoran', 'detail_setoran.id_setoran', '=', 'penyetoran.id_setoran')
-            ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
-            ->whereYear('penyetoran.tanggal_setoran', now()->year)
-            ->select(
-                'kategori_sampah.satuan',
-                DB::raw('MONTH(penyetoran.tanggal_setoran) as bulan'),
-                DB::raw('SUM(detail_setoran.berat_gram) as total')
-            )
-            ->groupBy('kategori_sampah.satuan', DB::raw('MONTH(penyetoran.tanggal_setoran)'))
-            ->get()
-            ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
-            ->map(
-                fn($rows, $grup) => $rows
-                    ->groupBy('bulan')
-                    ->map(fn($r, $bulan) => [
-                        'bulan' => (int) $bulan,
-                        'total' => $this->konversi((float) $r->sum('total'), $grup),
-                    ])
-                    ->values()
-            )
-            ->all();
+        // ===== CACHE: grafik bulanan 5 menit =====
+        $setoranPerBulan = cache()->remember('dash.setoran_per_bulan', 300, fn() => $this->hitungSetoranPerBulan());
+        $isValidSetoranPerBulan = is_array($setoranPerBulan)
+            && collect($setoranPerBulan)->every(fn($items) => is_array($items) && collect($items)->every(fn($row) => is_array($row)));
 
-        // ---------------------------------------------------------
-        // Statistik jenis sampah: [grup => [{nama, total}, ...]]
-        // ---------------------------------------------------------
-        $statistikJenisSampah = DB::table('detail_setoran')
-            ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
-            ->select(
-                'kategori_sampah.id_kategori',
-                'kategori_sampah.nama_kategori',
-                'kategori_sampah.satuan',
-                DB::raw('SUM(detail_setoran.berat_gram) as total')
-            )
-            ->groupBy(
-                'kategori_sampah.id_kategori',
-                'kategori_sampah.nama_kategori',
-                'kategori_sampah.satuan'
-            )
-            ->get()
-            ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
-            ->map(
-                fn($rows, $grup) => $rows
-                    ->map(fn($r) => [
-                        'nama'  => $r->nama_kategori,
-                        'total' => $this->konversi((float) $r->total, $grup),
-                    ])
-                    ->sortByDesc('total')
-                    ->values()
-            )
-            ->all();
+        if (!$isValidSetoranPerBulan) {
+            cache()->forget('dash.setoran_per_bulan');
+            $setoranPerBulan = $this->hitungSetoranPerBulan();
+        }
+
+        // ===== CACHE: statistik jenis 5 menit =====
+        $statistikJenisSampah = cache()->remember('dash.statistik_jenis', 300, fn() => $this->hitungStatistikJenisSampah());
+        $isValidStatistikJenis = is_array($statistikJenisSampah)
+            && collect($statistikJenisSampah)->every(fn($items) => is_array($items) && collect($items)->every(fn($row) => is_array($row)));
+
+        if (!$isValidStatistikJenis) {
+            cache()->forget('dash.statistik_jenis');
+            $statistikJenisSampah = $this->hitungStatistikJenisSampah();
+        }
 
         return view('admin.pages.dashboard', compact(
             'saldoKas',
@@ -224,29 +292,18 @@ class HomeController extends Controller
         ));
     }
 
-    /**
-     * Tampilan Data Warga
-     */
     public function warga(): View
     {
         $warga = Warga::orderBy('id_warga', 'desc')->get();
-
         return view('admin.pages.warga', compact('warga'));
     }
 
-    /**
-     * Tampilan Pengaturan Admin & Sesi Perangkat Login
-     */
     public function pengaturan(Request $request): View
     {
-        // 1. Ambil ID akun auth yang sedang login
         $primaryId = Auth::id();
-
-        // 2. Ambil data spesifik sesuai primary key masing-masing tabel
         $userRecord  = DB::table('users')->where('id', $primaryId)->first();
         $adminRecord = DB::table('admin')->where('id_admin', $primaryId)->first();
 
-        // 3. Gabungkan data agar $admin->nama dan $admin->username terisi sempurna di View
         $admin = (object) [
             'id_admin' => $adminRecord->id_admin ?? $primaryId,
             'nama'     => $adminRecord->nama ?? '',
@@ -254,7 +311,6 @@ class HomeController extends Controller
             'alamat'   => $adminRecord->alamat ?? '',
         ];
 
-        // 4. Ambil data sesi perangkat login user dari tabel 'sessions'
         $sessions = DB::table('sessions')
             ->where('user_id', $primaryId)
             ->orderBy('last_activity', 'desc')
@@ -263,7 +319,6 @@ class HomeController extends Controller
         $devices = $sessions->map(function ($session) use ($request) {
             $agent = new Agent();
             $agent->setUserAgent($session->user_agent);
-
             return (object) [
                 'id'                => $session->id,
                 'ip_address'        => $session->ip_address,
@@ -278,14 +333,10 @@ class HomeController extends Controller
         return view('admin.pages.pengaturan', compact('admin', 'devices'));
     }
 
-    /**
-     * Update Profil Admin
-     */
     public function updateProfil(Request $request): RedirectResponse
     {
         $primaryId = Auth::id();
 
-        // 1. Validasi Input
         $request->validate([
             'nama'     => ['required', 'string', 'max:100'],
             'username' => [
@@ -298,15 +349,12 @@ class HomeController extends Controller
             'password' => ['nullable', 'string', 'min:6'],
         ]);
 
-        // 2. Perbarui data pada tabel 'users' (username & password)
         $userData = ['username' => $request->username];
         if ($request->filled('password')) {
             $userData['password'] = Hash::make($request->password);
         }
-
         DB::table('users')->where('id', $primaryId)->update($userData);
 
-        // 3. Perbarui data pada tabel 'admin' (nama & alamat)
         $adminUpdated = DB::table('admin')
             ->where('id_admin', $primaryId)
             ->update([
@@ -325,9 +373,6 @@ class HomeController extends Controller
         return back()->with('success', 'Profil admin dan password berhasil diperbarui.');
     }
 
-    /**
-     * Form Kontak
-     */
     public function storeContact(Request $request): RedirectResponse
     {
         $data = $request->validate([

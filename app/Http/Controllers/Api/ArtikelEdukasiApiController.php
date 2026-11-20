@@ -12,24 +12,36 @@ class ArtikelEdukasiApiController extends Controller
     {
         try {
             $query = ArtikelEdukasi::whereNotNull('tanggal_publish')
-                // 1. Prioritaskan 'acara' (Event) selalu di paling atas
-                ->orderByRaw("CASE WHEN jenis = 'acara' THEN 0 ELSE 1 END ASC")
+                // 1. Prioritaskan Event / Acara di urutan paling atas
+                ->orderByRaw("CASE WHEN jenis IN ('acara', 'event') THEN 0 ELSE 1 END ASC")
                 // 2. Urutkan berdasarkan tanggal publish terbaru
                 ->orderBy('tanggal_publish', 'desc')
-                // 3. Jika tanggal publish sama (diupload di hari yang sama), urutkan dari ID terbaru
+                // 3. Jika tanggal sama, urutkan dari ID terbaru
                 ->orderBy('id_artikel', 'desc');
 
-            if ($request->has('jenis') && in_array($request->jenis, ['edukasi', 'artikel', 'acara'])) {
-                $query->where('jenis', $request->jenis);
+            if ($request->has('jenis') && in_array($request->jenis, ['edukasi', 'artikel', 'acara', 'event'])) {
+                if (in_array($request->jenis, ['acara', 'event'])) {
+                    $query->whereIn('jenis', ['acara', 'event']);
+                } else {
+                    $query->where('jenis', $request->jenis);
+                }
             }
 
             $artikel = $query->get()->map(function ($item) {
-                // Sekaligus menangani gambar hasil import URL (http/https) agar tidak rusak saat di-asset()
+                $tipeTampilan = 'teks';
+                $bannerTema = null;
                 $gambarUrl = null;
+
                 if ($item->gambar) {
-                    $gambarUrl = str_starts_with($item->gambar, 'http')
-                        ? $item->gambar
-                        : asset('uploads/artikel/' . $item->gambar);
+                    if (str_starts_with($item->gambar, 'banner:')) {
+                        $tipeTampilan = 'banner';
+                        $bannerTema = str_replace('banner:', '', $item->gambar);
+                    } else {
+                        $tipeTampilan = 'gambar';
+                        $gambarUrl = str_starts_with($item->gambar, 'http')
+                            ? $item->gambar
+                            : asset('uploads/artikel/' . $item->gambar);
+                    }
                 }
 
                 return [
@@ -37,6 +49,8 @@ class ArtikelEdukasiApiController extends Controller
                     'judul'           => $item->judul,
                     'jenis'           => $item->jenis,
                     'konten'          => $item->konten,
+                    'tipe_tampilan'   => $tipeTampilan, // 'gambar' | 'banner' | 'teks'
+                    'banner_tema'     => $bannerTema,   // 'edukasi' | 'event' | 'artikel' | null
                     'gambar'          => $gambarUrl,
                     'tanggal_publish' => $item->tanggal_publish ? optional($item->tanggal_publish)->format('Y-m-d') : null,
                 ];

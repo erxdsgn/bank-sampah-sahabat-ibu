@@ -14,7 +14,6 @@ class SetoranApiController extends Controller
 {
     /**
      * 1. GET DAFTAR KATEGORI SAMPAH & HARGA AKTIF
-     * Mengambil seluruh daftar kategori untuk pilihan dropdown di aplikasi mobile.
      */
     public function getKategori()
     {
@@ -22,11 +21,21 @@ class SetoranApiController extends Controller
             ->orderBy('id_kategori', 'asc')
             ->get()
             ->map(function ($item) {
+                $harga = 0;
+                if ($item->hargaTerbaru) {
+                    $harga = $item->hargaTerbaru->harga_satuan
+                        ?? $item->hargaTerbaru->harga
+                        ?? $item->hargaTerbaru->nominal
+                        ?? 0;
+                } else {
+                    $harga = $item->harga_satuan ?? 0;
+                }
+
                 return [
                     'id_kategori'   => (int) $item->id_kategori,
                     'nama_kategori' => $item->nama_kategori ?? '-',
-                    'satuan'        => $item->satuan_normal ?: 'kg',
-                    'harga_satuan'  => (float) ($item->harga_satuan_aktual ?? 0),
+                    'satuan'        => $item->satuan ?: 'kg', // PERBAIKAN: Gunakan $item->satuan
+                    'harga_satuan'  => (float) $harga,
                 ];
             });
 
@@ -37,34 +46,33 @@ class SetoranApiController extends Controller
     }
 
     /**
-     * 2. POST PENGAJUAN SETOR SAMPAH (OTOMATIS OTENTIKASI KE WARGA LOGIN)
-     * Warga cukup memilih ID Kategori & Jumlah. Sistem otomatis mengaitkannya ke id_warga pengirim.
+     * 2. POST PENGAJUAN SETOR SAMPAH
      */
     public function store(Request $request)
     {
-        // A. Handle payload `items` jika dikirim sebagai string JSON via Multipart Form-Data
         $itemsData = $request->items;
         if (is_string($itemsData)) {
             $itemsData = json_decode($itemsData, true);
         }
 
-        // B. Validasi Input
+        // Validasi Input (Termasuk Batas Maksimal & Foto 2MB)
         $validator = Validator::make([
             'foto_sampah' => $request->file('foto_sampah'),
             'items'       => $itemsData,
         ], [
-            'foto_sampah'         => 'nullable|image|mimes:jpeg,png,jpg,heic|max:5120',
+            'foto_sampah'         => 'nullable|image|mimes:jpeg,png,jpg,heic|max:2048', // Max 2 MB
             'items'               => 'required|array|min:1',
             'items.*.id_kategori' => 'required|exists:kategori_sampah,id_kategori',
-            'items.*.jumlah'      => 'required|numeric|gt:0',
+            'items.*.jumlah'      => 'required|numeric|gt:0|max:50', // Max 50 per item
         ], [
             'items.required'               => 'Minimal masukkan 1 jenis sampah.',
             'items.*.id_kategori.required' => 'Kategori sampah wajib dipilih.',
             'items.*.id_kategori.exists'   => 'Kategori sampah tidak valid.',
             'items.*.jumlah.required'      => 'Jumlah sampah wajib diisi.',
             'items.*.jumlah.gt'            => 'Jumlah sampah harus lebih besar dari 0.',
+            'items.*.jumlah.max'           => 'Maksimal setoran untuk satu jenis sampah adalah 50.',
             'foto_sampah.image'            => 'File foto bukti harus berupa gambar.',
-            'foto_sampah.max'              => 'Ukuran foto maksimal 5 MB.',
+            'foto_sampah.max'              => 'Ukuran foto maksimal 2 MB.',
         ]);
 
         if ($validator->fails()) {
@@ -74,9 +82,17 @@ class SetoranApiController extends Controller
             ], 422);
         }
 
-        // C. Identifikasi Warga dari Token Sanctum yang sedang aktif
-        $user = $request->user();
+        // Validasi Tambahan: Total Keseluruhan (Maks 100)
+        $totalJumlah = array_sum(array_column($itemsData, 'jumlah'));
+        if ($totalJumlah > 100) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Total keseluruhan sampah dalam sekali setor maksimal 100 kg/liter/pcs.',
+            ], 422);
+        }
 
+        // Identifikasi Warga
+        $user = $request->user();
         if (!$user || !$user->warga) {
             return response()->json([
                 'status'  => 'error',
@@ -86,18 +102,16 @@ class SetoranApiController extends Controller
 
         try {
             $setoran = DB::transaction(function () use ($request, $user, $itemsData) {
-                // 1. Upload foto bukti sampah jika dilampirkan dari kamera/galeri mobile
                 $fotoPath = null;
                 if ($request->hasFile('foto_sampah')) {
                     $fotoPath = $request->file('foto_sampah')->store('setoran', 'public');
                 }
 
-                // 2. Buat Header Setoran (Otomatis dikaitkan ke id_warga milik pengirim)
                 $setoran = Setoran::create([
-                    'id_warga'        => $user->warga->id_warga, // OTOMATIS AMBIL ID WARGA SESEORANG YANG LOGIN
-                    'id_admin'        => null,                     // Belum diverifikasi admin
+                    'id_warga'        => $user->warga->id_warga,
+                    'id_admin'        => null,
                     'tanggal_setoran' => now()->toDateString(),
-                    'status'          => 'pending',                // Status awal: Menunggu Verifikasi Admin
+                    'status'          => 'pending',
                     'total_berat'     => 0,
                     'total_nilai'     => 0,
                     'foto_sampah'     => $fotoPath,
@@ -106,13 +120,12 @@ class SetoranApiController extends Controller
                 $totalSemuaNilai = 0;
                 $totalBeratGram = 0;
 
-                // 3. Simpan Rincian Sampah & Hitung Subtotal Harga
                 foreach ($itemsData as $item) {
                     $kategori = KategoriSampah::with('hargaTerbaru')->findOrFail($item['id_kategori']);
                     $jumlah = (float) $item['jumlah'];
                     $hargaSatuan = (float) $kategori->harga_satuan_aktual;
                     $subtotal = round($jumlah * $hargaSatuan, 2);
-                    $satuan = $kategori->satuan_normal;
+                    $satuan = $kategori->satuan; // PERBAIKAN: Gunakan $kategori->satuan
 
                     DetailSetoran::create([
                         'id_setoran'     => $setoran->id_setoran,
@@ -127,13 +140,12 @@ class SetoranApiController extends Controller
                     $totalSemuaNilai += $subtotal;
 
                     if ($satuan === 'kg') {
-                        $totalGram = $totalBeratGram += ($jumlah * 1000);
+                        $totalBeratGram += ($jumlah * 1000);
                     } elseif ($satuan === 'gram') {
-                        $totalGram = $totalBeratGram += $jumlah;
+                        $totalBeratGram += $jumlah;
                     }
                 }
 
-                // 4. Update Akumulasi Nilai Rupiah & Berat pada Header Transaksi
                 $setoran->update([
                     'total_berat' => $totalBeratGram > 0 ? $totalBeratGram : null,
                     'total_nilai' => $totalSemuaNilai,
@@ -142,7 +154,6 @@ class SetoranApiController extends Controller
                 return $setoran;
             });
 
-            // 5. Kembalikan Response Sukses Lengkap dengan Data Warga & Rincian Sampah
             return response()->json([
                 'status'  => 'success',
                 'message' => 'Pengajuan setor sampah berhasil dikirim!',
@@ -161,7 +172,6 @@ class SetoranApiController extends Controller
 
     /**
      * 3. GET RIWAYAT SETORAN SAYA
-     * Mengambil riwayat setoran khusus untuk warga yang sedang login.
      */
     public function riwayat(Request $request)
     {

@@ -10,12 +10,19 @@
     $totalKonten = $artikel->count();
     $totalPublikasi = $artikel->whereNotNull('tanggal_publish')->count();
     $totalDraft = $artikel->whereNull('tanggal_publish')->count();
-    $totalAcara = $artikel->where('jenis', 'event')->count();
+    $totalAcara = $artikel->whereIn('jenis', ['event', 'acara'])->count();
 
     $labelJenis = [
         'edukasi' => ['Edukasi Sampah', 'badge--info'],
         'artikel' => ['Artikel', 'badge--info'],
-        'event' => ['Event', 'badge--purple'],
+        'event'   => ['Event', 'badge--purple'],
+        'acara'   => ['Event', 'badge--purple'],
+    ];
+
+    $bannerConfig = [
+        'edukasi' => ['label' => 'Banner Edukasi', 'icon' => '🌱', 'class' => 'banner-grad--edukasi'],
+        'event'   => ['label' => 'Banner Event',   'icon' => '📅', 'class' => 'banner-grad--event'],
+        'artikel' => ['label' => 'Banner Artikel', 'icon' => '📰', 'class' => 'banner-grad--artikel'],
     ];
 
     $preview = $artikel->whereNotNull('tanggal_publish')->first() ?? $artikel->first();
@@ -190,7 +197,7 @@
 
                     <thead>
                         <tr>
-                            <th>Gambar</th>
+                            <th>Tampilan / Media</th>
                             <th>Judul Konten</th>
                             <th>Kategori</th>
                             <th>Status</th>
@@ -204,22 +211,31 @@
                         @forelse($artikel as $item)
                             @php
                                 $status = $item->tanggal_publish ? 'publish' : 'draft';
+                                $jenisKey = $item->jenis === 'acara' ? 'event' : $item->jenis;
                                 [$labelKategori, $kelasKategori] = $labelJenis[$item->jenis] ?? ['Edukasi Sampah', 'badge--info'];
+                                $isBanner = $item->gambar && \Illuminate\Support\Str::startsWith($item->gambar, 'banner:');
+                                $bannerKey = $isBanner ? str_replace('banner:', '', $item->gambar) : null;
+                                $bannerInfo = $bannerKey ? ($bannerConfig[$bannerKey] ?? $bannerConfig['edukasi']) : null;
                             @endphp
 
-                            <tr data-judul="{{ strtolower($item->judul) }}" data-status="{{ $status }}" data-kategori="{{ $item->jenis }}">
+                            <tr data-judul="{{ strtolower($item->judul) }}" data-status="{{ $status }}" data-kategori="{{ $jenisKey }}">
                                 <td>
-                                    @if ($item->gambar)
+                                    @if ($isBanner && $bannerInfo)
+                                        <div class="artikel-thumb artikel-thumb--banner {{ $bannerInfo['class'] }}">
+                                            <span>{{ $bannerInfo['icon'] }}</span>
+                                            <small>{{ ucfirst($bannerKey) }}</small>
+                                        </div>
+                                    @elseif ($item->gambar)
                                         <img src="{{ Str::startsWith($item->gambar, 'http') ? $item->gambar : asset('uploads/artikel/' . $item->gambar) }}"
                                             alt="{{ $item->judul }}" class="artikel-thumb">
                                     @else
-                                        <div class="artikel-thumb artikel-thumb--kosong">Tidak ada gambar</div>
+                                        <div class="artikel-thumb artikel-thumb--kosong">Teks Saja</div>
                                     @endif
                                 </td>
 
                                 <td>
                                     <div class="artikel-judul">{{ $item->judul }}</div>
-                                    <div class="artikel-ringkasan">{{ \Illuminate\Support\Str::limit(strip_tags($item->konten), 30) }}</div>
+                                    <div class="artikel-ringkasan">{{ \Illuminate\Support\Str::limit(strip_tags($item->konten), 45) }}</div>
                                 </td>
 
                                 <td>
@@ -326,7 +342,7 @@
             </div>
 
             <div class="phone">
-                <div class="phone-header">← &nbsp; Edukasi Sampah</div>
+                <div class="phone-header">← &nbsp; Baca Artikel</div>
                 <div class="phone-body" id="phonePreviewBody"></div>
             </div>
         </section>
@@ -339,7 +355,7 @@
         <div class="form-full-header">
             <div>
                 <h2 class="card-title" id="formTitleText">Formulir Konten Artikel & Edukasi</h2>
-                <p class="card-sub">Tulis materi secara profesional dan lengkapi media pendukung.</p>
+                <p class="card-sub">Tulis materi secara profesional dan pilih gaya tampilan header untuk aplikasi warga.</p>
             </div>
             <button class="btn btn--ghost" type="button" onclick="tutupFormFull()">
                 ← Kembali ke Daftar
@@ -348,11 +364,12 @@
 
         <form id="formArtikel" onsubmit="return false;" class="form-full-body">
             <input type="hidden" id="artikelId">
+            <input type="hidden" id="modeMedia" name="mode_media" value="gambar">
 
             <div class="form-grid-columns">
                 <div class="form-group form-group--full">
                     <label for="artikelJudul">Judul Konten <span class="text-danger">*</span></label>
-                    <input type="text" id="artikelJudul" class="form-control" placeholder="Contoh: Cara Memilah Sampah dari Rumah" required>
+                    <input type="text" id="artikelJudul" class="form-control" placeholder="Contoh: Cara Memilah Sampah dari Rumah" oninput="updateFormMediaPreview()" required>
                     <span class="form-error" id="err_judul"></span>
                 </div>
 
@@ -374,25 +391,76 @@
                     <span class="form-error" id="err_tanggal"></span>
                 </div>
 
+                {{-- PILIHAN MODE TAMPILAN MEDIA --}}
                 <div class="form-group form-group--full">
-                    <label for="artikelGambar">Gambar Utama / Thumbnail</label>
-                    <input type="file" id="artikelGambar" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp" onchange="previewGambar(this)">
-                    <input type="hidden" id="artikelGambarUrl" name="gambar_url">
+                    <label>Gaya Tampilan Header / Media <span class="text-danger">*</span></label>
 
-                    {{-- Panduan Ukuran & Format Gambar --}}
-                    <div class="field-hint" style="margin-top: 6px; line-height: 1.5;">
-                        <span style="display: inline-block; font-weight: 600; color: #22c55e; margin-bottom: 2px;">📐 Panduan Ukuran Gambar:</span><br>
-                        • Format: <strong>JPG, PNG, atau WEBP</strong><br>
-                        • Rekomendasi Resolusi: <strong>1200 x 630 piksel</strong> (Rasio 16:9 atau Landscape)<br>
-                        • Ukuran Maksimal File: <strong>2 MB</strong>
+                    <div class="media-mode-grid" id="mediaModeGrid">
+                        <button type="button" class="media-mode-card active" data-mode="gambar" onclick="pilihModeMedia('gambar')">
+                            <div class="media-mode-icon media-mode-icon--img">🖼️</div>
+                            <div class="media-mode-info">
+                                <strong>Upload / URL Gambar</strong>
+                                <span>Gunakan foto atau poster</span>
+                            </div>
+                        </button>
+
+                        <button type="button" class="media-mode-card" data-mode="banner_edukasi" onclick="pilihModeMedia('banner_edukasi')">
+                            <div class="media-mode-icon banner-grad--edukasi">🌱</div>
+                            <div class="media-mode-info">
+                                <strong>Banner Warna Edukasi</strong>
+                                <span>Latar hijau alami</span>
+                            </div>
+                        </button>
+
+                        <button type="button" class="media-mode-card" data-mode="banner_event" onclick="pilihModeMedia('banner_event')">
+                            <div class="media-mode-icon banner-grad--event">📅</div>
+                            <div class="media-mode-info">
+                                <strong>Banner Warna Event</strong>
+                                <span>Latar amber hangat</span>
+                            </div>
+                        </button>
+
+                        <button type="button" class="media-mode-card" data-mode="banner_artikel" onclick="pilihModeMedia('banner_artikel')">
+                            <div class="media-mode-icon banner-grad--artikel">📰</div>
+                            <div class="media-mode-info">
+                                <strong>Banner Warna Artikel</strong>
+                                <span>Latar teal sejuk</span>
+                            </div>
+                        </button>
+
+                        <button type="button" class="media-mode-card" data-mode="tanpa_gambar" onclick="pilihModeMedia('tanpa_gambar')">
+                            <div class="media-mode-icon media-mode-icon--text">📝</div>
+                            <div class="media-mode-info">
+                                <strong>Teks Saja (Tanpa Gambar)</strong>
+                                <span>Fokus teks, tanpa banner</span>
+                            </div>
+                        </button>
                     </div>
 
-                    <span class="form-error" id="err_gambar"></span>
+                    {{-- PANEL 1: UPLOAD GAMBAR (Muncul jika mode = gambar) --}}
+                    <div id="panelUploadGambar" class="media-option-panel">
+                        <input type="file" id="artikelGambar" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp" onchange="previewGambar(this)">
+                        <input type="hidden" id="artikelGambarUrl" name="gambar_url">
 
-                    <div class="gambar-preview" id="gambarPreviewWrap">
-                        <img id="gambarPreviewImg" src="" alt="Preview">
+                        <div class="field-hint" style="margin-top: 8px; line-height: 1.5;">
+                            <span style="display: inline-block; font-weight: 600; color: #1E9E66; margin-bottom: 2px;">📐 Panduan Ukuran Gambar:</span><br>
+                            • Format: <strong>JPG, PNG, atau WEBP</strong><br>
+                            • Rekomendasi Resolusi: <strong>1200 x 630 piksel</strong> (Rasio 16:9 atau Landscape)<br>
+                            • Ukuran Maksimal File: <strong>2 MB</strong>
+                        </div>
+
+                        <span class="form-error" id="err_gambar"></span>
+
+                        <div class="gambar-preview" id="gambarPreviewWrap">
+                            <img id="gambarPreviewImg" src="" alt="Preview">
+                        </div>
+                        <div id="gambarLamaInfo"></div>
                     </div>
-                    <div id="gambarLamaInfo"></div>
+
+                    {{-- PANEL 2: PRATINJAU BANNER WARNA / TEKS SAJA (Muncul jika bukan mode gambar) --}}
+                    <div id="panelBannerPreview" class="media-option-panel" style="display: none;">
+                        <div class="form-live-card-preview" id="formLiveCardPreview"></div>
+                    </div>
                 </div>
 
                 {{-- CKEDITOR CONTAINER --}}
@@ -504,6 +572,20 @@
             color-scheme: dark;
         }
 
+        /* GRADIEN BANNER WARNA (SELARAS DENGAN PALET MOBILE APP) */
+        .banner-grad--edukasi {
+            background: linear-gradient(135deg, #157A4E 0%, #1E9E66 100%);
+            color: #ffffff;
+        }
+        .banner-grad--event {
+            background: linear-gradient(135deg, #9A5B13 0%, #C27B28 100%);
+            color: #ffffff;
+        }
+        .banner-grad--artikel {
+            background: linear-gradient(135deg, #1B6B78 0%, #2E8B99 100%);
+            color: #ffffff;
+        }
+
         /* SUMMARY */
         .artikel-page .summary-grid {
             display: grid;
@@ -539,11 +621,11 @@
             width: 40px; height: 40px; flex: 0 0 40px;
             border-radius: 11px;
             display: flex; align-items: center; justify-content: center;
-            background: rgba(99, 102, 241, .14);
-            color: #a5b4fc;
+            background: rgba(27, 107, 120, .14);
+            color: #2E8B99;
         }
-        .artikel-page .summary-icon--income { background: rgba(34, 197, 94, .14); color: #4ade80; }
-        .artikel-page .summary-icon--expense { background: rgba(245, 158, 11, .14); color: #fbbf24; }
+        .artikel-page .summary-icon--income { background: rgba(30, 158, 102, .14); color: #1E9E66; }
+        .artikel-page .summary-icon--expense { background: rgba(194, 123, 40, .14); color: #C27B28; }
         .artikel-page .summary-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
         .artikel-page .summary-info { margin-top: 12px; font-size: 12px; color: var(--text-secondary); }
 
@@ -598,7 +680,7 @@
             background: var(--input-bg); color: var(--text); font-family: inherit;
         }
         .artikel-page .table-search input:focus {
-            border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
+            border-color: #1E9E66; box-shadow: 0 0 0 3px rgba(30, 158, 102, .12);
         }
         .artikel-page .toolbar-right {
             display: flex; align-items: center; gap: 10px;
@@ -622,13 +704,21 @@
         .artikel-page .nowrap { white-space: nowrap; }
 
         .artikel-page .artikel-thumb {
-            width: 65px; height: 50px; border-radius: 8px; object-fit: cover;
+            width: 72px; height: 50px; border-radius: 8px; object-fit: cover;
             background: var(--surface-secondary); border: 1px solid var(--border);
         }
         .artikel-page .artikel-thumb--kosong {
             display: flex; align-items: center; justify-content: center;
-            color: var(--text-muted); font-size: 10px; text-align: center; padding: 4px;
+            color: var(--text-muted); font-size: 10px; font-weight: 600; text-align: center; padding: 4px;
+            border-style: dashed;
         }
+        .artikel-page .artikel-thumb--banner {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: none; gap: 1px; font-weight: 700;
+        }
+        .artikel-page .artikel-thumb--banner span { font-size: 14px; line-height: 1; }
+        .artikel-page .artikel-thumb--banner small { font-size: 9px; letter-spacing: .3px; }
+
         .artikel-page .artikel-judul { color: var(--text); font-weight: 700; margin-bottom: 3px; line-height: 1.35; }
         .artikel-page .artikel-ringkasan {
             color: var(--text-secondary); font-size: 12px; width: 230px;
@@ -664,31 +754,95 @@
 
         /* BADGES */
         .artikel-page .badge { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .artikel-page .badge--success { background: rgba(34, 197, 94, .14); color: #4ade80; }
-        .artikel-page .badge--warning { background: rgba(245, 158, 11, .14); color: #fbbf24; }
-        .artikel-page .badge--info { background: rgba(14, 165, 233, .14); color: #38bdf8; }
-        .artikel-page .badge--purple { background: rgba(168, 85, 247, .14); color: #c084fc; }
+        .artikel-page .badge--success { background: rgba(30, 158, 102, .14); color: #1E9E66; }
+        .artikel-page .badge--warning { background: rgba(194, 123, 40, .14); color: #C27B28; }
+        .artikel-page .badge--info { background: rgba(27, 107, 120, .14); color: #2E8B99; }
+        .artikel-page .badge--purple { background: rgba(154, 91, 19, .14); color: #C27B28; }
 
-        /* PREVIEW MOBILE */
+        /* PREVIEW MOBILE (MENGGUNAKAN TOKEN WARNA APP_COLORS) */
         .artikel-page .preview-card { padding: 20px; }
         .artikel-page .preview-head { margin-bottom: 14px; }
         .artikel-page .preview-select-group { margin-bottom: 14px; }
 
         .artikel-page .phone {
-            width: 100%; max-width: 220px; height: 440px; border: 7px solid #263449;
-            border-radius: 28px; overflow: hidden; margin: 0 auto; background: #f8fafc;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, .30);
+            width: 100%; max-width: 220px; height: 440px; border: 7px solid #182B24;
+            border-radius: 28px; overflow: hidden; margin: 0 auto; background: #F5F8F6;
+            box-shadow: 0 12px 30px rgba(24, 43, 36, .22);
         }
-        .artikel-page .phone-header { background: #15803d; color: #fff; padding: 14px 12px; font-size: 12px; font-weight: 600; }
-        .artikel-page .phone-body { padding: 12px; height: calc(100% - 42px); overflow-y: auto; background: #f8fafc; }
+        .artikel-page .phone-header { background: #1E9E66; color: #fff; padding: 14px 12px; font-size: 12px; font-weight: 600; }
+        .artikel-page .phone-body { padding: 12px; height: calc(100% - 42px); overflow-y: auto; background: #F5F8F6; }
         .artikel-page .phone-image { width: 100%; height: 110px; border-radius: 8px; object-fit: cover; margin-bottom: 10px; }
-        .artikel-page .phone-image--kosong { display: flex; align-items: center; justify-content: center; background: #e5ece8; color: #71817b; font-size: 10px; }
-        .artikel-page .phone-title { color: #1f2937; font-size: 15px; line-height: 1.3; font-weight: 700; }
-        .artikel-page .phone-meta { color: #15803d; font-size: 9px; margin: 6px 0 10px; }
-        .artikel-page .phone-meta .phone-badge-draft { background: #fef3c7; color: #b45309; padding: 1px 5px; border-radius: 10px; font-weight: 700; }
-        .artikel-page .phone-content { color: #66758a; font-size: 10px; line-height: 1.6; }
-        .artikel-page .phone-tip { background: #e8f5ed; color: #166534; padding: 8px; border-radius: 6px; font-size: 9px; margin-top: 12px; }
-        .artikel-page .phone-empty { text-align: center; color: #9aa6b5; padding-top: 120px; font-size: 11px; }
+        .artikel-page .phone-banner-box {
+            width: 100%; min-height: 92px; border-radius: 10px; padding: 12px; margin-bottom: 10px;
+            display: flex; flex-direction: column; justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(24, 43, 36, .10);
+        }
+        .artikel-page .phone-banner-pill {
+            display: inline-block; align-self: flex-start; font-size: 8px; font-weight: 700;
+            background: rgba(255, 255, 255, .20); padding: 2px 7px; border-radius: 99px;
+            text-transform: uppercase; letter-spacing: .4px;
+        }
+        .artikel-page .phone-banner-title { font-size: 12px; font-weight: 700; line-height: 1.3; margin-top: 8px; }
+        .artikel-page .phone-textonly-bar {
+            width: 32px; height: 3px; border-radius: 99px; background: #1E9E66; margin-bottom: 8px;
+        }
+        .artikel-page .phone-title { color: #182B24; font-size: 15px; line-height: 1.3; font-weight: 700; }
+        .artikel-page .phone-meta { color: #157A4E; font-size: 9px; margin: 6px 0 10px; }
+        .artikel-page .phone-meta .phone-badge-draft { background: #FEF3D6; color: #A66008; padding: 1px 5px; border-radius: 10px; font-weight: 700; }
+        .artikel-page .phone-content { color: #5D736B; font-size: 10px; line-height: 1.6; }
+        .artikel-page .phone-tip { background: #EAF6F0; color: #157A4E; border: 1px solid #D8E6DF; padding: 8px; border-radius: 6px; font-size: 9px; margin-top: 12px; }
+        .artikel-page .phone-empty { text-align: center; color: #92A59E; padding-top: 120px; font-size: 11px; }
+
+        /* =========================================================
+               PILIHAN MODE MEDIA DI FORM
+            ========================================================= */
+        .artikel-page .media-mode-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .artikel-page .media-mode-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            background: var(--input-bg);
+            color: var(--text);
+            text-align: left;
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+        .artikel-page .media-mode-card:hover {
+            border-color: #1E9E66;
+            background: var(--surface-secondary);
+        }
+        .artikel-page .media-mode-card.active {
+            border-color: #1E9E66;
+            background: rgba(30, 158, 102, .08);
+            box-shadow: 0 0 0 3px rgba(30, 158, 102, .12);
+        }
+        .artikel-page .media-mode-icon {
+            width: 36px; height: 36px; flex: 0 0 36px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+        }
+        .artikel-page .media-mode-icon--img { background: rgba(46, 139, 153, .14); }
+        .artikel-page .media-mode-icon--text { background: rgba(148, 163, 184, .16); }
+        .artikel-page .media-mode-info { display: flex; flex-direction: column; min-width: 0; }
+        .artikel-page .media-mode-info strong { font-size: 12px; font-weight: 700; color: var(--text); line-height: 1.25; }
+        .artikel-page .media-mode-info span { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+        .artikel-page .media-option-panel {
+            margin-top: 12px;
+            padding: 14px;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            background: var(--surface-secondary);
+        }
 
         /* =========================================================
                FULL PAGE FORM
@@ -712,14 +866,14 @@
         .artikel-page .form-group { display: flex; flex-direction: column; gap: 6px; }
         .artikel-page .form-group--full { grid-column: 1 / -1; }
         .artikel-page .form-group label { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); }
-        .artikel-page .text-danger { color: #ef4444; }
+        .artikel-page .text-danger { color: #E04848; }
 
         .artikel-page .form-control {
             width: 100%; padding: 11px 14px; font-size: 13.5px; color: var(--text);
             border: 1px solid var(--border); border-radius: 8px; outline: none; background: var(--input-bg);
             font-family: inherit; transition: border-color .15s ease, box-shadow .15s ease;
         }
-        .artikel-page .form-control:focus { border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, .10); }
+        .artikel-page .form-control:focus { border-color: #1E9E66; box-shadow: 0 0 0 3px rgba(30, 158, 102, .12); }
 
         /* STYLES KHUSUS CKEDITOR */
         .ck-editor__editable_inline {
@@ -748,7 +902,7 @@
         /* GAMBAR PREVIEW */
         .artikel-page .gambar-preview { display: none; margin-top: 10px; }
         .artikel-page .gambar-preview img, .artikel-page #gambarLamaInfo img {
-            width: 130px; height: 90px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border);
+            width: 160px; height: 95px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border);
         }
         .artikel-page #gambarLamaInfo small { display: block; margin-top: 6px; color: var(--text-muted); font-size: 11px; }
 
@@ -773,21 +927,24 @@
         .artikel-page .modal-foot--center { justify-content: center; }
 
         .artikel-page .detail-image { width: 100%; max-height: 250px; object-fit: cover; border-radius: 10px; margin-bottom: 16px; }
+        .artikel-page .detail-banner {
+            width: 100%; padding: 24px 20px; border-radius: 12px; margin-bottom: 16px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
         .artikel-page .detail-title { color: var(--text); font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-        .artikel-page .detail-date { color: #4ade80; font-size: 12px; margin-bottom: 14px; }
+        .artikel-page .detail-date { color: #1E9E66; font-size: 12px; margin-bottom: 14px; }
         .artikel-page .detail-text { color: var(--text-secondary); line-height: 1.7; font-size: 13.5px; }
 
         /* TOAST & COMBO */
         .artikel-page .toast-wrap { position: fixed; top: 20px; right: 20px; z-index: 1100; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .artikel-page .toast {
             display: flex; align-items: flex-start; gap: 12px; min-width: 300px; max-width: 380px;
-            background: var(--surface); border: 1px solid var(--border); border-left: 4px solid #22c55e;
+            background: var(--surface); border: 1px solid var(--border); border-left: 4px solid #1E9E66;
             border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,.30); padding: 14px 16px; pointer-events: auto;
         }
-        .artikel-page .toast.toast--error { border-left-color: #ef4444; }
+        .artikel-page .toast.toast--error { border-left-color: #E04848; }
         .artikel-page .toast-title { font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 2px; }
         .artikel-page .toast-text { font-size: 12.5px; color: var(--text-secondary); margin: 0; }
-        .artikel-page .toast-close { border: none; background: transparent; color: var(--text-muted); font-size: 16px; cursor: pointer; }
 
         .artikel-page .combo { position: relative; }
         .artikel-page .combo-hidden { display: none !important; }
@@ -803,8 +960,11 @@
         }
         .artikel-page .combo-list.show { display: block; }
         .artikel-page .combo-item { padding: 10px 14px; font-size: 13px; color: var(--text); cursor: pointer; }
-        .artikel-page .combo-item:hover { background: var(--table-hover); color: #22c55e; }
+        .artikel-page .combo-item:hover { background: var(--table-hover); color: #1E9E66; }
 
+        @media (max-width: 1200px) {
+            .artikel-page .media-mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
         @media (max-width: 1100px) {
             .artikel-page .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .artikel-page .artikel-columns { grid-template-columns: 1fr; }
@@ -822,10 +982,15 @@
         const urlArtikelDestroy = "{{ url('/admin/pages/artikel') }}/:id";
         const urlGambarArtikel = "{{ asset('uploads/artikel') }}";
 
+        const bannerMeta = {
+            edukasi: { label: '🌱 Edukasi Sampah', gradClass: 'banner-grad--edukasi' },
+            event:   { label: '📅 Event & Agenda',  gradClass: 'banner-grad--event' },
+            artikel: { label: '📰 Artikel Pilihan', gradClass: 'banner-grad--artikel' },
+        };
+
         let myEditor = null;
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Inisialisasi CKEditor 5 Classic
             ClassicEditor
                 .create(document.querySelector('#editorKonten'), {
                     toolbar: ['heading', '|', 'bold', 'italic', 'underline', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|', 'undo', 'redo']
@@ -841,7 +1006,6 @@
                 showToast('Berhasil', @json(session('success')));
             @endif
 
-            // Event Filter & Search
             const searchInput = document.getElementById('searchArtikel');
             const statusSelect = document.getElementById('statusArtikel');
             const kategoriSelect = document.getElementById('kategoriArtikel');
@@ -870,6 +1034,58 @@
         });
 
 
+        /* PILIH MODE MEDIA (GAMBAR / BANNER WARNA / TANPA GAMBAR) */
+        function pilihModeMedia(mode) {
+            document.getElementById('modeMedia').value = mode;
+
+            document.querySelectorAll('#mediaModeGrid .media-mode-card').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+
+            const panelUpload = document.getElementById('panelUploadGambar');
+            const panelBanner = document.getElementById('panelBannerPreview');
+
+            if (mode === 'gambar') {
+                panelUpload.style.display = 'block';
+                panelBanner.style.display = 'none';
+            } else {
+                panelUpload.style.display = 'none';
+                panelBanner.style.display = 'block';
+                updateFormMediaPreview();
+            }
+        }
+
+        function updateFormMediaPreview() {
+            const mode = document.getElementById('modeMedia')?.value || 'gambar';
+            const container = document.getElementById('formLiveCardPreview');
+            if (!container || mode === 'gambar') return;
+
+            const judulInput = (document.getElementById('artikelJudul')?.value || '').trim() || 'Judul Konten Anda Akan Tampil di Sini';
+
+            if (mode === 'tanpa_gambar') {
+                container.innerHTML = `
+                    <div style="max-width: 380px; background: #ffffff; border: 1px solid #D8E6DF; border-left: 4px solid #1E9E66; border-radius: 10px; padding: 14px; color: #182B24;">
+                        <span style="display:inline-block; font-size:10px; font-weight:700; color:#157A4E; background:#D7EDE2; padding:2px 8px; border-radius:99px; margin-bottom:6px;">Mode Teks Saja (Tanpa Gambar)</span>
+                        <div style="font-size:14px; font-weight:700; line-height:1.35;">${escapeHtml(judulInput)}</div>
+                        <div style="font-size:11.5px; color:#5D736B; margin-top:4px;">Di aplikasi mobile, kartu akan langsung menampilkan judul & ringkasan teks tanpa kotak gambar kosong.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const tema = mode.replace('banner_', '');
+            const meta = bannerMeta[tema] || bannerMeta.edukasi;
+
+            container.innerHTML = `
+                <div class="${meta.gradClass}" style="max-width: 380px; border-radius: 12px; padding: 16px 18px; box-shadow: 0 6px 18px rgba(24, 43, 36, .12);">
+                    <span style="display:inline-block; font-size:10px; font-weight:700; background:rgba(255,255,255,.20); padding:3px 9px; border-radius:99px; letter-spacing:.3px;">${meta.label}</span>
+                    <div style="font-size:16px; font-weight:800; line-height:1.35; margin-top:10px;">${escapeHtml(judulInput)}</div>
+                    <div style="font-size:11px; opacity:.88; margin-top:6px;">Pratinjau header banner warna otomatis di aplikasi mobile</div>
+                </div>
+            `;
+        }
+
+
         /* NAVIGASI ANTARA DAFTAR & FORM FULL PAGE */
         function alihKeForm(mode, id = null) {
             document.getElementById('viewDaftar').style.display = 'none';
@@ -889,6 +1105,7 @@
             if (mode === 'tambah') {
                 document.getElementById('formTitleText').textContent = 'Tambah Konten Artikel & Edukasi Baru';
                 document.getElementById('artikelId').value = '';
+                pilihModeMedia('gambar');
             } else if (mode === 'edit') {
                 document.getElementById('formTitleText').textContent = 'Edit Konten Artikel & Edukasi';
                 isiFormEdit(id);
@@ -917,17 +1134,24 @@
 
             document.getElementById('artikelId').value = artikel.id_artikel;
             document.getElementById('artikelJudul').value = artikel.judul ?? '';
-            document.getElementById('artikelJenis').value = artikel.jenis ?? 'edukasi';
-            document.getElementById('artikelTanggal').value = artikel.tanggal_publish ?? '';
+            document.getElementById('artikelJenis').value = (artikel.jenis === 'acara' ? 'event' : artikel.jenis) ?? 'edukasi';
+            document.getElementById('artikelTanggal').value = artikel.tanggal_publish ? artikel.tanggal_publish.split('T')[0].split(' ')[0] : '';
 
             if (myEditor) myEditor.setData(artikel.konten ?? '');
 
             const gambarLama = document.getElementById('gambarLamaInfo');
-            if (artikel.gambar) {
+
+            if (artikel.gambar && artikel.gambar.startsWith('banner:')) {
+                const tema = artikel.gambar.replace('banner:', '');
+                pilihModeMedia('banner_' + tema);
+                gambarLama.innerHTML = '';
+            } else if (artikel.gambar) {
+                pilihModeMedia('gambar');
                 const imgSrc = artikel.gambar.startsWith('http') ? artikel.gambar : `${urlGambarArtikel}/${encodeURIComponent(artikel.gambar)}`;
                 gambarLama.innerHTML = `<img src="${imgSrc}" alt="Gambar lama"><small>Gambar saat ini. Pilih file baru jika ingin menggantinya.</small>`;
             } else {
-                gambarLama.innerHTML = '<small>Belum ada gambar.</small>';
+                pilihModeMedia('tanpa_gambar');
+                gambarLama.innerHTML = '';
             }
         }
 
@@ -938,9 +1162,11 @@
             const id = document.getElementById('artikelId').value;
             clearFormErrors(['judul', 'jenis', 'gambar', 'konten', 'tanggal']);
 
+            const modeMedia = document.getElementById('modeMedia').value;
             const formData = new FormData();
             formData.append('judul', document.getElementById('artikelJudul').value.trim());
             formData.append('jenis', document.getElementById('artikelJenis').value);
+            formData.append('mode_media', modeMedia);
             formData.append('konten', myEditor ? myEditor.getData() : '');
 
             let tanggalPublish = '';
@@ -953,10 +1179,12 @@
             }
             formData.append('tanggal_publish', tanggalPublish);
 
-            const file = document.getElementById('artikelGambar').files[0];
-            const urlGambarFetched = document.getElementById('artikelGambarUrl').value;
-            if (file) formData.append('gambar', file);
-            else if (urlGambarFetched) formData.append('gambar_url', urlGambarFetched);
+            if (modeMedia === 'gambar') {
+                const file = document.getElementById('artikelGambar').files[0];
+                const urlGambarFetched = document.getElementById('artikelGambarUrl').value;
+                if (file) formData.append('gambar', file);
+                else if (urlGambarFetched) formData.append('gambar_url', urlGambarFetched);
+            }
 
             let url = urlArtikelStore;
             if (id) {
@@ -1022,7 +1250,6 @@
                 tableInfo.innerHTML = tampil === 0 ? 'Tidak ada data' : `Menampilkan konten <strong>${start + 1}</strong> - <strong>${Math.min(start + perPage, tampil)}</strong> dari <strong>${tampil}</strong>`;
             }
 
-            // Render pagination buttons
             const pContainer = document.getElementById('paginationButtons');
             if (pContainer) {
                 let html = `<button class="btn btn--ghost" type="button" data-page="${window.artikelCurrentPage - 1}" ${window.artikelCurrentPage === 1 ? 'disabled' : ''}>‹</button>`;
@@ -1059,9 +1286,23 @@
                 return;
             }
 
-            let gambarHtml = item.gambar ?
-                `<img src="${item.gambar.startsWith('http') ? item.gambar : `${urlGambarArtikel}/${encodeURIComponent(item.gambar)}`}" class="phone-image">` :
-                '<div class="phone-image phone-image--kosong">Tidak ada gambar</div>';
+            let headerMediaHtml = '';
+            if (item.gambar && item.gambar.startsWith('banner:')) {
+                const tema = item.gambar.replace('banner:', '');
+                const meta = bannerMeta[tema] || bannerMeta.edukasi;
+                headerMediaHtml = `
+                    <div class="phone-banner-box ${meta.gradClass}">
+                        <span class="phone-banner-pill">${meta.label}</span>
+                        <div class="phone-banner-title">${escapeHtml(item.judul)}</div>
+                    </div>
+                `;
+            } else if (item.gambar) {
+                const src = item.gambar.startsWith('http') ? item.gambar : `${urlGambarArtikel}/${encodeURIComponent(item.gambar)}`;
+                headerMediaHtml = `<img src="${src}" class="phone-image">`;
+            } else {
+                // Mode teks saja: tidak ada kotak kosong, langsung garis aksen editorial
+                headerMediaHtml = `<div class="phone-textonly-bar"></div>`;
+            }
 
             const jenisLabel = jsLabelJenis[item.jenis] || 'Edukasi Sampah';
             let metaHtml = '♻ ' + escapeHtml(jenisLabel);
@@ -1072,7 +1313,7 @@
             }
 
             body.innerHTML = `
-                ${gambarHtml}
+                ${headerMediaHtml}
                 <div class="phone-title">${escapeHtml(item.judul)}</div>
                 <div class="phone-meta">${metaHtml}</div>
                 <div class="phone-content">${item.konten || ''}</div>
@@ -1150,7 +1391,22 @@
             document.getElementById('detailJudul').textContent = item.judul;
             document.getElementById('detailTanggal').textContent = (item.jenis || 'edukasi').toUpperCase() + ' • ' + (item.tanggal_publish ? 'Dipublikasikan' : 'Draft');
             document.getElementById('detailKonten').innerHTML = item.konten || '-';
-            document.getElementById('detailGambar').innerHTML = item.gambar ? `<img src="${item.gambar.startsWith('http') ? item.gambar : `${urlGambarArtikel}/${encodeURIComponent(item.gambar)}`}" class="detail-image">` : '';
+
+            let mediaHtml = '';
+            if (item.gambar && item.gambar.startsWith('banner:')) {
+                const tema = item.gambar.replace('banner:', '');
+                const meta = bannerMeta[tema] || bannerMeta.edukasi;
+                mediaHtml = `
+                    <div class="detail-banner ${meta.gradClass}">
+                        <span style="font-size:11px; font-weight:700; opacity:.9;">${meta.label}</span>
+                        <strong style="font-size:18px;">${escapeHtml(item.judul)}</strong>
+                    </div>
+                `;
+            } else if (item.gambar) {
+                const src = item.gambar.startsWith('http') ? item.gambar : `${urlGambarArtikel}/${encodeURIComponent(item.gambar)}`;
+                mediaHtml = `<img src="${src}" class="detail-image">`;
+            }
+            document.getElementById('detailGambar').innerHTML = mediaHtml;
             bukaModal('modalDetail');
         }
 
@@ -1201,6 +1457,5 @@
     </script>
 
 </div>
-
 
 @endsection

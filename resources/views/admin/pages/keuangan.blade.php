@@ -1093,9 +1093,16 @@
      SCRIPT KEUANGAN PAGE
 ============================================================== --}}
 <script>
+    // Ambil saldo dari PHP untuk validasi frontend
+    const saldoKasSistem = {{ $saldoKas ?? 0 }};
+
     document.addEventListener('DOMContentLoaded', function() {
         @if (session('success'))
             showToast('Berhasil', @json(session('success')));
+        @endif
+
+        @if (session('error'))
+            showToast('Gagal', @json(session('error')), 'error');
         @endif
 
         const searchInput = document.getElementById('searchKeuangan');
@@ -1391,17 +1398,31 @@
     function simpanTransaksi(event) {
         event.preventDefault();
 
-        if (!document.getElementById('transaksiJenis').value) {
+        const jenis = document.getElementById('transaksiJenis').value;
+        const jumlah = parseFloat(document.getElementById('transaksiJumlah').value) || 0;
+
+        if (!jenis) {
             showToast('Gagal menyimpan', 'Silakan pilih jenis transaksi.', 'error');
             document.getElementById('cari_transaksiJenis')?.focus();
             return false;
         }
 
+        // --- VALIDASI SALDO DI FRONTEND ---
+        if (jenis === 'Pengeluaran' && jumlah > saldoKasSistem) {
+            showToast(
+                'Gagal menyimpan',
+                `Saldo kas tidak mencukupi! Sisa saldo Anda saat ini adalah ${formatRupiah(saldoKasSistem)}.`,
+                'error'
+            );
+            return false; // Hentikan proses
+        }
+        // ----------------------------------
+
         const payload = {
-            jenis: document.getElementById('transaksiJenis').value,
+            jenis: jenis,
             tanggal: document.getElementById('transaksiTanggal').value,
             kategori: document.getElementById('transaksiKategori').value,
-            jumlah: document.getElementById('transaksiJumlah').value,
+            jumlah: jumlah,
             keterangan: document.getElementById('transaksiKeterangan').value
         };
 
