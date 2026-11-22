@@ -216,6 +216,8 @@
                                 $isBanner = $item->gambar && \Illuminate\Support\Str::startsWith($item->gambar, 'banner:');
                                 $bannerKey = $isBanner ? str_replace('banner:', '', $item->gambar) : null;
                                 $bannerInfo = $bannerKey ? ($bannerConfig[$bannerKey] ?? $bannerConfig['edukasi']) : null;
+                                $cleanKontenRow = trim(html_entity_decode(strip_tags($item->konten), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                                $isKontenLink = filter_var($cleanKontenRow, FILTER_VALIDATE_URL) !== false;
                             @endphp
 
                             <tr data-judul="{{ strtolower($item->judul) }}" data-status="{{ $status }}" data-kategori="{{ $jenisKey }}">
@@ -235,7 +237,13 @@
 
                                 <td>
                                     <div class="artikel-judul">{{ $item->judul }}</div>
-                                    <div class="artikel-ringkasan">{{ \Illuminate\Support\Str::limit(strip_tags($item->konten), 45) }}</div>
+                                    @if ($isKontenLink)
+                                        <div class="artikel-ringkasan" style="color: #1E9E66; font-weight: 600;">
+                                            🔗 Link Web ({{ parse_url($cleanKontenRow, PHP_URL_HOST) ?? 'Sumber Eksternal' }})
+                                        </div>
+                                    @else
+                                        <div class="artikel-ringkasan">{{ \Illuminate\Support\Str::limit($cleanKontenRow, 45) }}</div>
+                                    @endif
                                 </td>
 
                                 <td>
@@ -355,7 +363,7 @@
         <div class="form-full-header">
             <div>
                 <h2 class="card-title" id="formTitleText">Formulir Konten Artikel & Edukasi</h2>
-                <p class="card-sub">Tulis materi secara profesional dan pilih gaya tampilan header untuk aplikasi warga.</p>
+                <p class="card-sub">Tulis materi secara manual atau tempel link artikel dari Google agar tampil utuh di aplikasi warga.</p>
             </div>
             <button class="btn btn--ghost" type="button" onclick="tutupFormFull()">
                 ← Kembali ke Daftar
@@ -463,13 +471,42 @@
                     </div>
                 </div>
 
-                {{-- CKEDITOR CONTAINER --}}
+                {{-- PILIHAN SUMBER KONTEN: MANUAL VS LINK WEB --}}
                 <div class="form-group form-group--full">
-                    <div class="editor-label-wrap">
-                        <label for="editorKonten">Isi Konten / Materi <span class="text-danger">*</span></label>
+                    <label>Sumber Isi Konten <span class="text-danger">*</span></label>
+                    <input type="hidden" id="sumberKonten" name="sumber_konten" value="manual">
+
+                    <div class="sumber-mode-grid">
+                        <button type="button" class="media-mode-card active" data-sumber="manual" onclick="pilihSumberKonten('manual')">
+                            <div class="media-mode-icon media-mode-icon--text">✍️</div>
+                            <div class="media-mode-info">
+                                <strong>Tulis Manual (Editor)</strong>
+                                <span>Ketik atau format artikel sendiri</span>
+                            </div>
+                        </button>
+
+                        <button type="button" class="media-mode-card" data-sumber="link" onclick="pilihSumberKonten('link')">
+                            <div class="media-mode-icon media-mode-icon--img">🔗</div>
+                            <div class="media-mode-info">
+                                <strong>Tempel Link Google / Web</strong>
+                                <span>Tampilkan halaman web 100% utuh di mobile</span>
+                            </div>
+                        </button>
                     </div>
-                    <textarea id="editorKonten" class="form-control"></textarea>
-                    <span class="form-error" id="err_konten"></span>
+
+                    <div id="panelKontenManual">
+                        <textarea id="editorKonten" class="form-control"></textarea>
+                        <span class="form-error" id="err_konten"></span>
+                    </div>
+
+                    <div id="panelKontenLink" class="media-option-panel" style="display: none; margin-top: 0;">
+                        <label for="artikelLinkUrl" style="margin-bottom: 6px; display: block;">URL / Link Artikel dari Google <span class="text-danger">*</span></label>
+                        <input type="url" id="artikelLinkUrl" class="form-control" placeholder="https://www.contoh-berita.com/judul-artikel-sampah">
+                        <span class="field-hint" style="margin-top: 6px; display: block;">
+                            Salin link artikel dari Google/browser lalu tempel di sini. Saat warga membuka artikel di aplikasi mobile, halaman web asli akan ditampilkan secara utuh tanpa perubahan.
+                        </span>
+                        <span class="form-error" id="err_link_url"></span>
+                    </div>
                 </div>
             </div>
 
@@ -794,13 +831,20 @@
         .artikel-page .phone-empty { text-align: center; color: #92A59E; padding-top: 120px; font-size: 11px; }
 
         /* =========================================================
-               PILIHAN MODE MEDIA DI FORM
+               PILIHAN MODE MEDIA & SUMBER KONTEN DI FORM
             ========================================================= */
         .artikel-page .media-mode-grid {
             display: grid;
             grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 10px;
             margin-top: 4px;
+        }
+        .artikel-page .sumber-mode-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 4px;
+            margin-bottom: 12px;
         }
         .artikel-page .media-mode-card {
             display: flex;
@@ -970,6 +1014,7 @@
             .artikel-page .artikel-columns { grid-template-columns: 1fr; }
             .artikel-page .preview-card { display: none; }
             .artikel-page .form-grid-columns { grid-template-columns: 1fr; }
+            .artikel-page .sumber-mode-grid { grid-template-columns: 1fr; }
         }
     </style>
 
@@ -1034,6 +1079,34 @@
         });
 
 
+        function extractSingleUrl(html) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html || '';
+            const text = (tmp.textContent || tmp.innerText || '').trim();
+            return /^https?:\/\/[^\s]+$/i.test(text) ? text : null;
+        }
+
+
+        /* PILIH SUMBER KONTEN (TULIS MANUAL VS TEMPEL LINK WEB) */
+        function pilihSumberKonten(sumber) {
+            document.getElementById('sumberKonten').value = sumber;
+            document.querySelectorAll('[data-sumber]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.sumber === sumber);
+            });
+
+            const panelManual = document.getElementById('panelKontenManual');
+            const panelLink = document.getElementById('panelKontenLink');
+
+            if (sumber === 'link') {
+                panelManual.style.display = 'none';
+                panelLink.style.display = 'block';
+            } else {
+                panelManual.style.display = 'block';
+                panelLink.style.display = 'none';
+            }
+        }
+
+
         /* PILIH MODE MEDIA (GAMBAR / BANNER WARNA / TANPA GAMBAR) */
         function pilihModeMedia(mode) {
             document.getElementById('modeMedia').value = mode;
@@ -1067,7 +1140,7 @@
                     <div style="max-width: 380px; background: #ffffff; border: 1px solid #D8E6DF; border-left: 4px solid #1E9E66; border-radius: 10px; padding: 14px; color: #182B24;">
                         <span style="display:inline-block; font-size:10px; font-weight:700; color:#157A4E; background:#D7EDE2; padding:2px 8px; border-radius:99px; margin-bottom:6px;">Mode Teks Saja (Tanpa Gambar)</span>
                         <div style="font-size:14px; font-weight:700; line-height:1.35;">${escapeHtml(judulInput)}</div>
-                        <div style="font-size:11.5px; color:#5D736B; margin-top:4px;">Di aplikasi mobile, kartu akan langsung menampilkan judul & ringkasan teks tanpa kotak gambar kosong.</div>
+                        <div style="font-size:11.5px; color:#5D736B; margin-top:4px;">Di aplikasi mobile, kartu akan langsung menampilkan judul & ringkasan tanpa kotak gambar kosong.</div>
                     </div>
                 `;
                 return;
@@ -1095,8 +1168,9 @@
 
             const form = document.getElementById('formArtikel');
             form.reset();
-            clearFormErrors(['judul', 'jenis', 'gambar', 'konten', 'tanggal']);
+            clearFormErrors(['judul', 'jenis', 'gambar', 'konten', 'link_url', 'tanggal']);
             document.getElementById('artikelGambarUrl').value = '';
+            document.getElementById('artikelLinkUrl').value = '';
             document.getElementById('gambarPreviewWrap').style.display = 'none';
             document.getElementById('gambarLamaInfo').innerHTML = '';
 
@@ -1106,6 +1180,7 @@
                 document.getElementById('formTitleText').textContent = 'Tambah Konten Artikel & Edukasi Baru';
                 document.getElementById('artikelId').value = '';
                 pilihModeMedia('gambar');
+                pilihSumberKonten('manual');
             } else if (mode === 'edit') {
                 document.getElementById('formTitleText').textContent = 'Edit Konten Artikel & Edukasi';
                 isiFormEdit(id);
@@ -1137,7 +1212,16 @@
             document.getElementById('artikelJenis').value = (artikel.jenis === 'acara' ? 'event' : artikel.jenis) ?? 'edukasi';
             document.getElementById('artikelTanggal').value = artikel.tanggal_publish ? artikel.tanggal_publish.split('T')[0].split(' ')[0] : '';
 
-            if (myEditor) myEditor.setData(artikel.konten ?? '');
+            const detectedUrl = extractSingleUrl(artikel.konten ?? '');
+            if (detectedUrl) {
+                pilihSumberKonten('link');
+                document.getElementById('artikelLinkUrl').value = detectedUrl;
+                if (myEditor) myEditor.setData('');
+            } else {
+                pilihSumberKonten('manual');
+                document.getElementById('artikelLinkUrl').value = '';
+                if (myEditor) myEditor.setData(artikel.konten ?? '');
+            }
 
             const gambarLama = document.getElementById('gambarLamaInfo');
 
@@ -1160,14 +1244,24 @@
         function simpanArtikel(aksi) {
             aksi = aksi === 'draft' ? 'draft' : 'publish';
             const id = document.getElementById('artikelId').value;
-            clearFormErrors(['judul', 'jenis', 'gambar', 'konten', 'tanggal']);
+            clearFormErrors(['judul', 'jenis', 'gambar', 'konten', 'link_url', 'tanggal']);
 
             const modeMedia = document.getElementById('modeMedia').value;
+            const sumberKonten = document.getElementById('sumberKonten').value;
+            const linkUrl = document.getElementById('artikelLinkUrl').value.trim();
+
             const formData = new FormData();
             formData.append('judul', document.getElementById('artikelJudul').value.trim());
             formData.append('jenis', document.getElementById('artikelJenis').value);
             formData.append('mode_media', modeMedia);
-            formData.append('konten', myEditor ? myEditor.getData() : '');
+            formData.append('sumber_konten', sumberKonten);
+
+            if (sumberKonten === 'link') {
+                formData.append('link_url', linkUrl);
+                formData.append('konten', linkUrl);
+            } else {
+                formData.append('konten', myEditor ? myEditor.getData() : '');
+            }
 
             let tanggalPublish = '';
             if (aksi === 'publish') {
@@ -1203,7 +1297,7 @@
             .then(async res => {
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) {
-                    if (data.errors) tampilkanFormErrors(data.errors, ['judul', 'jenis', 'gambar', 'konten', 'tanggal']);
+                    if (data.errors) tampilkanFormErrors(data.errors, ['judul', 'jenis', 'gambar', 'konten', 'link_url', 'tanggal']);
                     throw new Error(data.message || 'Gagal menyimpan artikel.');
                 }
                 return data;
@@ -1300,7 +1394,6 @@
                 const src = item.gambar.startsWith('http') ? item.gambar : `${urlGambarArtikel}/${encodeURIComponent(item.gambar)}`;
                 headerMediaHtml = `<img src="${src}" class="phone-image">`;
             } else {
-                // Mode teks saja: tidak ada kotak kosong, langsung garis aksen editorial
                 headerMediaHtml = `<div class="phone-textonly-bar"></div>`;
             }
 
@@ -1312,11 +1405,19 @@
                 metaHtml += ' <span class="phone-badge-draft">Draft</span>';
             }
 
+            const previewUrl = extractSingleUrl(item.konten || '');
+            const previewContentHtml = previewUrl
+                ? `<div style="background:#EAF6F0;border:1px solid #C8D8BE;border-radius:8px;padding:10px;color:#157A4E;font-size:10px;line-height:1.45;">
+                     <strong>🔗 Halaman Web Utuh (WebView)</strong><br>
+                     <span style="word-break:break-all;color:#566B59;">${escapeHtml(previewUrl)}</span>
+                   </div>`
+                : `<div class="phone-content">${item.konten || ''}</div>`;
+
             body.innerHTML = `
                 ${headerMediaHtml}
                 <div class="phone-title">${escapeHtml(item.judul)}</div>
                 <div class="phone-meta">${metaHtml}</div>
-                <div class="phone-content">${item.konten || ''}</div>
+                ${previewContentHtml}
                 <div class="phone-tip">💡 <strong>Tips Warga</strong><br>Pilah sampah dari rumah untuk lingkungan yang lebih bersih.</div>
             `;
         }
@@ -1390,7 +1491,20 @@
             if (!item) return;
             document.getElementById('detailJudul').textContent = item.judul;
             document.getElementById('detailTanggal').textContent = (item.jenis || 'edukasi').toUpperCase() + ' • ' + (item.tanggal_publish ? 'Dipublikasikan' : 'Draft');
-            document.getElementById('detailKonten').innerHTML = item.konten || '-';
+
+            const detailUrl = extractSingleUrl(item.konten || '');
+            if (detailUrl) {
+                document.getElementById('detailKonten').innerHTML = `
+                    <div style="padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface-secondary);">
+                        <div style="font-weight:700;color:#1E9E66;margin-bottom:4px;">🔗 Tautan Artikel Web Eksternal</div>
+                        <a href="${escapeHtml(detailUrl)}" target="_blank" rel="noopener noreferrer" style="color:var(--text);word-break:break-all;text-decoration:underline;">
+                            ${escapeHtml(detailUrl)}
+                        </a>
+                    </div>
+                `;
+            } else {
+                document.getElementById('detailKonten').innerHTML = item.konten || '-';
+            }
 
             let mediaHtml = '';
             if (item.gambar && item.gambar.startsWith('banner:')) {

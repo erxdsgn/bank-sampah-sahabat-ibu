@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ForgotPasswordController;
 use App\Http\Controllers\Api\HargaSampahApiController;
 use App\Http\Controllers\Api\JadwalSetoranApiController;
 use App\Http\Controllers\Api\SetoranApiController;
@@ -15,6 +16,11 @@ use Kreait\Laravel\Firebase\Facades\Firebase;
 // =============================
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register-warga', [AuthController::class, 'registerWarga']);
+// Fitur Lupa Password (OTP)
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendOtp'])->middleware('throttle:3,1');
+Route::post('/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
+Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
+
 Route::get('/harga-sampah', [HargaSampahApiController::class, 'index']);
 Route::get('/artikel-edukasi', [ArtikelEdukasiApiController::class, 'index']);
 

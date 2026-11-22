@@ -44,11 +44,16 @@ class ArtikelEdukasiApiController extends Controller
                     }
                 }
 
+                $cleanKonten = trim(strip_tags((string) $item->konten));
+                $isLink = (bool) preg_match('/^https?:\/\/[^\s]+$/i', $cleanKonten);
+
                 return [
                     'id_artikel'      => $item->id_artikel,
                     'judul'           => $item->judul,
                     'jenis'           => $item->jenis,
                     'konten'          => $item->konten,
+                    'is_link'         => $isLink,
+                    'link_url'        => $isLink ? $cleanKonten : null,
                     'tipe_tampilan'   => $tipeTampilan, // 'gambar' | 'banner' | 'teks'
                     'banner_tema'     => $bannerTema,   // 'edukasi' | 'event' | 'artikel' | null
                     'gambar'          => $gambarUrl,

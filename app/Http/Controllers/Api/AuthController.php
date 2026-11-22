@@ -107,7 +107,6 @@ class AuthController extends Controller
                 'message' => 'Registrasi warga berhasil.',
                 'data'    => $result,
             ], 201);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status'  => 'error',
@@ -117,7 +116,7 @@ class AuthController extends Controller
     }
 
     /**
-     * API Edit Profil, Username & Pemilihan/Perubahan Kelompok (Jeda 30 Hari)
+     * API Edit Profil, Username, Email & Pemilihan/Perubahan Kelompok (Jeda 30 Hari)
      */
     public function updateProfile(Request $request)
     {
@@ -141,6 +140,7 @@ class AuthController extends Controller
 
         $validator = Validator::make($request->all(), [
             'username'                => 'required|string|max:50|unique:users,username,' . $user->id,
+            'email'                   => 'required|email|max:100|unique:users,email,' . $user->id,
             'nama'                    => 'required|string|max:100',
             'kelompok'                => 'nullable|string|max:50',
             'no_hp'                   => 'nullable|string|max:20',
@@ -152,6 +152,9 @@ class AuthController extends Controller
         ], [
             'username.required' => 'Username wajib diisi.',
             'username.unique'   => 'Username sudah digunakan orang lain.',
+            'email.required'    => 'Email wajib diisi.',
+            'email.email'       => 'Format email tidak valid.',
+            'email.unique'      => 'Email sudah terdaftar.',
             'nama.required'     => 'Nama lengkap wajib diisi.',
         ]);
 
@@ -166,6 +169,7 @@ class AuthController extends Controller
             DB::transaction(function () use ($user, $warga, $request) {
                 $user->update([
                     'username' => $request->username,
+                    'email'    => $request->email,   // ✅ TAMBAHKAN INI
                 ]);
 
                 $dataWarga = [
@@ -186,6 +190,10 @@ class AuthController extends Controller
                 $warga->update($dataWarga);
             });
 
+            // ✅ Refresh model agar data terbaru (email baru) ikut terkirim
+            $user->refresh();
+            $user->load('warga');
+
             return response()->json([
                 'status'  => 'success',
                 'message' => 'Profil berhasil diperbarui.',
@@ -196,10 +204,9 @@ class AuthController extends Controller
                     'avatar_url'       => $user->avatar ? asset('storage/' . $user->avatar) : null,
                     'notifikasi_aktif' => $user->notifikasi_aktif ?? true,
                     'role'             => 'warga',
-                    'profil'           => $user->warga()->first(),
+                    'profil'           => $user->warga,
                 ],
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status'  => 'error',
@@ -249,7 +256,6 @@ class AuthController extends Controller
                 'status'  => 'success',
                 'message' => 'Password berhasil diperbarui.',
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status'  => 'error',

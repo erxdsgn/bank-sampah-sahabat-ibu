@@ -44,11 +44,17 @@ class ArtikelEdukasiController extends Controller
             'judul'           => 'required|string|max:80',
             'jenis'           => 'required|in:edukasi,artikel,event,acara',
             'mode_media'      => 'required|in:gambar,banner_edukasi,banner_event,banner_artikel,tanpa_gambar',
-            'konten'          => 'required|string',
+            'sumber_konten'   => 'nullable|in:manual,link',
+            'link_url'        => 'required_if:sumber_konten,link|nullable|url',
+            'konten'          => 'required_unless:sumber_konten,link|nullable|string',
             'gambar'          => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'gambar_url'      => 'nullable|url',
             'tanggal_publish' => 'nullable|date',
         ]);
+
+        if (($validated['sumber_konten'] ?? 'manual') === 'link') {
+            $validated['konten'] = trim($validated['link_url']);
+        }
 
         $modeMedia = $validated['mode_media'];
 
@@ -64,15 +70,13 @@ class ArtikelEdukasiController extends Controller
                 $validated['gambar'] = null;
             }
         } elseif (str_starts_with($modeMedia, 'banner_')) {
-            // Simpan sebagai 'banner:edukasi', 'banner:event', atau 'banner:artikel'
             $tema = str_replace('banner_', '', $modeMedia);
             $validated['gambar'] = 'banner:' . $tema;
         } else {
-            // Mode 'tanpa_gambar' (teks saja)
             $validated['gambar'] = null;
         }
 
-        unset($validated['gambar_url'], $validated['mode_media']);
+        unset($validated['gambar_url'], $validated['mode_media'], $validated['sumber_konten'], $validated['link_url']);
         $validated['tanggal_publish'] = $validated['tanggal_publish'] ?? null;
         $validated['id_admin'] = Auth::id() ?? 1;
 
@@ -95,11 +99,17 @@ class ArtikelEdukasiController extends Controller
             'judul'           => 'required|string|max:80',
             'jenis'           => 'required|in:edukasi,artikel,event,acara',
             'mode_media'      => 'required|in:gambar,banner_edukasi,banner_event,banner_artikel,tanpa_gambar',
-            'konten'          => 'required|string',
+            'sumber_konten'   => 'nullable|in:manual,link',
+            'link_url'        => 'required_if:sumber_konten,link|nullable|url',
+            'konten'          => 'required_unless:sumber_konten,link|nullable|string',
             'gambar'          => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'gambar_url'      => 'nullable|url',
             'tanggal_publish' => 'nullable|date',
         ]);
+
+        if (($validated['sumber_konten'] ?? 'manual') === 'link') {
+            $validated['konten'] = trim($validated['link_url']);
+        }
 
         $modeMedia = $validated['mode_media'];
 
@@ -115,10 +125,8 @@ class ArtikelEdukasiController extends Controller
                 $this->hapusFileGambarLama($artikel->gambar);
                 $validated['gambar'] = $request->input('gambar_url');
             } elseif ($artikel->gambar && str_starts_with($artikel->gambar, 'banner:')) {
-                // Jika sebelumnya banner warna lalu pindah ke mode gambar tapi belum upload file baru
                 $validated['gambar'] = null;
             } else {
-                // Pertahankan gambar lama
                 unset($validated['gambar']);
             }
         } elseif (str_starts_with($modeMedia, 'banner_')) {
@@ -126,12 +134,11 @@ class ArtikelEdukasiController extends Controller
             $tema = str_replace('banner_', '', $modeMedia);
             $validated['gambar'] = 'banner:' . $tema;
         } else {
-            // Mode 'tanpa_gambar' (teks saja)
             $this->hapusFileGambarLama($artikel->gambar);
             $validated['gambar'] = null;
         }
 
-        unset($validated['gambar_url'], $validated['mode_media']);
+        unset($validated['gambar_url'], $validated['mode_media'], $validated['sumber_konten'], $validated['link_url']);
         $validated['tanggal_publish'] = $validated['tanggal_publish'] ?? null;
 
         $artikel->update($validated);
