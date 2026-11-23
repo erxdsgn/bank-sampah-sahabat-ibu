@@ -35,7 +35,7 @@ class KeuanganController extends Controller
             ->unique()
             ->values();
 
-        return view('admin.pages.keuangan', compact(
+        return view('admin.pages.keuangan.index', compact(
             'transaksi',
             'totalPemasukan',
             'totalPengeluaran',

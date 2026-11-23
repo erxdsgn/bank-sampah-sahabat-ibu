@@ -275,7 +275,7 @@ class HomeController extends Controller
             $statistikJenisSampah = $this->hitungStatistikJenisSampah();
         }
 
-        return view('admin.pages.dashboard', compact(
+        return view('admin.pages.dashboard.index', compact(
             'saldoKas',
             'jumlahWarga',
             'jumlahSetoran',

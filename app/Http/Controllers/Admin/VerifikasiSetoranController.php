@@ -64,7 +64,7 @@ class VerifikasiSetoranController extends Controller
         )->get();
 
         return view(
-            'admin.pages.verifikasi-setoran',
+            'admin.pages.verifikasi-setoran.index',
             compact(
                 'setoran',
                 'detailMap',

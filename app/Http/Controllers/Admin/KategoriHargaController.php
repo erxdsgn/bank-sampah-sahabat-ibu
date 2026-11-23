@@ -32,7 +32,7 @@ class KategoriHargaController extends Controller
             ->get();
 
         return view(
-            'admin.pages.kategori-harga',
+            'admin.pages.kategori-harga.index',
             compact('kategoriInduk')
         );
     }

@@ -16,7 +16,7 @@ class WargaController extends Controller
     public function index()
     {
         $warga = Warga::orderBy('created_at', 'desc')->get();
-        return view('admin.pages.warga', compact('warga'));
+        return view('admin.pages.warga.index', compact('warga'));
     }
 
     // === LEADERBOARD POPUP (RESET OTOMATIS SETIAP 3 BULAN / TRIWULAN) ===
@@ -62,7 +62,7 @@ class WargaController extends Controller
 
     public function create()
     {
-        return view('admin.pages.form-warga');
+        return view('admin.pages.warga.index');
     }
 
     public function store(Request $request)
@@ -146,19 +146,19 @@ class WargaController extends Controller
             ], 201);
         }
 
-        return redirect()->route('admin.warga')->with('success', 'Data warga berhasil ditambahkan.');
+        return redirect()->route('admin.warga.')->with('success', 'Data warga berhasil ditambahkan.');
     }
 
     public function show($id)
     {
         $warga = Warga::findOrFail($id);
-        return view('admin.pages.warga', compact('warga'));
+        return view('admin.pages.warga.index', compact('warga'));
     }
 
     public function edit($id)
     {
         $warga = Warga::findOrFail($id);
-        return view('admin.pages.form-warga', compact('warga'));
+        return view('admin.pages.warga.index', compact('warga'));
     }
 
     public function update(Request $request, $id)

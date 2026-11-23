@@ -14,7 +14,7 @@ class ArtikelEdukasiController extends Controller
     {
         $artikel = ArtikelEdukasi::orderBy('id_artikel', 'desc')->get();
 
-        return view('admin.pages.artikel', compact('artikel'));
+        return view('admin.pages.artikel.index', compact('artikel'));
     }
 
     private function normalisasiTanggalPublish(Request $request): void

@@ -31,7 +31,7 @@ class PencairanController extends Controller
             'status_rekening',
         ]);
 
-        return view('admin.pages.pencairan', compact('pencairan', 'warga'));
+        return view('admin.pages.pencairan.index', compact('pencairan', 'warga'));
     }
 
     /**

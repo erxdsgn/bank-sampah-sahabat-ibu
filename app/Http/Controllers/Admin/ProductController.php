@@ -19,7 +19,7 @@ class ProductController extends Controller
             ->orderByDesc('id_produk')
             ->get();
 
-        return view('admin.pages.katalog', compact('katalogProduk'));
+        return view('admin.pages.katalog.index', compact('katalogProduk'));
     }
 
 
