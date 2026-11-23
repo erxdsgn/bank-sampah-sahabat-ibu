@@ -1,0 +1,730 @@
+/* =========================================================
+   KEUANGAN PAGE — STYLES UNIK
+   ========================================================= */
+
+.keuangan-page input,
+.keuangan-page select,
+.keuangan-page textarea {
+    color-scheme: light;
+}
+
+html[data-theme="dark"] .keuangan-page input,
+html[data-theme="dark"] .keuangan-page select,
+html[data-theme="dark"] .keuangan-page textarea {
+    color-scheme: dark;
+}
+
+/* ---------- SUMMARY ---------- */
+.keuangan-page .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.keuangan-page .summary-card {
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--t-base);
+    border-radius: 14px;
+    box-shadow: var(--shadow-card);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.keuangan-page .summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.keuangan-page .summary-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.keuangan-page .summary-label {
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--t-muted);
+}
+
+.keuangan-page .summary-value {
+    font-size: 21px;
+    font-weight: 800;
+    line-height: 1.25;
+    color: var(--t-base);
+    font-family: 'Inter Tight', Inter, sans-serif;
+}
+
+.keuangan-page .summary-icon {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.keuangan-page .summary-icon--income {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.keuangan-page .summary-icon--expense {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.keuangan-page .summary-icon--cash {
+    background: var(--info-soft);
+    color: var(--info);
+}
+
+.keuangan-page .summary-icon--transaction {
+    background: var(--purple-soft);
+    color: var(--purple);
+}
+
+.keuangan-page .summary-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.keuangan-page .summary-info {
+    margin-top: 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--t-muted);
+}
+
+/* ---------- CARD & TOOLBAR ---------- */
+.keuangan-page .keuangan-card .table-toolbar {
+    padding: 0 0 16px;
+}
+
+.keuangan-page .keuangan-card .table-footer {
+    padding: 16px 0 0;
+}
+
+.keuangan-page .toolbar-right .combo {
+    width: 160px;
+}
+
+.keuangan-page .toolbar-right .combo-input {
+    height: 38px;
+    color: var(--t-base);
+}
+
+.keuangan-page .per-page .combo-input {
+    height: 34px;
+}
+
+/* ---------- TABEL ---------- */
+.keuangan-page .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.keuangan-page .data-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.keuangan-page .data-table thead th {
+    padding: 11px 14px;
+    background: var(--bg-muted);
+    color: var(--t-muted);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    white-space: nowrap;
+}
+
+.keuangan-page .data-table thead th:first-child {
+    border-top-left-radius: 8px;
+}
+
+.keuangan-page .data-table thead th:last-child {
+    border-top-right-radius: 8px;
+}
+
+.keuangan-page .data-table tbody td {
+    padding: 13px 14px;
+    background: var(--bg-card);
+    color: var(--t-muted);
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 13px;
+    vertical-align: middle;
+    transition: background .15s ease;
+}
+
+.keuangan-page .data-table tbody tr:hover td {
+    background: var(--bg-hover);
+}
+
+.keuangan-page .data-table td strong {
+    color: var(--t-base);
+}
+
+.keuangan-page .description-cell {
+    max-width: 280px;
+}
+
+.keuangan-page .nowrap {
+    white-space: nowrap;
+}
+
+.keuangan-page .saldo {
+    white-space: nowrap;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.keuangan-page .amount-in {
+    color: var(--success) !important;
+}
+
+.keuangan-page .amount-out {
+    color: var(--danger) !important;
+}
+
+.keuangan-page .table-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.keuangan-page .table-actions .icon-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--t-muted);
+}
+
+.keuangan-page .table-actions .icon-btn svg {
+    width: 15px;
+    height: 15px;
+}
+
+.keuangan-page .table-actions .icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--t-base);
+    border-color: var(--t-light);
+}
+
+.keuangan-page .table-actions .icon-btn.danger {
+    color: var(--danger);
+}
+
+.keuangan-page .table-actions .icon-btn.danger:hover {
+    background: var(--danger-soft);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.keuangan-page .badge--success {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.keuangan-page .badge--danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.keuangan-page .empty-table-row td {
+    border-bottom: none;
+}
+
+.keuangan-page .table-empty-content {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--t-base);
+}
+
+.keuangan-page .empty-icon {
+    margin-bottom: 10px;
+    font-size: 30px;
+    line-height: 1;
+}
+
+.keuangan-page .table-empty-content strong,
+.keuangan-page .catalog-empty strong {
+    display: block;
+    color: var(--t-base);
+    font-size: 14px;
+}
+
+.keuangan-page .table-empty-content p,
+.keuangan-page .catalog-empty p {
+    margin: 6px 0 0;
+    color: var(--t-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.keuangan-page .catalog-empty {
+    padding: 44px 20px;
+    background: var(--bg-muted);
+    color: var(--t-base);
+    text-align: center;
+    border-radius: 10px;
+    margin-top: 12px;
+}
+
+/* ---------- MODAL ---------- */
+.keuangan-page .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, .52);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    overflow-y: auto;
+}
+
+html[data-theme="dark"] .keuangan-page .modal-overlay {
+    background: rgba(2, 6, 23, .72);
+}
+
+.keuangan-page .modal-overlay.active {
+    display: flex;
+    animation: fade-in .16s ease forwards;
+}
+
+.keuangan-page .modal-box {
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 40px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    color: var(--t-base);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    animation: modalPop .18s ease-out;
+}
+
+.keuangan-page .modal-box--sm {
+    max-width: 420px;
+}
+
+.keuangan-page .modal-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.keuangan-page .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.keuangan-page .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    color: var(--t-base);
+    font-family: 'Inter Tight', Inter, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.keuangan-page .modal-title svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.keuangan-page .modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    color: var(--t-muted);
+    font-size: 20px;
+    line-height: 1;
+    transition: background .15s ease, color .15s ease;
+}
+
+.keuangan-page .modal-close:hover {
+    background: var(--bg-hover);
+    color: var(--t-base);
+}
+
+.keuangan-page .modal-body {
+    padding: 20px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    color: var(--t-base);
+}
+
+.keuangan-page .modal-body--center {
+    padding: 28px 24px 18px;
+    text-align: center;
+}
+
+.keuangan-page .modal-foot {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
+    flex-shrink: 0;
+}
+
+.keuangan-page .modal-foot--center {
+    justify-content: center;
+    border-top: 0;
+    padding-top: 0;
+    padding-bottom: 24px;
+}
+
+.keuangan-page .modal-box .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+}
+
+.keuangan-page .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.keuangan-page .form-group--full {
+    grid-column: 1 / -1;
+}
+
+.keuangan-page .form-group label {
+    color: var(--t-base);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.keuangan-page .form-group input,
+.keuangan-page .form-group textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    outline: none;
+    background: var(--bg-card);
+    color: var(--t-base);
+    font-family: inherit;
+    font-size: 13px;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.keuangan-page .form-group input {
+    height: 38px;
+}
+
+.keuangan-page .form-group .combo-input {
+    height: 38px;
+}
+
+.keuangan-page .form-group textarea {
+    resize: vertical;
+    min-height: 82px;
+    line-height: 1.5;
+}
+
+.keuangan-page .form-group input:focus,
+.keuangan-page .form-group textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.keuangan-page .form-note {
+    margin: 14px 0 0;
+    color: var(--t-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.keuangan-page .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 20px;
+}
+
+.keuangan-page .detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.keuangan-page .detail-item--full {
+    grid-column: 1 / -1;
+}
+
+.keuangan-page .detail-label {
+    color: var(--t-muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.keuangan-page .detail-value {
+    color: var(--t-base);
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.keuangan-page .confirm-icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 14px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.keuangan-page .confirm-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+}
+
+.keuangan-page .confirm-title {
+    margin: 0 0 6px;
+    color: var(--t-base);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.keuangan-page .confirm-text {
+    margin: 0;
+    color: var(--t-muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.keuangan-page .confirm-text strong {
+    color: var(--t-base);
+}
+
+/* ---------- TOAST ---------- */
+.keuangan-page .toast-wrap {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: calc(100vw - 40px);
+    pointer-events: none;
+}
+
+.keuangan-page .toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 380px;
+    max-width: calc(100vw - 40px);
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--success);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    pointer-events: auto;
+}
+
+.keuangan-page .toast.toast--error {
+    border-left-color: var(--danger);
+}
+
+.keuangan-page .toast-icon {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.keuangan-page .toast.toast--error .toast-icon {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.keuangan-page .toast-icon svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.keuangan-page .toast-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.keuangan-page .toast-title {
+    margin: 0 0 2px;
+    color: var(--t-base);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.keuangan-page .toast-text {
+    margin: 0;
+    color: var(--t-muted);
+    font-size: 12.5px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.keuangan-page .toast-close {
+    flex-shrink: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--t-light);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.keuangan-page .toast-close:hover {
+    color: var(--t-base);
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 1100px) {
+    .keuangan-page .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .keuangan-page .keuangan-card .table-toolbar {
+        align-items: stretch;
+        padding: 0 0 14px;
+    }
+    .keuangan-page .table-search {
+        width: 100%;
+    }
+    .keuangan-page .toolbar-right {
+        width: 100%;
+    }
+    .keuangan-page .toolbar-right .combo {
+        flex: 1 1 140px;
+        min-width: 130px;
+        width: auto;
+    }
+}
+
+@media (max-width: 560px) {
+    .keuangan-page .summary-grid {
+        grid-template-columns: 1fr;
+    }
+    .keuangan-page .modal-box .form-grid,
+    .keuangan-page .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    .keuangan-page .form-group--full,
+    .keuangan-page .detail-item--full {
+        grid-column: auto;
+    }
+    .keuangan-page .modal-overlay {
+        padding: 12px;
+    }
+    .keuangan-page .modal-box {
+        max-height: calc(100vh - 24px);
+        border-radius: 12px;
+    }
+    .keuangan-page .modal-head,
+    .keuangan-page .modal-body,
+    .keuangan-page .modal-foot {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    .keuangan-page .modal-foot {
+        flex-wrap: wrap;
+    }
+    .keuangan-page .modal-foot .btn {
+        flex: 1;
+        justify-content: center;
+    }
+    .keuangan-page .toolbar-right {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+    .keuangan-page .toolbar-right .combo,
+    .keuangan-page .toolbar-right .btn {
+        width: 100%;
+        min-width: 0;
+    }
+    .keuangan-page .toolbar-right .btn {
+        justify-content: center;
+    }
+    .keuangan-page .toast-wrap {
+        top: 12px;
+        right: 12px;
+        left: 12px;
+        max-width: none;
+    }
+    .keuangan-page .toast {
+        width: 100%;
+        max-width: none;
+    }
+}

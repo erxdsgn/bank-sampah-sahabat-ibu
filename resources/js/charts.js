@@ -1,14 +1,18 @@
-/**
+/* =========================================================
  * charts.js
- * ---------------------------------------------------------
- * Semua konfigurasi Chart.js. Chart dipasang otomatis ke
- * setiap <canvas data-chart-key="..."> yang ditemukan di halaman.
- *
- * npm install chart.js
- */
-import { Chart, registerables } from "chart.js";
+ * Chart.js di-load via <script src="..."> (UMD global).
+ * Tidak ada ESM import karena tidak pakai bundler.
+ * ========================================================= */
 
-Chart.register(...registerables);
+const Chart = window.Chart;
+const registerables = window.Chart?.registerables;
+
+if (!Chart) {
+  console.warn(
+    '[charts] window.Chart belum tersedia. ' +
+    'Pastikan chart.umd.min.js atau vendor-chartjs.js sudah di-load di layout SEBELUM module ini.'
+  );
+}
 
 /** Ambil warna dari CSS custom properties (biar ngikut tema light/dark) */
 function getThemeColors() {

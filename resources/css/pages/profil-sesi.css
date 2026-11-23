@@ -1,0 +1,583 @@
+/* =========================================================
+   PROFIL & SESI PERANGKAT — STYLES UNIK
+   ========================================================= */
+
+.profil-page {
+    color: var(--t-base);
+}
+
+.profil-page input,
+.profil-page select,
+.profil-page textarea {
+    color-scheme: light;
+}
+
+html[data-theme="dark"] .profil-page input,
+html[data-theme="dark"] .profil-page select,
+html[data-theme="dark"] .profil-page textarea {
+    color-scheme: dark;
+}
+
+/* =========================================================
+   SETTINGS GRID
+   ========================================================= */
+
+.profil-page .settings-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.profil-page .settings-col {
+    min-width: 0;
+}
+
+/* =========================================================
+   SECTION HEADING
+   ========================================================= */
+
+.profil-page .section-heading {
+    margin-bottom: 12px;
+}
+
+.profil-page .section-heading-title {
+    margin: 0;
+    color: var(--t-base);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+/* =========================================================
+   CARD SECTIONS
+   ========================================================= */
+
+.profil-page .card {
+    overflow: hidden;
+}
+
+.profil-page .card-body {
+    padding: 22px 24px;
+}
+
+.profil-page .card-foot {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 24px;
+    background: var(--bg-muted);
+    border-top: 1px solid var(--border);
+}
+
+/* =========================================================
+   SECTION TITLE
+   ========================================================= */
+
+.profil-page .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.profil-page .section-title-icon {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.profil-page .section-title-icon svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.profil-page .section-title strong {
+    display: block;
+    color: var(--t-base);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.profil-page .section-title span {
+    display: block;
+    margin-top: 2px;
+    color: var(--t-light);
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.profil-page .form-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px 18px;
+}
+
+.profil-page .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.profil-page .form-group--full {
+    grid-column: 1 / -1;
+}
+
+.profil-page .form-group label {
+    color: var(--t-base);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.profil-page .form-group input,
+.profil-page .form-group select,
+.profil-page .form-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--t-base);
+    outline: none;
+    font-family: inherit;
+    font-size: 13px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.profil-page .form-group input {
+    height: 40px;
+}
+
+.profil-page .form-group textarea {
+    min-height: 85px;
+    resize: vertical;
+}
+
+.profil-page .form-group input:focus,
+.profil-page .form-group select:focus,
+.profil-page .form-group textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.profil-page .form-group input::placeholder,
+.profil-page .form-group textarea::placeholder {
+    color: var(--t-light);
+}
+
+.profil-page .form-group input[readonly] {
+    background: var(--bg-muted);
+    color: var(--t-muted);
+    cursor: not-allowed;
+}
+
+.profil-page .field-sub {
+    color: var(--t-light);
+    font-size: 11.5px;
+    line-height: 1.4;
+}
+
+.profil-page .optional {
+    color: var(--t-light);
+    font-size: 10.5px;
+    font-weight: 500;
+}
+
+/* =========================================================
+   BUTTON VARIANT
+   ========================================================= */
+
+.profil-page .btn--danger-soft {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 28%, transparent);
+}
+
+.profil-page .btn--danger-soft:hover {
+    background: color-mix(in srgb, var(--danger-soft) 130%, transparent);
+    border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+/* =========================================================
+   DEVICE LIST
+   ========================================================= */
+
+.profil-page .device-list {
+    padding: 4px 24px;
+}
+
+.profil-page .device-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.profil-page .device-row:last-child {
+    border-bottom: none;
+}
+
+.profil-page .device-info {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profil-page .device-icon {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: var(--bg-muted);
+    border: 1px solid var(--border);
+    color: var(--t-muted);
+}
+
+.profil-page .device-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.profil-page .device-content {
+    min-width: 0;
+}
+
+.profil-page .device-name {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px;
+    color: var(--t-base);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.profil-page .device-name > span:first-child {
+    overflow-wrap: anywhere;
+}
+
+.profil-page .device-meta {
+    margin: 3px 0 0;
+    color: var(--t-muted);
+    font-size: 11.5px;
+    line-height: 1.5;
+}
+
+.profil-page .separator {
+    color: var(--t-light);
+}
+
+.profil-page .mono {
+    color: var(--t-muted);
+    font-family: monospace;
+    font-size: 11px;
+}
+
+.profil-page .device-action {
+    flex-shrink: 0;
+}
+
+.profil-page .form-logout-device {
+    margin: 0;
+}
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.profil-page .status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.profil-page .status-badge--approved {
+    background: var(--success-soft);
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+.profil-page .current-device {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--success-soft);
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+    font-size: 10.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.profil-page .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.profil-page .empty-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    background: var(--bg-muted);
+    color: var(--t-light);
+}
+
+.profil-page .empty-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.profil-page .empty-title {
+    margin: 0;
+    color: var(--t-base);
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.profil-page .empty-desc {
+    margin: 5px 0 0;
+    color: var(--t-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+
+.profil-page .toast-wrap {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.profil-page .toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 300px;
+    max-width: 380px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--success);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    pointer-events: auto;
+    animation: profilToastIn .18s ease-out;
+}
+
+.profil-page .toast.toast--error {
+    border-left-color: var(--danger);
+}
+
+.profil-page .toast-icon {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.profil-page .toast.toast--error .toast-icon {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.profil-page .toast-icon svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+}
+
+.profil-page .toast-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.profil-page .toast-title {
+    margin: 0 0 2px;
+    color: var(--t-base);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.profil-page .toast-text {
+    margin: 0;
+    color: var(--t-muted);
+    font-size: 12.5px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.profil-page .toast-close {
+    flex-shrink: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--t-light);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.profil-page .toast-close:hover {
+    color: var(--t-base);
+}
+
+.profil-page .toast.toast--leaving {
+    animation: profilToastOut .18s ease-in forwards;
+}
+
+@keyframes profilToastIn {
+    from {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes profilToastOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+    .profil-page .settings-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .profil-page .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profil-page .form-group--full {
+        grid-column: auto;
+    }
+
+    .profil-page .card-body {
+        padding: 20px 18px;
+    }
+
+    .profil-page .card-foot {
+        padding: 14px 18px;
+    }
+
+    .profil-page .device-list {
+        padding: 4px 18px;
+    }
+}
+
+@media (max-width: 560px) {
+    .profil-page .device-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .profil-page .device-info,
+    .profil-page .device-action,
+    .profil-page .form-logout-device,
+    .profil-page .form-logout-device .btn--danger-soft {
+        width: 100%;
+    }
+
+    .profil-page .current-device {
+        width: 100%;
+        justify-content: center;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 480px) {
+    .profil-page .toast-wrap {
+        left: 16px;
+        right: 16px;
+        top: 16px;
+    }
+
+    .profil-page .toast {
+        min-width: 0;
+        width: 100%;
+        max-width: none;
+        box-sizing: border-box;
+    }
+}

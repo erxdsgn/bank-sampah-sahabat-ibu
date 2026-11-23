@@ -25,34 +25,32 @@ class BarangKeluarController extends Controller
         $setoranMasuk = DetailSetoran::whereHas('setoran', function ($query) {
             $query->where('status', 'approved');
         })
-            ->selectRaw('id_kategori, SUM(berat_gram) as total_masuk')
+            ->selectRaw('id_kategori, SUM(berat) as total_masuk') // ✅ Gunakan kolom 'berat'
             ->groupBy('id_kategori')
             ->pluck('total_masuk', 'id_kategori');
 
         // Hitung Total Keluar (Penjualan) per id_kategori
-        $barangKeluarTotal = BarangKeluar::selectRaw('id_kategori, SUM(berat_gram) as total_keluar')
+        $barangKeluarTotal = BarangKeluar::selectRaw('id_kategori, SUM(berat) as total_keluar') // ✅ Gunakan kolom 'berat'
             ->groupBy('id_kategori')
             ->pluck('total_keluar', 'id_kategori');
 
-        // Ambil kategori beserta stok dan penyesuaian satuannya
+        // Ambil kategori beserta stok
         $kategoriSampah = KategoriSampah::all()->map(function ($kat) use ($setoranMasuk, $barangKeluarTotal) {
             $totalMasuk  = $setoranMasuk->get($kat->id_kategori, 0);
             $totalKeluar = $barangKeluarTotal->get($kat->id_kategori, 0);
 
             $sisaStok = max(0, $totalMasuk - $totalKeluar);
-            $satuan   = strtolower($kat->satuan ?? 'kg');
 
-            // Jika satuan kg, tampilkan dalam bentuk kg (dibagi 1000). Jika pcs/lainnya, tampilkan apa adanya.
-            $kat->stok_tersedia = ($satuan === 'kg') ? ($sisaStok / 1000) : $sisaStok;
+            // ✅ Stok langsung dimasukkan tanpa dibagi 1000
+            $kat->stok_tersedia = (float) $sisaStok;
 
             return $kat;
         });
 
         // Ringkasan Statistik
         $totalPenjualan  = $barangKeluar->sum('total');
-        $totalKuantitas  = $barangKeluar->sum('berat_gram');
+        $totalKuantitas  = $barangKeluar->sum('berat'); // ✅ Gunakan kolom 'berat'
 
-        // Asumsi ringkasan berat total kg mengambil dari kategori yang bersatuan kg
         $jumlahTransaksi = $barangKeluar->count();
         $jumlahPengepul  = $barangKeluar->pluck('pembeli')->filter()->unique()->count();
 
@@ -72,51 +70,42 @@ class BarangKeluarController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'pembeli'           => 'required|string|regex:/^[a-zA-Z\s]+$/|max:50',
-            'id_kategori'       => 'required|exists:kategori_sampah,id_kategori',
-            'kuantitas'         => 'required|numeric|min:1',
-            'harga_satuan'      => 'required|numeric|min:1',
+            'pembeli'      => 'required|string|regex:/^[a-zA-Z\s]+$/|max:50',
+            'id_kategori'  => 'required|exists:kategori_sampah,id_kategori',
+            'kuantitas'    => 'required|numeric|min:0.01',
+            'harga_satuan' => 'required|numeric|min:1',
         ], [
             'pembeli.regex' => 'Nama pembeli hanya boleh berisi huruf dan spasi.',
         ]);
-        $kategori = KategoriSampah::findOrFail($validated['id_kategori']);
-        $satuan   = strtolower($kategori->satuan ?? 'kg');
 
-        // Konversi kuantitas ke basis penyimpanan sistem
-        $kuantitasInput = $validated['kuantitas'];
-        $kuantitasSimpan = ($satuan === 'kg') ? ($kuantitasInput * 1000) : $kuantitasInput;
+        $kategori = KategoriSampah::findOrFail($validated['id_kategori']);
+
+        // ✅ Langsung pakai nilai input tanpa dikonversi ke gram
+        $kuantitasSimpan = (float) $validated['kuantitas'];
+        $hargaJualSimpan = (float) $validated['harga_satuan'];
+        $totalHarga = $kuantitasSimpan * $hargaJualSimpan;
 
         $stokTersedia = $this->getSisaStokSistem($validated['id_kategori']);
 
         if ($kuantitasSimpan > $stokTersedia) {
-            $formattedStok = ($satuan === 'kg') ? number_format($stokTersedia / 1000, 2, ',', '.') : number_format($stokTersedia, 0, ',', '.');
+            $formattedStok = number_format($stokTersedia, 2, ',', '.');
             $errorMessage = "Jumlah penjualan melebihi stok yang tersedia (Stok saat ini: {$formattedStok} {$kategori->satuan}).";
 
             if ($request->wantsJson()) {
-                return response()->json([
-                    'status'  => 'error',
-                    'message' => $errorMessage
-                ], 422);
+                return response()->json(['status' => 'error', 'message' => $errorMessage], 422);
             }
 
             return redirect()->back()->withInput()->withErrors(['kuantitas' => $errorMessage]);
         }
 
-        // Perhitungan harga jual per satuan dan total harga
-        $hargaJualPerSatuan = $validated['harga_satuan'];
-        $hargaJualSimpan = ($satuan === 'kg') ? ($hargaJualPerSatuan / 1000) : $hargaJualPerSatuan;
-        $totalHarga = ($satuan === 'kg')
-            ? (($kuantitasInput * 1000) * ($hargaJualPerSatuan / 1000))
-            : ($kuantitasInput * $hargaJualPerSatuan);
-
         $dataInsert = [
-            'id_kategori'         => $validated['id_kategori'],
-            'tanggal'             => now()->toDateString(), // Tanggal otomatis hari ini, tidak bisa diatur dari form
-            'berat_gram'          => $kuantitasSimpan, // Kolom database tetap menggunakan 'berat_gram' sebagai representatif nilai simpan sistem
-            'harga_jual_per_gram' => $hargaJualSimpan,  // Representatif harga per unit sistem
-            'total'               => $totalHarga,
-            'id_admin'            => Auth::id(),
-            'pembeli'             => $validated['pembeli'],
+            'id_kategori'       => $validated['id_kategori'],
+            'tanggal'           => now()->toDateString(),
+            'berat'             => $kuantitasSimpan, // ✅ Gunakan kolom 'berat'
+            'harga_jual_satuan' => $hargaJualSimpan, // ✅ Gunakan kolom 'harga_jual_satuan'
+            'total'             => $totalHarga,
+            'id_admin'          => Auth::id(),
+            'pembeli'           => $validated['pembeli'],
         ];
 
         $barangKeluar = DB::transaction(function () use ($dataInsert) {
@@ -143,10 +132,7 @@ class BarangKeluarController extends Controller
         $barangKeluar->load(['kategori', 'admin']);
 
         if (request()->wantsJson()) {
-            return response()->json([
-                'status' => 'success',
-                'data'   => $barangKeluar
-            ]);
+            return response()->json(['status' => 'success', 'data' => $barangKeluar]);
         }
 
         return view('admin.pages.penjualan-pengepul.show', compact('barangKeluar'));
@@ -158,47 +144,39 @@ class BarangKeluarController extends Controller
     public function update(Request $request, BarangKeluar $barangKeluar)
     {
         $validated = $request->validate([
-            'id_kategori'         => 'required|exists:kategori_sampah,id_kategori',
-            'berat_gram'          => 'required|numeric|min:1',
-            'harga_jual_per_gram' => 'required|numeric|min:1',
-            'pembeli'             => 'required|string|regex:/^[a-zA-Z\s]+$/|max:50',
+            'id_kategori'  => 'required|exists:kategori_sampah,id_kategori',
+            'kuantitas'    => 'required|numeric|min:0.01', // ✅ Diseragamkan dengan store
+            'harga_satuan' => 'required|numeric|min:1',    // ✅ Diseragamkan dengan store
+            'pembeli'      => 'required|string|regex:/^[a-zA-Z\s]+$/|max:50',
         ], [
             'pembeli.regex' => 'Nama pembeli hanya boleh berisi huruf dan spasi.',
         ]);
 
         $kategori = KategoriSampah::findOrFail($validated['id_kategori']);
-        $satuan   = strtolower($kategori->satuan ?? 'kg');
 
-        $kuantitasInput = $validated['berat_gram'];
-        $kuantitasSimpan = ($satuan === 'kg') ? ($kuantitasInput * 1000) : $kuantitasInput;
+        $kuantitasSimpan = (float) $validated['kuantitas'];
+        $hargaSatuanSimpan = (float) $validated['harga_satuan'];
+        $totalHarga = $kuantitasSimpan * $hargaSatuanSimpan;
 
         $stokTersedia = $this->getSisaStokSistem($validated['id_kategori'], $barangKeluar);
 
         if ($kuantitasSimpan > $stokTersedia) {
-            $formattedStok = ($satuan === 'kg') ? number_format($stokTersedia / 1000, 2, ',', '.') : number_format($stokTersedia, 0, ',', '.');
+            $formattedStok = number_format($stokTersedia, 2, ',', '.');
             $errorMessage = "Jumlah penjualan melebihi stok yang tersedia (Stok tersedia: {$formattedStok} {$kategori->satuan}).";
 
             if ($request->wantsJson()) {
-                return response()->json([
-                    'status'  => 'error',
-                    'message' => $errorMessage
-                ], 422);
+                return response()->json(['status' => 'error', 'message' => $errorMessage], 422);
             }
 
-            return redirect()->back()->withInput()->withErrors(['berat_gram' => $errorMessage]);
+            return redirect()->back()->withInput()->withErrors(['kuantitas' => $errorMessage]);
         }
 
-        $hargaSatuanSimpan = ($satuan === 'kg') ? ($validated['harga_jual_per_gram'] / 1000) : $validated['harga_jual_per_gram'];
-        $totalHarga = ($satuan === 'kg')
-            ? (($kuantitasInput * 1000) * ($validated['harga_jual_per_gram'] / 1000))
-            : ($kuantitasInput * $validated['harga_jual_per_gram']);
-
         $updateData = [
-            'id_kategori'         => $validated['id_kategori'],
-            'berat_gram'          => $kuantitasSimpan,
-            'harga_jual_per_gram' => $hargaSatuanSimpan,
-            'total'               => $totalHarga,
-            'pembeli'             => $validated['pembeli'],
+            'id_kategori'       => $validated['id_kategori'],
+            'berat'             => $kuantitasSimpan, // ✅ Gunakan kolom 'berat'
+            'harga_jual_satuan' => $hargaSatuanSimpan, // ✅ Gunakan kolom 'harga_jual_satuan'
+            'total'             => $totalHarga,
+            'pembeli'           => $validated['pembeli'],
         ];
 
         DB::transaction(function () use ($barangKeluar, $updateData) {
@@ -227,10 +205,7 @@ class BarangKeluarController extends Controller
         });
 
         if ($request->wantsJson()) {
-            return response()->json([
-                'status'  => 'success',
-                'message' => 'Transaksi penjualan berhasil dihapus.'
-            ]);
+            return response()->json(['status' => 'success', 'message' => 'Transaksi penjualan berhasil dihapus.']);
         }
 
         return redirect()->route('admin.penjualan-pengepul.index')
@@ -239,6 +214,7 @@ class BarangKeluarController extends Controller
 
     /**
      * Helper privat untuk menghitung sisa stok sistem per kategori secara dinamis.
+     * Nilai yang dikembalikan adalah nilai asli (kg/liter/pcs).
      */
     private function getSisaStokSistem(int $idKategori, ?BarangKeluar $ignoreItem = null): float
     {
@@ -246,7 +222,7 @@ class BarangKeluarController extends Controller
             ->whereHas('setoran', function ($q) {
                 $q->where('status', 'approved');
             })
-            ->sum('berat_gram');
+            ->sum('berat'); // ✅ Gunakan kolom 'berat'
 
         $queryKeluar = BarangKeluar::where('id_kategori', $idKategori);
 
@@ -254,7 +230,7 @@ class BarangKeluarController extends Controller
             $queryKeluar->where('id_barang_keluar', '!=', $ignoreItem->id_barang_keluar);
         }
 
-        $totalKeluar = $queryKeluar->sum('berat_gram');
+        $totalKeluar = $queryKeluar->sum('berat'); // ✅ Gunakan kolom 'berat'
 
         return max(0, $totalMasuk - $totalKeluar);
     }

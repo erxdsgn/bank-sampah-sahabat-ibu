@@ -83,7 +83,8 @@ class RingkasanKeuangan
                 $r->tanggal_setoran,
                 'Pengeluaran',
                 'Pembelian Sampah',
-                'Setoran sampah ' . ($r->nama ?? '-') . ' (' . number_format((float) $r->total_berat, 0, ',', '.') . ' gram)',
+                // ✅ DIPERBAIKI: Menghapus kata "gram" karena total_berat sekarang menyimpan angka asli (kg/liter/pcs)
+                'Setoran sampah ' . ($r->nama ?? '-') . ' (' . number_format((float) $r->total_berat, 2, ',', '.') . ')',
                 $r->total_nilai
             ));
     }
@@ -110,7 +111,8 @@ class RingkasanKeuangan
     {
         return DB::table('barang_keluar as b')
             ->leftJoin('kategori_sampah as k', 'k.id_kategori', '=', 'b.id_kategori')
-            ->select('b.tanggal', 'b.total', 'b.berat_gram', 'b.pembeli', 'k.nama_kategori')
+            // ✅ DIPERBAIKI: Menggunakan 'b.berat' (sesuaikan dengan nama kolom baru di tabel barang_keluar)
+            ->select('b.tanggal', 'b.total', 'b.berat', 'b.pembeli', 'k.nama_kategori')
             ->get()
             ->map(fn ($r) => self::baris(
                 'penjualan',
@@ -118,7 +120,8 @@ class RingkasanKeuangan
                 $r->tanggal,
                 'Pemasukan',
                 'Penjualan Sampah',
-                'Penjualan ' . number_format((float) $r->berat_gram, 0, ',', '.') . ' gram '
+                // ✅ DIPERBAIKI: Menghapus kata "gram"
+                'Penjualan ' . number_format((float) $r->berat, 2, ',', '.') . ' unit '
                     . ($r->nama_kategori ?? '') . ' ke ' . ($r->pembeli ?? '-'),
                 $r->total
             ));

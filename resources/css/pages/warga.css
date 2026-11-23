@@ -1,0 +1,928 @@
+/* =========================================================
+   DATA WARGA PAGE — STYLES UNIK
+   ========================================================= */
+
+.warga-page .hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.warga-page .hero-actions .btn svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* ---------- STATS SUMMARY ---------- */
+.warga-page .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.warga-page .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: var(--shadow-card);
+}
+
+.warga-page .stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.warga-page .stat-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.warga-page .stat-icon--blue {
+    background: rgba(59, 130, 246, .14);
+    color: #60a5fa;
+}
+
+.warga-page .stat-icon--green {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.warga-page .stat-icon--amber {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.warga-page .stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.warga-page .stat-info .stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--t-muted);
+}
+
+.warga-page .stat-info .stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--t-base);
+}
+
+/* ---------- FILTER PILLS ---------- */
+.warga-page .filter-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.warga-page .fpill {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--t-muted);
+    padding: 8px 14px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: .15s ease;
+}
+
+.warga-page .fpill:hover {
+    background: var(--bg-muted);
+    color: var(--t-base);
+}
+
+.warga-page .fpill.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+/* ---------- TABLE ---------- */
+.warga-page .table-no-scroll {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+.warga-page .data-table {
+    width: 100%;
+    min-width: unset;
+    table-layout: fixed;
+    border-collapse: collapse;
+    background: var(--bg-card);
+    color: var(--t-base);
+}
+
+.warga-page .data-table th {
+    background: var(--bg-muted);
+    color: var(--t-muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 13px 16px;
+    text-align: left;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.warga-page .data-table th.col-no,
+.warga-page .data-table td.col-no {
+    width: 50px;
+    text-align: center;
+}
+
+.warga-page .data-table th.col-aksi {
+    text-align: center;
+}
+
+.warga-page .data-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 13px;
+    color: var(--t-base);
+    vertical-align: middle;
+    background: var(--bg-card);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.warga-page .data-table tbody tr:hover td {
+    background: var(--bg-hover);
+}
+
+.warga-page .no-urut {
+    font-weight: 600;
+}
+
+.warga-page .subline-mt {
+    margin-top: 2px;
+}
+
+.warga-page .kelompok-text {
+    font-weight: 600;
+}
+
+.warga-page .mono {
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.warga-page .text-subtle {
+    color: var(--t-muted);
+}
+
+.warga-page .user-name {
+    font-weight: 700;
+    color: var(--t-base);
+}
+
+.warga-page .saldo-text {
+    color: var(--success);
+    white-space: nowrap;
+}
+
+.warga-page .bank-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    line-height: 1.35;
+    min-width: 0;
+}
+
+.warga-page .bank-main {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.warga-page .bank-main > strong {
+    display: block;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.warga-page .bank-info .bank-number {
+    display: block;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-left: 31px;
+}
+
+.warga-page .table-actions {
+    display: flex;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.warga-page .table-actions--center {
+    justify-content: center;
+}
+
+.warga-page .kategori-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    font-weight: 600;
+    background: var(--success-soft);
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+.warga-page .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.warga-page .status-badge--pending {
+    background: var(--warning-soft);
+    color: var(--warning);
+    border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+}
+
+.warga-page .status-badge--approved {
+    background: var(--success-soft);
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+}
+
+.warga-page .status-badge--icon {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.warga-page .status-badge--icon svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.warga-page .icon-btn--primary {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.warga-page .icon-btn--primary:hover {
+    background: var(--bg-muted);
+}
+
+.warga-page .icon-btn--danger {
+    color: var(--danger);
+}
+
+.warga-page .icon-btn--danger:hover {
+    background: var(--danger-soft);
+    border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+    color: var(--danger);
+}
+
+.warga-page .empty-state-cell {
+    text-align: center;
+    padding: 40px;
+}
+
+.warga-page .empty-icon {
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+.warga-page .empty-desc {
+    margin: 5px 0 0;
+    color: var(--t-muted);
+}
+
+.warga-page .per-page .combo {
+    width: 84px;
+}
+
+.warga-page .per-page .combo-input {
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+/* ---------- MODAL & FORM ---------- */
+.warga-page .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .55);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.warga-page .modal-overlay.active {
+    display: flex;
+}
+
+.warga-page .modal-box {
+    width: 100%;
+    max-width: 580px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    color: var(--t-base);
+    animation: wargaModalPop .15s ease-out;
+}
+
+.warga-page .modal-box--sm {
+    max-width: 420px;
+}
+
+@keyframes wargaModalPop {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.warga-page .modal-box > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.warga-page .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.warga-page .modal-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--t-base);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.warga-page .modal-title svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.warga-page .modal-close {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--t-muted);
+    cursor: pointer;
+}
+
+.warga-page .modal-close:hover {
+    background: var(--bg-muted);
+    color: var(--t-base);
+}
+
+.warga-page .modal-body {
+    padding: 22px 24px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.warga-page .modal-body--center {
+    text-align: center;
+    padding-top: 28px;
+}
+
+.warga-page .modal-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.warga-page .modal-foot--center {
+    justify-content: center;
+}
+
+.warga-page .confirm-icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: var(--danger-soft);
+    color: var(--danger);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.warga-page .confirm-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.warga-page .confirm-title {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--t-base);
+}
+
+.warga-page .confirm-text {
+    margin: 0;
+    font-size: 13px;
+    color: var(--t-muted);
+    line-height: 1.5;
+}
+
+.warga-page .detail-avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 18px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+.warga-page .detail-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--success-soft);
+    color: var(--success);
+    font-weight: 700;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.warga-page .detail-nama {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--t-base);
+}
+
+.warga-page .detail-nik-wrap {
+    display: flex;
+    gap: 8px;
+    margin-top: 3px;
+    align-items: center;
+}
+
+.warga-page .detail-nik-badge {
+    font-family: monospace;
+    font-size: 11px;
+}
+
+.warga-page .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 18px;
+}
+
+.warga-page .detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.warga-page .detail-item--full {
+    grid-column: 1 / -1;
+}
+
+.warga-page .detail-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--t-light);
+    display: block;
+}
+
+.warga-page .detail-value {
+    font-size: 14px;
+    color: var(--t-base);
+}
+
+.warga-page .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 18px;
+}
+
+.warga-page .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.warga-page .form-group--full {
+    grid-column: 1 / -1;
+}
+
+.warga-page .form-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--t-muted);
+}
+
+.warga-page .form-group input,
+.warga-page .form-group select,
+.warga-page .form-group textarea {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    width: 100%;
+    background: var(--bg-card);
+    color: var(--t-base);
+}
+
+.warga-page .form-group input:focus,
+.warga-page .form-group select:focus,
+.warga-page .form-group textarea:focus {
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px var(--success-soft);
+}
+
+.warga-page .form-group textarea {
+    resize: vertical;
+}
+
+/* ---------- COMBOBOX ---------- */
+.warga-page .combo {
+    position: relative;
+}
+
+.warga-page .combo-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    background: var(--bg-card);
+    color: var(--t-base);
+}
+
+.warga-page .combo-hidden {
+    display: none !important;
+}
+
+.warga-page .combo--up .combo-list {
+    top: auto;
+    bottom: calc(100% + 4px);
+}
+
+.warga-page .combo--arrow .combo-input {
+    cursor: pointer;
+    padding-right: 30px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 14px;
+}
+
+.warga-page .combo-list {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 180px;
+    overflow-y: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    z-index: 60;
+}
+
+.warga-page .combo-list.show {
+    display: block;
+}
+
+.warga-page .combo-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--t-base);
+    cursor: pointer;
+}
+
+.warga-page .combo-item.is-selected {
+    font-weight: 700;
+}
+
+.warga-page .combo-item:hover,
+.warga-page .combo-item.is-active {
+    background: var(--bg-hover);
+    color: var(--success);
+}
+
+.warga-page .combo-empty {
+    padding: 10px;
+    font-size: 12px;
+    color: var(--t-light);
+    text-align: center;
+}
+
+/* ---------- EDIT STATUS REKENING ---------- */
+.warga-page .edit-status-group {
+    margin-top: 16px;
+}
+
+.warga-page .edit-ringkasan {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--t-base);
+    background: var(--bg-muted);
+}
+
+.warga-page .edit-ringkasan .er-nama {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.warga-page .edit-ringkasan .er-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.warga-page .edit-ringkasan .er-label {
+    color: var(--t-muted);
+    flex-shrink: 0;
+}
+
+.warga-page .edit-ringkasan .er-value {
+    font-weight: 600;
+    text-align: right;
+    word-break: break-word;
+}
+
+.warga-page .edit-ringkasan .er-note {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--warning);
+}
+
+.warga-page .seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.warga-page .seg-btn {
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--t-muted);
+    border-radius: 10px;
+    padding: 12px 10px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.warga-page .seg-btn:hover {
+    border-color: var(--t-muted);
+    color: var(--t-base);
+}
+
+.warga-page .seg-btn.is-active[data-value="verified"] {
+    border-color: var(--success);
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.warga-page .seg-btn.is-active[data-value="unverified"] {
+    border-color: var(--warning);
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+/* ---------- TOAST ---------- */
+.warga-page .toast-wrap {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.warga-page .toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 300px;
+    max-width: 380px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--success);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    padding: 14px 16px;
+    pointer-events: auto;
+    animation: wargaToastIn .18s ease-out;
+    color: var(--t-base);
+}
+
+.warga-page .toast.toast--error {
+    border-left-color: var(--danger);
+}
+
+.warga-page .toast-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--success-soft);
+    color: var(--success);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.warga-page .toast.toast--error .toast-icon {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.warga-page .toast-icon svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.warga-page .toast-body {
+    flex: 1;
+}
+
+.warga-page .toast-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--t-base);
+    margin: 0 0 2px;
+}
+
+.warga-page .toast-text {
+    font-size: 12.5px;
+    color: var(--t-muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.warga-page .toast-close {
+    border: none;
+    background: transparent;
+    color: var(--t-light);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.warga-page .toast-close:hover {
+    color: var(--t-base);
+}
+
+.warga-page .toast.toast--leaving {
+    animation: wargaToastOut .18s ease-in forwards;
+}
+
+@keyframes wargaToastIn {
+    from {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes wargaToastOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+}
+
+@media (max-width: 640px) {
+    .warga-page .hero {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .warga-page .hero-actions {
+        width: 100%;
+    }
+
+    .warga-page .detail-grid,
+    .warga-page .form-grid {
+        grid-template-columns: 1fr;
+    }
+}

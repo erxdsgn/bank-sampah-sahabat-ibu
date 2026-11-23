@@ -13,27 +13,20 @@ class DetailSetoran extends Model
     protected $fillable = [
         'id_setoran',
         'id_kategori',
-
-        /*
-         * Sistem baru.
-         */
         'jumlah',
         'satuan',
-
-        /*
-         * Kolom lama untuk kompatibilitas.
-         */
-        'berat_gram',
-        'harga_per_gram',
-
+        'berat',
+        'harga_satuan',
         'subtotal',
+        'poin', // <-- DITAMBAHKAN: Agar poin bisa disimpan
     ];
 
     protected $casts = [
         'jumlah' => 'decimal:2',
-        'berat_gram' => 'decimal:2',
-        'harga_per_gram' => 'decimal:2',
+        'berat' => 'decimal:2',
+        'harga_satuan' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'poin' => 'integer', // <-- DITAMBAHKAN: Casting poin ke integer
     ];
 
     /**
@@ -64,7 +57,6 @@ class DetailSetoran extends Model
      * Helper untuk mendapatkan jumlah.
      *
      * Data baru menggunakan jumlah.
-     * Data lama fallback ke berat_gram.
      */
     public function getJumlahAktualAttribute()
     {
@@ -73,7 +65,7 @@ class DetailSetoran extends Model
         }
 
         return (float) (
-            $this->berat_gram ?? 0
+            $this->berat ?? 0
         );
     }
 
@@ -81,7 +73,6 @@ class DetailSetoran extends Model
      * Helper untuk mendapatkan satuan.
      *
      * Data baru menggunakan satuan.
-     * Data lama dianggap gram.
      */
     public function getSatuanAktualAttribute(): string
     {

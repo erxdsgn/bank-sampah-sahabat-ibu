@@ -1,0 +1,936 @@
+/* =========================================================
+   VERIFIKASI SETORAN PAGE — STYLES UNIK
+   ========================================================= */
+
+.verifikasi-page .verif-status-spacer {
+    margin-top: 6px;
+}
+
+.verifikasi-page .empty-state-cell {
+    text-align: center;
+    padding: 40px;
+    background: var(--bg-muted);
+    color: var(--t-base);
+}
+
+.verifikasi-page .empty-icon {
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+.verifikasi-page .empty-desc {
+    margin: 5px 0 0;
+    color: var(--t-muted);
+}
+
+.verifikasi-page .catalog-empty {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--t-base);
+}
+
+/* ---------- HERO STATS ---------- */
+.verifikasi-page .hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.verifikasi-page .stat-chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 130px;
+    box-shadow: var(--shadow-card);
+}
+
+.verifikasi-page .stat-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.verifikasi-page .stat-dot--amber {
+    background: var(--warning);
+}
+
+.verifikasi-page .stat-dot--green {
+    background: var(--success);
+}
+
+.verifikasi-page .stat-dot--red {
+    background: var(--danger);
+}
+
+.verifikasi-page .stat-num {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--t-base);
+}
+
+.verifikasi-page .stat-label {
+    font-size: 12px;
+    color: var(--t-muted);
+    margin-top: 3px;
+}
+
+/* ---------- FILTER PILLS ---------- */
+.verifikasi-page .filter-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.verifikasi-page .fpill {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--t-muted);
+    padding: 8px 14px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: .15s ease;
+}
+
+.verifikasi-page .fpill:hover {
+    background: var(--bg-muted);
+    color: var(--t-base);
+}
+
+.verifikasi-page .fpill.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+/* ---------- TABEL & STATUS ---------- */
+.verifikasi-page .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.verifikasi-page .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1100px;
+    color: var(--t-base);
+}
+
+.verifikasi-page .data-table th {
+    background: var(--bg-muted);
+    color: var(--t-muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 13px 16px;
+    text-align: left;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.verifikasi-page .data-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 13px;
+    color: var(--t-base);
+    vertical-align: middle;
+    background: var(--bg-card);
+}
+
+.verifikasi-page .data-table tbody tr {
+    transition: background .15s ease;
+}
+
+.verifikasi-page .data-table tbody tr:hover td {
+    background: var(--bg-hover);
+}
+
+.verifikasi-page .col-no {
+    width: 56px;
+    text-align: center;
+}
+
+.verifikasi-page .mono {
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--t-muted);
+}
+
+.verifikasi-page .unit {
+    color: var(--t-light);
+    font-size: 12px;
+}
+
+.verifikasi-page .kategori-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-width: 240px;
+}
+
+.verifikasi-page .kategori-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    font-weight: 600;
+    background: var(--success-soft);
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+.verifikasi-page .kategori-tag--more {
+    background: var(--bg-muted);
+    color: var(--t-muted);
+    border-color: var(--border);
+}
+
+.verifikasi-page .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.verifikasi-page .status-badge--pending {
+    background: var(--warning-soft);
+    color: var(--warning);
+    border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+}
+
+.verifikasi-page .status-badge--approved {
+    background: var(--success-soft);
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+}
+
+.verifikasi-page .status-badge--rejected {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+}
+
+.verifikasi-page .table-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.verifikasi-page .icon-btn--primary {
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.verifikasi-page .icon-btn--primary:hover {
+    background: var(--success-soft);
+}
+
+.verifikasi-page .per-page .combo {
+    width: 84px;
+}
+
+.verifikasi-page .per-page .combo-input {
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.verifikasi-page .pagination-dots {
+    padding: 0 4px;
+    color: var(--t-muted);
+}
+
+.verifikasi-page .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+/* ---------- MODAL & FORM ---------- */
+.verifikasi-page .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .55);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.verifikasi-page .modal-overlay.active {
+    display: flex;
+}
+
+.verifikasi-page .modal-box {
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    color: var(--t-base);
+    animation: verifModalPop .15s ease-out;
+}
+
+.verifikasi-page .modal-box--wide {
+    max-width: 680px;
+}
+
+.verifikasi-page .modal-box > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+@keyframes verifModalPop {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.verifikasi-page .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.verifikasi-page .modal-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--t-base);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+
+.verifikasi-page .modal-title svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--success);
+    stroke-width: 1.8;
+}
+
+.verifikasi-page .modal-close {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--t-muted);
+    cursor: pointer;
+}
+
+.verifikasi-page .modal-close:hover {
+    background: var(--bg-muted);
+    color: var(--t-base);
+}
+
+.verifikasi-page .modal-body {
+    padding: 22px 24px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.verifikasi-page .modal-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
+    flex-shrink: 0;
+}
+
+.verifikasi-page .detail-avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 18px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+.verifikasi-page .detail-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--success-soft);
+    color: var(--success);
+    font-weight: 700;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.verifikasi-page .detail-nama {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--t-base);
+}
+
+.verifikasi-page .detail-nik {
+    margin-top: 3px;
+    color: var(--t-muted);
+}
+
+.verifikasi-page .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 18px;
+}
+
+.verifikasi-page .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.verifikasi-page .form-group--full {
+    grid-column: 1 / -1;
+}
+
+.verifikasi-page .form-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--t-base);
+}
+
+.verifikasi-page .form-group input,
+.verifikasi-page .form-group select,
+.verifikasi-page .form-group textarea,
+.verifikasi-page .combo-input {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    width: 100%;
+    background: var(--bg-card);
+    color: var(--t-base);
+    transition: border-color .15s, box-shadow .15s;
+}
+
+.verifikasi-page .form-group input:focus,
+.verifikasi-page .form-group select:focus,
+.verifikasi-page .form-group textarea:focus,
+.verifikasi-page .combo-input:focus {
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px var(--success-soft);
+}
+
+.verifikasi-page .form-group input:disabled,
+.verifikasi-page .form-group select:disabled,
+.verifikasi-page .combo-input:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+    background: var(--bg-muted);
+}
+
+.verifikasi-page .form-group textarea {
+    resize: vertical;
+}
+
+.verifikasi-page .field-sub {
+    font-size: 11.5px;
+    color: var(--t-light);
+}
+
+.verifikasi-page .photo-frame {
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    min-height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--t-light);
+    font-size: 12.5px;
+    background: var(--bg-muted);
+    overflow: hidden;
+}
+
+.verifikasi-page .photo-frame img {
+    width: 100%;
+    max-height: 240px;
+    object-fit: cover;
+}
+
+.verifikasi-page .estimate-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--success-soft);
+    border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+.verifikasi-page .estimate-box .lab,
+.verifikasi-page .estimate-box .val {
+    color: var(--success);
+}
+
+.verifikasi-page .estimate-box .lab {
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.verifikasi-page .estimate-box .val {
+    font-size: 19px;
+    font-weight: 800;
+}
+
+/* ---------- EDITOR RINCIAN SAMPAH ---------- */
+.verifikasi-page .items-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.verifikasi-page .items-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.verifikasi-page .items-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--t-base);
+}
+
+.verifikasi-page .items-count {
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.verifikasi-page .items-add {
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px dashed var(--success);
+    background: transparent;
+    color: var(--success);
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .12s;
+}
+
+.verifikasi-page .items-add:hover {
+    background: var(--success-soft);
+}
+
+.verifikasi-page .item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.verifikasi-page .item-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-muted);
+}
+
+.verifikasi-page .item-row.is-invalid {
+    border-color: var(--danger);
+}
+
+.verifikasi-page .item-row__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.verifikasi-page .item-row__no {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--t-muted);
+}
+
+.verifikasi-page .item-row__remove {
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--t-light);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.verifikasi-page .item-row__remove:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.verifikasi-page .item-row__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 190px;
+    gap: 12px;
+}
+
+.verifikasi-page .item-row__qty {
+    display: flex;
+    gap: 8px;
+}
+
+.verifikasi-page .item-row__qty .item-qty {
+    flex: 1;
+    min-width: 0;
+}
+
+.verifikasi-page .item-row__qty .item-unit {
+    width: 72px;
+}
+
+.verifikasi-page .item-row__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+}
+
+.verifikasi-page .item-info {
+    font-size: 11.5px;
+    color: var(--t-light);
+}
+
+.verifikasi-page .item-sub {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--t-base);
+    white-space: nowrap;
+}
+
+/* ---------- COMBOBOX LOKAL ---------- */
+.verifikasi-page .combo {
+    position: relative;
+}
+
+.verifikasi-page .combo-hidden {
+    display: none !important;
+}
+
+.verifikasi-page .combo-list {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    min-width: 84px;
+    max-height: 220px;
+    overflow-y: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    z-index: 60;
+}
+
+.verifikasi-page .combo-list.show {
+    display: block;
+}
+
+.verifikasi-page .combo--up .combo-list {
+    top: auto;
+    bottom: calc(100% + 4px);
+}
+
+.verifikasi-page .combo--arrow .combo-input {
+    cursor: pointer;
+    padding-right: 30px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 14px;
+}
+
+.verifikasi-page .combo-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--t-base);
+    cursor: pointer;
+    transition: background .1s ease, color .1s ease;
+}
+
+.verifikasi-page .combo-item.is-selected {
+    font-weight: 700;
+}
+
+.verifikasi-page .combo-item:hover,
+.verifikasi-page .combo-item.is-active {
+    background: var(--bg-hover);
+    color: var(--success);
+}
+
+.verifikasi-page .combo-item.is-disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.verifikasi-page .combo-item.is-disabled:hover {
+    background: transparent;
+    color: var(--t-base);
+}
+
+.verifikasi-page .combo-empty {
+    padding: 12px;
+    font-size: 12.5px;
+    color: var(--t-light);
+    text-align: center;
+}
+
+.verifikasi-page .combo-note {
+    font-size: 11.5px;
+    font-style: italic;
+}
+
+.verifikasi-page .reject-reason {
+    display: none;
+}
+
+.verifikasi-page .reject-reason.open {
+    display: flex;
+}
+
+/* ---------- TOAST ---------- */
+.verifikasi-page .toast-wrap {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.verifikasi-page .toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 300px;
+    max-width: 380px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--success);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    padding: 14px 16px;
+    pointer-events: auto;
+    animation: verifToastIn .18s ease-out;
+    color: var(--t-base);
+}
+
+.verifikasi-page .toast.toast--error {
+    border-left-color: var(--danger);
+}
+
+.verifikasi-page .toast-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--success-soft);
+    color: var(--success);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.verifikasi-page .toast.toast--error .toast-icon {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.verifikasi-page .toast-icon svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+}
+
+.verifikasi-page .toast-body {
+    flex: 1;
+}
+
+.verifikasi-page .toast-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--t-base);
+    margin: 0 0 2px;
+}
+
+.verifikasi-page .toast-text {
+    font-size: 12.5px;
+    color: var(--t-muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.verifikasi-page .toast-close {
+    border: none;
+    background: transparent;
+    color: var(--t-light);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.verifikasi-page .toast-close:hover {
+    color: var(--t-base);
+}
+
+.verifikasi-page .toast.toast--leaving {
+    animation: verifToastOut .18s ease-in forwards;
+}
+
+@keyframes verifToastIn {
+    from {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes verifToastOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+}
+
+@media (max-width: 560px) {
+    .verifikasi-page .form-grid,
+    .verifikasi-page .item-row__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .verifikasi-page .hero-actions {
+        width: 100%;
+    }
+
+    .verifikasi-page .stat-chip {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .verifikasi-page .table-toolbar,
+    .verifikasi-page .table-footer {
+        padding: 14px 16px;
+    }
+
+    .verifikasi-page .modal-body {
+        padding: 18px 16px;
+    }
+
+    .verifikasi-page .modal-head,
+    .verifikasi-page .modal-foot {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .verifikasi-page .toast-wrap {
+        left: 16px;
+        right: 16px;
+        top: 16px;
+    }
+
+    .verifikasi-page .toast {
+        min-width: 0;
+        max-width: none;
+        width: 100%;
+    }
+
+    .verifikasi-page .modal-overlay {
+        padding: 10px;
+    }
+
+    .verifikasi-page .modal-box {
+        max-height: 94vh;
+        border-radius: 12px;
+    }
+
+    .verifikasi-page .modal-foot {
+        flex-wrap: wrap;
+    }
+
+    .verifikasi-page .modal-foot .btn {
+        flex: 1;
+    }
+}

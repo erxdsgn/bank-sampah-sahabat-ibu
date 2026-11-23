@@ -12,9 +12,6 @@ use Illuminate\Support\Facades\Validator;
 
 class SetoranApiController extends Controller
 {
-    /**
-     * 1. GET DAFTAR KATEGORI SAMPAH & HARGA AKTIF
-     */
     public function getKategori()
     {
         $kategori = KategoriSampah::with('hargaTerbaru')
@@ -34,7 +31,7 @@ class SetoranApiController extends Controller
                 return [
                     'id_kategori'   => (int) $item->id_kategori,
                     'nama_kategori' => $item->nama_kategori ?? '-',
-                    'satuan'        => $item->satuan ?: 'kg', // PERBAIKAN: Gunakan $item->satuan
+                    'satuan'        => $item->satuan ?: 'kg',
                     'harga_satuan'  => (float) $harga,
                 ];
             });
@@ -45,9 +42,6 @@ class SetoranApiController extends Controller
         ], 200);
     }
 
-    /**
-     * 2. POST PENGAJUAN SETOR SAMPAH
-     */
     public function store(Request $request)
     {
         $itemsData = $request->items;
@@ -55,15 +49,14 @@ class SetoranApiController extends Controller
             $itemsData = json_decode($itemsData, true);
         }
 
-        // Validasi Input (Termasuk Batas Maksimal & Foto 2MB)
         $validator = Validator::make([
             'foto_sampah' => $request->file('foto_sampah'),
             'items'       => $itemsData,
         ], [
-            'foto_sampah'         => 'nullable|image|mimes:jpeg,png,jpg,heic|max:2048', // Max 2 MB
+            'foto_sampah'         => 'nullable|image|mimes:jpeg,png,jpg,heic|max:2048',
             'items'               => 'required|array|min:1',
             'items.*.id_kategori' => 'required|exists:kategori_sampah,id_kategori',
-            'items.*.jumlah'      => 'required|numeric|gt:0|max:50', // Max 50 per item
+            'items.*.jumlah'      => 'required|numeric|gt:0|max:50',
         ], [
             'items.required'               => 'Minimal masukkan 1 jenis sampah.',
             'items.*.id_kategori.required' => 'Kategori sampah wajib dipilih.',
@@ -76,28 +69,17 @@ class SetoranApiController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => $validator->errors()->first(),
-            ], 422);
+            return response()->json(['status' => 'error', 'message' => $validator->errors()->first()], 422);
         }
 
-        // Validasi Tambahan: Total Keseluruhan (Maks 100)
         $totalJumlah = array_sum(array_column($itemsData, 'jumlah'));
         if ($totalJumlah > 100) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Total keseluruhan sampah dalam sekali setor maksimal 100 kg/liter/pcs.',
-            ], 422);
+            return response()->json(['status' => 'error', 'message' => 'Total keseluruhan sampah maksimal 100.'], 422);
         }
 
-        // Identifikasi Warga
         $user = $request->user();
         if (!$user || !$user->warga) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Profil warga tidak ditemukan atau Anda tidak memiliki akses warga.',
-            ], 403);
+            return response()->json(['status' => 'error', 'message' => 'Profil warga tidak ditemukan.'], 403);
         }
 
         try {
@@ -118,36 +100,39 @@ class SetoranApiController extends Controller
                 ]);
 
                 $totalSemuaNilai = 0;
-                $totalBeratGram = 0;
+                $totalBerat = 0;
 
                 foreach ($itemsData as $item) {
                     $kategori = KategoriSampah::with('hargaTerbaru')->findOrFail($item['id_kategori']);
                     $jumlah = (float) $item['jumlah'];
-                    $hargaSatuan = (float) $kategori->harga_satuan_aktual;
+
+                    $hargaSatuan = (float) (
+                        $kategori->hargaTerbaru->harga_satuan
+                        ?? $kategori->hargaTerbaru->harga
+                        ?? $kategori->hargaTerbaru->nominal
+                        ?? $kategori->harga_satuan
+                        ?? 0
+                    );
+
                     $subtotal = round($jumlah * $hargaSatuan, 2);
-                    $satuan = $kategori->satuan; // PERBAIKAN: Gunakan $kategori->satuan
+                    $satuan = $kategori->satuan ?: 'kg';
 
                     DetailSetoran::create([
-                        'id_setoran'     => $setoran->id_setoran,
-                        'id_kategori'    => $kategori->id_kategori,
-                        'jumlah'         => $jumlah,
-                        'satuan'         => $satuan,
-                        'harga_per_gram' => $hargaSatuan,
-                        'subtotal'       => $subtotal,
-                        'berat_gram'     => ($satuan === 'kg' || $satuan === 'liter') ? ($jumlah * 1000) : $jumlah,
+                        'id_setoran'   => $setoran->id_setoran,
+                        'id_kategori'  => $kategori->id_kategori,
+                        'jumlah'       => $jumlah,       // ✅ Simpan asli (10 untuk 10 kg)
+                        'satuan'       => $satuan,
+                        'harga_satuan' => $hargaSatuan,  // ✅ Nama kolom baru
+                        'subtotal'     => $subtotal,
+                        'berat'        => $jumlah,       // ✅ Simpan asli (10, tanpa x1000)
                     ]);
 
                     $totalSemuaNilai += $subtotal;
-
-                    if ($satuan === 'kg') {
-                        $totalBeratGram += ($jumlah * 1000);
-                    } elseif ($satuan === 'gram') {
-                        $totalBeratGram += $jumlah;
-                    }
+                    $totalBerat += $jumlah;              // ✅ Total asli
                 }
 
                 $setoran->update([
-                    'total_berat' => $totalBeratGram > 0 ? $totalBeratGram : null,
+                    'total_berat' => $totalBerat > 0 ? $totalBerat : null,
                     'total_nilai' => $totalSemuaNilai,
                 ]);
 
@@ -156,32 +141,19 @@ class SetoranApiController extends Controller
 
             return response()->json([
                 'status'  => 'success',
-                'message' => 'Pengajuan setor sampah berhasil dikirim!',
-                'data'    => $setoran->load([
-                    'warga:id_warga,nama,nik',
-                    'details.kategori:id_kategori,nama_kategori,satuan'
-                ]),
+                'message' => 'Pengajuan setor sampah berhasil dikirim! Menunggu verifikasi admin.',
+                'data'    => $setoran->load(['warga:id_warga,nama,nik', 'details.kategori:id_kategori,nama_kategori,satuan']),
             ], 201);
         } catch (\Exception $e) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Gagal menyimpan transaksi setoran: ' . $e->getMessage(),
-            ], 500);
+            return response()->json(['status' => 'error', 'message' => 'Gagal: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     * 3. GET RIWAYAT SETORAN SAYA
-     */
     public function riwayat(Request $request)
     {
         $user = $request->user();
-
         if (!$user || !$user->warga) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Profil warga tidak ditemukan.',
-            ], 403);
+            return response()->json(['status' => 'error', 'message' => 'Profil warga tidak ditemukan.'], 403);
         }
 
         $riwayat = Setoran::with(['details.kategori'])
@@ -190,9 +162,6 @@ class SetoranApiController extends Controller
             ->orderByDesc('id_setoran')
             ->get();
 
-        return response()->json([
-            'status' => 'success',
-            'data'   => $riwayat,
-        ], 200);
+        return response()->json(['status' => 'success', 'data' => $riwayat], 200);
     }
 }

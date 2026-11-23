@@ -15,13 +15,13 @@ class HargaSampah extends Model
     protected $fillable = [
         'id_kategori',
         'id_admin',
-        'harga_satuan', // Diubah dari harga_per_gram
+        'harga_satuan',
         'tanggal_berlaku',
     ];
 
     protected $casts = [
         'tanggal_berlaku' => 'date',
-        'harga_satuan'    => 'decimal:2', // Diubah dari harga_per_gram
+        'harga_satuan'    => 'decimal:2', 
     ];
 
     public function kategori()

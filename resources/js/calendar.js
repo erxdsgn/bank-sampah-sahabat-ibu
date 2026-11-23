@@ -1,22 +1,15 @@
 /**
  * calendar.js
  * ---------------------------------------------------------
- * Kalender pakai FullCalendar. Dipasang ke elemen [data-fc].
- * Tombol navigasi (.cal-nav-btn), tombol "Today" (.cal-today-btn),
- * dan tab view (.cal-view-tab) dicari di dalam container ".cal-main"
- * terdekat dari elemen [data-fc].
+ * FullCalendar via UMD global (window.FullCalendar).
+ * Di-load via <script src=".../fullcalendar.global.min.js">
+ * di layout — SEBELUM module layout.js.
  *
- * npm install @fullcalendar/core @fullcalendar/daygrid
- *             @fullcalendar/timegrid @fullcalendar/list
- *             @fullcalendar/interaction
+ * Kalau FullCalendar tidak ada di halaman, fungsi ini
+ * langsung return tanpa error (safe untuk halaman non-kalender).
  */
-import { Calendar } from "@fullcalendar/core";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import listPlugin from "@fullcalendar/list";
-import interactionPlugin from "@fullcalendar/interaction";
 
-/** Data event contoh. Ganti / fetch dari backend Laravel sesuai kebutuhan. */
+/** Data event contoh. Ganti / fetch dari backend Laravel. */
 const events = [
   { title: "Q2 kickoff", start: "2026-04-01T09:00", classNames: ["fc-cat-work"] },
   { title: "Design review", start: "2026-04-02T11:00", classNames: ["fc-cat-team"] },
@@ -106,6 +99,18 @@ export function initCalendar() {
   const el = document.querySelector("[data-fc]");
   if (!el) return;
 
+  // Ambil FullCalendar dari global (UMD)
+  const FC = window.FullCalendar;
+  if (!FC || !FC.Calendar) {
+    console.warn(
+      "[calendar] window.FullCalendar belum tersedia. " +
+      "Pastikan fullcalendar.global.min.js sudah di-load di layout."
+    );
+    return;
+  }
+
+  const { Calendar, dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin } = FC;
+
   if (calendarInstance) {
     try {
       calendarInstance.destroy();
@@ -115,7 +120,7 @@ export function initCalendar() {
   }
 
   calendarInstance = new Calendar(el, {
-    plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
+    plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin].filter(Boolean),
     initialView: "dayGridMonth",
     initialDate: "2026-04-25",
     headerToolbar: false,
@@ -134,7 +139,7 @@ export function initCalendar() {
   calendarInstance.render();
   bindCalendarControls(el);
 
-  // Re-render kalender saat tema berubah (biar warna re-computed)
+  // Re-render kalender saat tema berubah
   new MutationObserver((mutations) => {
     if (mutations.some((m) => m.attributeName === "data-theme") && calendarInstance) {
       calendarInstance.render();

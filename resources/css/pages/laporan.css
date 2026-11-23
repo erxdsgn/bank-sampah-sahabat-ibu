@@ -1,0 +1,913 @@
+/* =========================================================
+   LAPORAN & RIWAYAT — STYLES UNIK
+   ========================================================= */
+
+.laporan-page {
+    color: var(--t-base);
+}
+
+.laporan-page .hero-actions .btn svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* ---------- SUMMARY GRID ---------- */
+.laporan-page .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.laporan-page .summary-grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.laporan-page .summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.laporan-page .summary-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.laporan-page .summary-dual-content {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.laporan-page .summary-item-block--divider {
+    padding-left: 18px;
+    border-left: 1px solid var(--border);
+}
+
+.laporan-page .summary-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--t-muted);
+    margin-bottom: 4px;
+}
+
+.laporan-page .summary-value {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--t-base);
+    line-height: 1.25;
+}
+
+.laporan-page .summary-unit-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--t-muted);
+}
+
+.laporan-page .summary-value-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.laporan-page .volume-badge {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    background: var(--bg-muted);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--t-base);
+}
+
+.laporan-page .volume-badge small {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--t-muted);
+}
+
+.laporan-page .summary-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: var(--bg-muted);
+    color: var(--t-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.laporan-page .summary-icon--income {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.laporan-page .summary-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.laporan-page .summary-info {
+    font-size: 12px;
+    color: var(--t-light);
+}
+
+/* ---------- REPORT CARD & TABS ---------- */
+.laporan-page .report-card {
+    overflow: hidden;
+}
+
+.laporan-page .tabs-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 20px 0;
+    background: var(--bg-muted);
+    border-bottom: 1px solid var(--border);
+}
+
+.laporan-page .report-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 16px;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    background: transparent;
+    color: var(--t-muted);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    position: relative;
+    bottom: -1px;
+    transition: color .15s ease, background .15s ease, border-color .15s ease;
+}
+
+.laporan-page .report-tab svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.laporan-page .report-tab:hover {
+    color: var(--t-base);
+    background: var(--bg-hover);
+}
+
+.laporan-page .report-tab.tab-active {
+    background: var(--bg-card);
+    color: var(--primary);
+    border-color: var(--border);
+    border-bottom-color: var(--bg-card);
+}
+
+.laporan-page .tab-count {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--t-muted);
+    border: 1px solid var(--border);
+}
+
+.laporan-page .report-tab.tab-active .tab-count {
+    background: var(--success-soft);
+    color: var(--success);
+    border-color: transparent;
+}
+
+/* ---------- TOOLBAR & TABLE ---------- */
+.laporan-page .table-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    flex-wrap: wrap;
+}
+
+.laporan-page .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.laporan-page .table-search {
+    width: 400px;
+    max-width: 100%;
+    position: relative;
+    color: var(--t-light);
+}
+
+.laporan-page .table-search svg {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    pointer-events: none;
+}
+
+.laporan-page .table-search input {
+    width: 100%;
+    height: 40px;
+    padding: 0 14px 0 40px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    outline: none;
+    box-sizing: border-box;
+    background: var(--bg-card);
+    color: var(--t-base);
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.laporan-page .table-search input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--success-soft);
+}
+
+.laporan-page .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.laporan-page .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 860px;
+}
+
+.laporan-page .data-table th {
+    background: var(--bg-muted);
+    color: var(--t-muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 13px 16px;
+    text-align: left;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.laporan-page .data-table td {
+    padding: 15px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 13px;
+    color: var(--t-base);
+    vertical-align: middle;
+    background: var(--bg-card);
+}
+
+.laporan-page .data-table tbody tr:hover td {
+    background: var(--bg-hover);
+}
+
+.laporan-page .data-table th.col-num,
+.laporan-page .data-table td.col-num {
+    text-align: right;
+}
+
+.laporan-page .nowrap {
+    white-space: nowrap;
+}
+
+.laporan-page .unit {
+    font-size: 11.5px;
+    color: var(--t-muted);
+    margin-left: 2px;
+}
+
+.laporan-page .amount-in {
+    color: var(--success);
+}
+
+.laporan-page .party-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.laporan-page .mono {
+    font-family: monospace;
+    font-size: 11.5px;
+    color: var(--t-muted);
+}
+
+.laporan-page .cell-note {
+    max-width: 240px;
+    color: var(--t-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.laporan-page .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.laporan-page .badge--success {
+    background: var(--success-soft);
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+.laporan-page .badge--warning {
+    background: var(--warning-soft);
+    color: var(--warning);
+    border: 1px solid color-mix(in srgb, var(--warning) 28%, transparent);
+}
+
+.laporan-page .badge--danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
+}
+
+.laporan-page .empty-state {
+    text-align: center;
+    padding: 44px 20px;
+}
+
+.laporan-page .empty-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.laporan-page .empty-state strong {
+    display: block;
+    font-size: 14px;
+    color: var(--t-base);
+}
+
+.laporan-page .empty-state p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--t-muted);
+}
+
+/* ---------- FOOTER & PAGINATION ---------- */
+.laporan-page .table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 24px;
+    flex-wrap: wrap;
+}
+
+.laporan-page .table-info {
+    font-size: 13px;
+    color: var(--t-muted);
+}
+
+.laporan-page .table-info strong {
+    color: var(--t-base);
+}
+
+.laporan-page .table-pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.laporan-page .per-page {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.laporan-page .per-page label {
+    font-size: 13px;
+    color: var(--t-muted);
+}
+
+.laporan-page .per-page .combo {
+    width: 84px;
+}
+
+.laporan-page .per-page .combo-input {
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.laporan-page .pagination-buttons .btn.is-disabled {
+    opacity: .5;
+    pointer-events: none;
+}
+
+/* ---------- COMBOBOX ---------- */
+.laporan-page .combo {
+    position: relative;
+}
+
+.laporan-page .combo-hidden {
+    display: none !important;
+}
+
+.laporan-page .combo-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    background: var(--bg-card);
+    color: var(--t-base);
+}
+
+.laporan-page .combo--up .combo-list {
+    top: auto;
+    bottom: calc(100% + 4px);
+}
+
+.laporan-page .combo--arrow .combo-input {
+    cursor: pointer;
+    padding-right: 30px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 14px;
+}
+
+.laporan-page .combo-list {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    min-width: 84px;
+    max-height: 180px;
+    overflow-y: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    z-index: 60;
+}
+
+.laporan-page .combo-list.show {
+    display: block;
+}
+
+.laporan-page .combo-item {
+    padding: 9px 12px;
+    font-size: 13px;
+    color: var(--t-base);
+    cursor: pointer;
+}
+
+.laporan-page .combo-item.is-selected {
+    font-weight: 700;
+}
+
+.laporan-page .combo-item:hover,
+.laporan-page .combo-item.is-active {
+    background: var(--bg-hover);
+    color: var(--success);
+}
+
+/* ---------- MODAL CETAK ---------- */
+.laporan-page .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .55);
+    backdrop-filter: blur(2px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.laporan-page .modal-overlay.active {
+    display: flex;
+}
+
+.laporan-page .modal-box {
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    color: var(--t-base);
+    overflow: hidden;
+}
+
+.laporan-page .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.laporan-page .modal-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--t-base);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.laporan-page .modal-title svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--success);
+    stroke-width: 1.8;
+}
+
+.laporan-page .modal-close {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--t-light);
+    cursor: pointer;
+}
+
+.laporan-page .modal-close:hover {
+    background: var(--bg-muted);
+    color: var(--t-base);
+}
+
+.laporan-page .modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.laporan-page .modal-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.laporan-page .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 16px;
+}
+
+.laporan-page .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.laporan-page .form-group--full {
+    grid-column: 1 / -1;
+}
+
+.laporan-page .form-group > label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--t-muted);
+}
+
+.laporan-page .form-control {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    width: 100%;
+    background: var(--bg-card);
+    color: var(--t-base);
+}
+
+.laporan-page .form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--success-soft);
+}
+
+.laporan-page .form-note {
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: var(--t-muted);
+    line-height: 1.5;
+}
+
+.laporan-page .print-radio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.laporan-page .print-radio-grid.cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.laporan-page .print-radio-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+    background: var(--bg-card);
+}
+
+.laporan-page .print-radio-card:hover {
+    border-color: var(--primary);
+    background: var(--bg-hover);
+}
+
+.laporan-page .print-radio-card.active {
+    border-color: var(--primary);
+    background: var(--success-soft);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 15%, transparent);
+}
+
+.laporan-page .print-radio-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.laporan-page .print-radio-card strong {
+    display: block;
+    font-size: 13px;
+    color: var(--t-base);
+}
+
+.laporan-page .print-radio-card span {
+    display: block;
+    font-size: 11px;
+    color: var(--t-muted);
+    margin-top: 2px;
+}
+
+/* ---------- AREA PRINT ---------- */
+.laporan-page .print-area {
+    display: none;
+    background: #fff;
+    color: #000;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+    line-height: 1.4;
+}
+
+.laporan-page .print-area .print-header {
+    text-align: center;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    border-bottom: 2px solid #000;
+}
+
+.laporan-page .print-area .print-header h1 {
+    font-size: 14pt;
+    margin: 0;
+    letter-spacing: 2px;
+    font-weight: 700;
+}
+
+.laporan-page .print-area .print-header h2 {
+    font-size: 11pt;
+    margin: 3px 0 0;
+    font-weight: normal;
+}
+
+.laporan-page .print-area .print-meta {
+    text-align: center;
+    font-size: 9pt;
+    color: #333;
+    margin-bottom: 14px;
+}
+
+.laporan-page .print-area .print-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.laporan-page .print-area .print-summary-card {
+    border: 1px solid #000;
+    padding: 8px 12px;
+    flex: 1 1 200px;
+}
+
+.laporan-page .print-area .print-summary-card .label {
+    font-size: 8pt;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.laporan-page .print-area .print-summary-card .value {
+    font-size: 12pt;
+    font-weight: bold;
+    margin-top: 3px;
+}
+
+.laporan-page .print-area h3.print-section-title {
+    font-size: 10.5pt;
+    margin: 14px 0 6px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.laporan-page .print-area table.print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+}
+
+.laporan-page .print-area table.print-table th {
+    background: #f0f0f0;
+    border: 1px solid #000;
+    padding: 6px 8px;
+    text-align: left;
+    font-weight: 700;
+}
+
+.laporan-page .print-area table.print-table td {
+    border: 1px solid #000;
+    padding: 5px 8px;
+    vertical-align: top;
+}
+
+.laporan-page .print-area table.print-table thead {
+    display: table-header-group;
+}
+
+.laporan-page .print-area table.print-table tr {
+    page-break-inside: avoid;
+}
+
+.laporan-page .print-area table.print-table td.col-num,
+.laporan-page .print-area table.print-table th.col-num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.laporan-page .print-area .print-signature {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 30px;
+}
+
+.laporan-page .print-area .print-signature .sig-block {
+    text-align: center;
+    min-width: 180px;
+    font-size: 10pt;
+}
+
+.laporan-page .print-area .print-signature .sig-date {
+    margin-top: 4px;
+}
+
+.laporan-page .print-area .print-signature .sig-line {
+    margin-top: 55px;
+    border-top: 1px solid #000;
+    padding-top: 3px;
+}
+
+.laporan-page .print-area .print-footer {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 8pt;
+    color: #666;
+    border-top: 1px solid #ccc;
+    padding-top: 6px;
+    font-style: italic;
+}
+
+.laporan-page .print-area .empty-print {
+    text-align: center;
+    padding: 24px;
+    font-style: italic;
+    color: #666;
+    border: 1px dashed #999;
+}
+
+@media (max-width: 820px) {
+    .laporan-page .summary-grid--two {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .laporan-page .form-grid,
+    .laporan-page .print-radio-grid.cols-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .laporan-page .form-group--full {
+        grid-column: auto;
+    }
+}
+
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+
+    html, body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    body * {
+        visibility: hidden !important;
+    }
+
+    #printArea, #printArea * {
+        visibility: visible !important;
+    }
+
+    #printArea {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 15mm;
+        box-sizing: border-box;
+    }
+
+    .laporan-page .hero,
+    .laporan-page .summary-grid,
+    .laporan-page .report-card,
+    .laporan-page .modal-overlay,
+    .no-print {
+        display: none !important;
+    }
+
+    .laporan-page .print-area table.print-table {
+        font-size: 8.5pt;
+    }
+
+    .laporan-page .print-area table.print-table td,
+    .laporan-page .print-area table.print-table th {
+        padding: 4px 6px;
+    }
+}

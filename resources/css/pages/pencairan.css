@@ -1,0 +1,633 @@
+/* =========================================================
+   PENCAIRAN PAGE — STYLES UNIK
+   ========================================================= */
+
+.pencairan-page .pencairan-addr {
+    font-size: 11px;
+}
+
+/* ---------- BANK & REKENING ---------- */
+.pencairan-page .bank-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    line-height: 1.35;
+    min-width: 0;
+}
+
+.pencairan-page .bank-main {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.pencairan-page .bank-main > strong {
+    display: block;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pencairan-page .bank-info .rekening-number {
+    display: block;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-left: 27px;
+}
+
+.pencairan-page .saldo {
+    color: var(--success) !important;
+    white-space: nowrap;
+}
+
+/* ---------- ICON BADGE STATUS REKENING ---------- */
+.pencairan-page .status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+
+.pencairan-page .status-badge--icon {
+    width: 20px;
+    height: 20px;
+}
+
+.pencairan-page .status-badge--icon svg {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.pencairan-page .status-badge--approved {
+    background: var(--success-soft);
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+.pencairan-page .status-badge--pending {
+    background: var(--warning-soft);
+    color: var(--warning);
+    border: 1px solid color-mix(in srgb, var(--warning) 25%, transparent);
+}
+
+/* ---------- EMPTY STATE ---------- */
+.pencairan-page .empty-table {
+    text-align: center;
+    padding: 50px 40px !important;
+    background: var(--bg-card) !important;
+}
+
+.pencairan-page .empty-icon {
+    font-size: 30px;
+    margin-bottom: 10px;
+    opacity: .8;
+}
+
+.pencairan-page .empty-table strong {
+    display: block;
+    color: var(--t-base);
+    font-size: 14px;
+}
+
+.pencairan-page .empty-table p {
+    margin: 5px 0 0;
+    color: var(--t-muted);
+    font-size: 13px;
+}
+
+/* ---------- MODAL ---------- */
+.pencairan-page .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, .68);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.pencairan-page .modal-overlay.active {
+    display: flex;
+}
+
+.pencairan-page .modal-box {
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    color: var(--t-base);
+}
+
+.pencairan-page .modal-box > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.pencairan-page .modal-head,
+.pencairan-page .modal-foot {
+    flex-shrink: 0;
+}
+
+.pencairan-page .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+}
+
+.pencairan-page .modal-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--t-base);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pencairan-page .modal-title svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: var(--success);
+    stroke-width: 1.8;
+}
+
+.pencairan-page .modal-close {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--t-light);
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+}
+
+.pencairan-page .modal-close:hover {
+    background: var(--bg-hover);
+    color: var(--t-base);
+}
+
+.pencairan-page .modal-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px 22px;
+    background: var(--bg-card);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.pencairan-page .modal-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 22px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
+}
+
+/* ---------- INVOICE MODAL ---------- */
+.pencairan-page .invoice-modal-box {
+    max-width: 480px;
+}
+
+.pencairan-page .invoice-paper {
+    background: var(--bg-muted);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.pencairan-page .inv-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pencairan-page .inv-company-name {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--t-base);
+    display: block;
+}
+
+.pencairan-page .inv-company-addr {
+    font-size: 11px;
+    color: var(--t-light);
+    display: block;
+}
+
+.pencairan-page .inv-title-group {
+    text-align: right;
+}
+
+.pencairan-page .inv-number {
+    font-weight: 700;
+    color: var(--success);
+    font-size: 12.5px;
+    display: block;
+}
+
+.pencairan-page .inv-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 12px 0;
+}
+
+.pencairan-page .inv-grid-compact {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+}
+
+.pencairan-page .inv-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--t-light);
+    margin-bottom: 2px;
+    display: block;
+}
+
+.pencairan-page .inv-text-dark {
+    color: var(--t-base);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.pencairan-page .inv-text-muted {
+    color: var(--t-muted);
+}
+
+.pencairan-page .inv-block {
+    display: block;
+}
+
+.pencairan-page .inv-nik {
+    margin-top: 2px;
+}
+
+.pencairan-page .inv-align-right {
+    text-align: right;
+}
+
+.pencairan-page .inv-status-wrap {
+    margin-top: 2px;
+}
+
+.pencairan-page .inv-compact-box {
+    margin-top: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.pencairan-page .inv-compact-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pencairan-page .inv-compact-right {
+    text-align: right;
+}
+
+.pencairan-page .inv-total-amount {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--success);
+}
+
+.pencairan-page .btn--whatsapp {
+    background-color: #25d366;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background-color .2s ease;
+}
+
+.pencairan-page .btn--whatsapp:hover {
+    background-color: #22bf5b;
+}
+
+/* ---------- FORM & DETAIL ---------- */
+.pencairan-page .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.pencairan-page .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.pencairan-page .form-group--full {
+    grid-column: 1 / -1;
+}
+
+.pencairan-page .form-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--t-muted);
+}
+
+.pencairan-page .form-group input,
+.pencairan-page .form-group select {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    width: 100%;
+    background: var(--bg-card);
+    color: var(--t-base);
+    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.pencairan-page .form-group input::placeholder {
+    color: var(--t-light);
+}
+
+.pencairan-page .form-group input:focus,
+.pencairan-page .form-group select:focus {
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px var(--success-soft);
+}
+
+.pencairan-page .form-group input:disabled {
+    background: var(--bg-muted);
+    color: var(--t-muted);
+    cursor: not-allowed;
+}
+
+.pencairan-page .detail-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--t-light);
+    display: block;
+}
+
+.pencairan-page .detail-value {
+    font-size: 13.5px;
+    color: var(--t-base);
+    font-weight: 600;
+}
+
+/* ---------- COMBOBOX LOKAL PENCAIRAN ---------- */
+.pencairan-page .combo {
+    position: relative;
+}
+
+.pencairan-page .combo-hidden {
+    display: none !important;
+}
+
+.pencairan-page .combo-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    background: var(--bg-card);
+    color: var(--t-base);
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.pencairan-page .combo-input::placeholder {
+    color: var(--t-light);
+}
+
+.pencairan-page .combo-input:focus {
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px var(--success-soft);
+}
+
+.pencairan-page .combo--arrow .combo-input {
+    cursor: pointer;
+    padding-right: 30px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 14px;
+}
+
+.pencairan-page .combo-list {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    min-width: 84px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    z-index: 60;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.pencairan-page .combo-list.show {
+    display: block;
+}
+
+.pencairan-page .combo--up .combo-list {
+    top: auto;
+    bottom: calc(100% + 4px);
+}
+
+.pencairan-page .combo-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--t-base);
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+
+.pencairan-page .combo-item:hover,
+.pencairan-page .combo-item.is-active {
+    background: var(--bg-hover);
+    color: var(--success);
+}
+
+.pencairan-page .combo-item.is-selected {
+    font-weight: 700;
+}
+
+.pencairan-page .combo-empty {
+    padding: 10px;
+    font-size: 12px;
+    color: var(--t-light);
+    text-align: center;
+}
+
+/* ---------- TOAST ---------- */
+.pencairan-page .toast-wrap {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.pencairan-page .toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 300px;
+    max-width: 380px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--success);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    padding: 14px 16px;
+    pointer-events: auto;
+}
+
+.pencairan-page .toast.toast--error {
+    border-left-color: var(--danger);
+}
+
+.pencairan-page .toast-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--success-soft);
+    color: var(--success);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pencairan-page .toast.toast--error .toast-icon {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.pencairan-page .toast-icon svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+}
+
+.pencairan-page .toast-body {
+    flex: 1;
+}
+
+.pencairan-page .toast-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--t-base);
+    margin: 0 0 2px;
+}
+
+.pencairan-page .toast-text {
+    font-size: 12.5px;
+    color: var(--t-muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.pencairan-page .toast-close {
+    border: none;
+    background: transparent;
+    color: var(--t-light);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.pencairan-page .toast-close:hover {
+    color: var(--t-base);
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 760px) {
+    .pencairan-page .table-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pencairan-page .table-search {
+        width: 100%;
+    }
+
+    .pencairan-page .table-toolbar .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .pencairan-page .toast {
+        min-width: 0;
+        width: calc(100vw - 40px);
+    }
+
+    .pencairan-page .toast-wrap {
+        left: 20px;
+        right: 20px;
+    }
+}

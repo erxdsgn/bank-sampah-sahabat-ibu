@@ -10,7 +10,6 @@ use App\Models\Warga;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 
 class VerifikasiSetoranController extends Controller
@@ -112,7 +111,7 @@ class VerifikasiSetoranController extends Controller
 
         DB::transaction(function () use ($request, $setoran) {
             $totalSemuaNilai = 0;
-            $totalBeratGram = 0;
+            $totalBerat = 0; // Diubah dari totalBeratGram
 
             // Hapus detail lama jika ada sebelum dimasukkan ulang yang baru
             DB::table('detail_setoran')->where('id_setoran', $setoran->getKey())->delete();
@@ -131,48 +130,33 @@ class VerifikasiSetoranController extends Controller
                 $subtotal = round($jumlah * $hargaSatuan, 2);
 
                 // --- PERHITUNGAN POIN OTOMATIS BERDASARKAN ACCESSOR MODEL ---
-                $poinPerSatuan = $kategori->poin_per_satuan; // Otomatis dari Model KategoriSampah
+                $poinPerSatuan = $kategori->poin_per_satuan;
                 $totalPoinItem = round($jumlah * $poinPerSatuan);
 
                 $totalSemuaNilai += $subtotal;
-                // (Opsional) Jika ingin warga juga punya kolom total poin akumulasi di tabel warga, bisa ditambahkan di sini.
 
-                if ($satuan === 'gram') {
-                    $totalBeratGram += $jumlah;
-                } elseif ($satuan === 'kg') {
-                    $totalBeratGram += ($jumlah * 1000);
-                }
+                // LANGSUNG TAMBAHKAN ANGKA ASLINYA (TANPA DIKALI 1000)
+                $totalBerat += $jumlah;
 
                 $detailData = [
-                    'id_setoran' => $setoran->getKey(),
-                    'id_kategori' => $kategori->id_kategori,
-                    'jumlah' => $jumlah,
-                    'satuan' => $satuan,
-                    'subtotal' => $subtotal,
-                    'poin' => $totalPoinItem, // <-- Menyimpan poin otomatis per item sampah
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'id_setoran'   => $setoran->getKey(),
+                    'id_kategori'  => $kategori->id_kategori,
+                    'jumlah'       => $jumlah,
+                    'satuan'       => $satuan,
+                    'subtotal'     => $subtotal,
+                    'poin'         => $totalPoinItem,
+                    'harga_satuan' => $hargaSatuan, // KOLOM BARU
+                    'berat'        => $jumlah,      // KOLOM BARU (Tanpa * 1000)
+                    'created_at'   => now(),
+                    'updated_at'   => now(),
                 ];
-
-                if (Schema::hasColumn('detail_setoran', 'harga_per_gram')) {
-                    $detailData['harga_per_gram'] = $hargaSatuan;
-                }
-
-                if (Schema::hasColumn('detail_setoran', 'berat_gram')) {
-                    // Konversi khusus satuan berat/volume ke unit terkecil (gram atau mililiter)
-                    if ($satuan === 'kg' || $satuan === 'liter') {
-                        $detailData['berat_gram'] = $jumlah * 1000;
-                    } else {
-                        $detailData['berat_gram'] = $jumlah;
-                    }
-                }
 
                 DB::table('detail_setoran')->insert($detailData);
             }
 
             $setoran->forceFill([
                 'id_admin'    => Auth::id(),
-                'total_berat' => $totalBeratGram > 0 ? $totalBeratGram : null,
+                'total_berat' => $totalBerat > 0 ? $totalBerat : null,
                 'total_nilai' => $totalSemuaNilai,
                 'status'      => 'approved',
             ])->save();
@@ -310,7 +294,7 @@ class VerifikasiSetoranController extends Controller
             $setoran->save();
 
             $totalSemuaNilai = 0;
-            $totalBeratGram = 0;
+            $totalBerat = 0; // Diubah dari totalBeratGram
 
             foreach ($request->items as $itemData) {
                 // Memuat kategori beserta harga terbaru agar accessor getPoinPerSatuanAttribute aktif
@@ -331,40 +315,27 @@ class VerifikasiSetoranController extends Controller
 
                 $totalSemuaNilai += $subtotal;
 
-                if ($satuan === 'gram') {
-                    $totalBeratGram += $jumlah;
-                } elseif ($satuan === 'kg') {
-                    $totalBeratGram += ($jumlah * 1000);
-                }
+                // LANGSUNG TAMBAHKAN ANGKA ASLINYA (TANPA DIKALI 1000)
+                $totalBerat += $jumlah;
 
                 $detailData = [
-                    'id_setoran' => $setoran->getKey(),
-                    'id_kategori' => $kategori->id_kategori,
-                    'jumlah' => $jumlah,
-                    'satuan' => $satuan,
-                    'subtotal' => $subtotal,
-                    'poin' => $totalPoinItem, // <-- Menambahkan penyimpanan poin otomatis per item
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'id_setoran'   => $setoran->getKey(),
+                    'id_kategori'  => $kategori->id_kategori,
+                    'jumlah'       => $jumlah,
+                    'satuan'       => $satuan,
+                    'subtotal'     => $subtotal,
+                    'poin'         => $totalPoinItem,
+                    'harga_satuan' => $hargaSatuan, // KOLOM BARU
+                    'berat'        => $jumlah,      // KOLOM BARU (Tanpa * 1000)
+                    'created_at'   => now(),
+                    'updated_at'   => now(),
                 ];
-
-                if (Schema::hasColumn('detail_setoran', 'harga_per_gram')) {
-                    $detailData['harga_per_gram'] = $hargaSatuan;
-                }
-
-                if (Schema::hasColumn('detail_setoran', 'berat_gram')) {
-                    if ($satuan === 'kg' || $satuan === 'liter') {
-                        $detailData['berat_gram'] = $jumlah * 1000;
-                    } else {
-                        $detailData['berat_gram'] = $jumlah;
-                    }
-                }
 
                 DB::table('detail_setoran')->insert($detailData);
             }
 
             $setoran->forceFill([
-                'total_berat' => $totalBeratGram > 0 ? $totalBeratGram : null,
+                'total_berat' => $totalBerat > 0 ? $totalBerat : null,
                 'total_nilai' => $totalSemuaNilai,
             ])->save();
 

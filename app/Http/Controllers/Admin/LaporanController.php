@@ -21,8 +21,6 @@ class LaporanController extends Controller
 
         // Volume keluar dikelompokkan per satuan kategori.
         // Hasil: ['kg' => 25000, 'pcs' => 120, 'liter' => 40]
-        // Nilai kg masih dalam gram (konversi ke Kg dilakukan di view),
-        // satuan lain disimpan apa adanya di kolom berat_gram.
         $tabelKeluar = (new BarangKeluar)->getTable();
 
         $rincianVolume = BarangKeluar::leftJoin(
@@ -33,7 +31,7 @@ class LaporanController extends Controller
             )
             ->selectRaw(
                 "LOWER(TRIM(COALESCE(kategori_sampah.satuan, 'kg'))) as satuan_key,
-                 SUM({$tabelKeluar}.berat_gram) as total_dasar"
+                 SUM({$tabelKeluar}.berat) as total_dasar"
             )
             ->groupBy('satuan_key')
             ->pluck('total_dasar', 'satuan_key');

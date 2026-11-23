@@ -20,13 +20,6 @@
         }();
     </script>
 
-    {{-- Script JS dari public/assets/admin/js/ --}}
-    <script defer src="{{ asset('assets/admin/js/runtime.js') }}"></script>
-    <script defer src="{{ asset('assets/admin/js/2026.js') }}"></script>
-
-    {{-- File CSS dari public/assets/admin/css/ --}}
-    <link href="{{ asset('assets/admin/css/style.css') }}" rel="stylesheet">
-
     {{-- Slot tambahan untuk CSS per halaman --}}
     @stack('styles')
 </head>

@@ -1,0 +1,429 @@
+/* =========================================================
+   PENJUALAN SAMPAH PAGE — STYLES UNIK
+   ========================================================= */
+
+.penjualan-page .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.penjualan-page .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+}
+
+.penjualan-page .data-table th {
+    background: var(--bg-muted);
+    color: var(--t-muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 13px 16px;
+    text-align: left;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.penjualan-page .data-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 13px;
+    color: var(--t-base);
+    vertical-align: middle;
+    background: var(--bg-card);
+    transition: background .15s ease, color .15s ease;
+}
+
+.penjualan-page .data-table tbody tr:hover td {
+    background: var(--bg-hover);
+}
+
+.penjualan-page .saldo {
+    color: var(--success);
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.penjualan-page .empty-table {
+    text-align: center;
+    padding: 50px 40px;
+    background: var(--bg-card);
+}
+
+.penjualan-page .empty-search {
+    display: none;
+}
+
+.penjualan-page .empty-icon {
+    font-size: 30px;
+    margin-bottom: 10px;
+    opacity: .8;
+}
+
+.penjualan-page .empty-table strong {
+    display: block;
+    color: var(--t-base);
+    font-size: 14px;
+}
+
+.penjualan-page .empty-table p {
+    margin: 5px 0 0;
+    color: var(--t-muted);
+    font-size: 13px;
+}
+
+.penjualan-page .per-page .combo {
+    width: 84px;
+}
+
+.penjualan-page .per-page .combo-input {
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+/* ---------- MODAL & FORM ---------- */
+.penjualan-page .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .55);
+    backdrop-filter: blur(2px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.penjualan-page .modal-overlay.active {
+    display: flex;
+}
+
+.penjualan-page .modal-box {
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    color: var(--t-base);
+    overflow: hidden;
+}
+
+.penjualan-page .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+    flex-shrink: 0;
+}
+
+.penjualan-page .modal-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--t-base);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.penjualan-page .modal-title svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--success);
+    stroke-width: 1.8;
+}
+
+.penjualan-page .modal-close {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--t-light);
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+}
+
+.penjualan-page .modal-close:hover {
+    background: var(--bg-muted);
+    color: var(--t-base);
+}
+
+.penjualan-page .modal-body {
+    padding: 22px 24px;
+    background: var(--bg-card);
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.penjualan-page .modal-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
+    flex-shrink: 0;
+}
+
+.penjualan-page .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 18px;
+}
+
+.penjualan-page .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.penjualan-page .form-group--full {
+    grid-column: 1 / -1;
+}
+
+.penjualan-page .form-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--t-muted);
+}
+
+.penjualan-page .form-group input,
+.penjualan-page .form-group select {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    width: 100%;
+    background: var(--bg-card);
+    color: var(--t-base);
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.penjualan-page .input-locked {
+    pointer-events: none;
+    opacity: .7;
+    user-select: none;
+}
+
+.penjualan-page .lock-hint {
+    font-size: 12px;
+    color: var(--t-muted);
+}
+
+.penjualan-page .form-group input:focus,
+.penjualan-page .form-group select:focus {
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px var(--success-soft);
+}
+
+.penjualan-page .total-box {
+    background: var(--bg-muted);
+    border: 1px dashed var(--border);
+    padding: 14px 16px;
+    border-radius: 10px;
+}
+
+.penjualan-page .detail-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--t-light);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.penjualan-page .detail-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--t-base);
+}
+
+/* ---------- COMBOBOX ---------- */
+.penjualan-page .combo {
+    position: relative;
+}
+
+.penjualan-page .combo-hidden {
+    display: none !important;
+}
+
+.penjualan-page .combo-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    background: var(--bg-card);
+    color: var(--t-base);
+}
+
+.penjualan-page .combo-input:focus {
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px var(--success-soft);
+}
+
+.penjualan-page .combo-list {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    min-width: 84px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    z-index: 20;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.penjualan-page .combo-list.show {
+    display: block;
+}
+
+.penjualan-page .combo--up .combo-list {
+    top: auto;
+    bottom: calc(100% + 4px);
+}
+
+.penjualan-page .combo--arrow .combo-input {
+    cursor: pointer;
+    padding-right: 30px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 14px;
+}
+
+.penjualan-page .combo-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--t-base);
+    cursor: pointer;
+    transition: background .1s ease, color .1s ease;
+}
+
+.penjualan-page .combo-item.is-selected {
+    font-weight: 700;
+}
+
+.penjualan-page .combo-item:hover,
+.penjualan-page .combo-item.is-active {
+    background: var(--bg-hover);
+    color: var(--success);
+}
+
+.penjualan-page .combo-empty {
+    padding: 12px;
+    font-size: 12.5px;
+    color: var(--t-light);
+    text-align: center;
+}
+
+/* ---------- TOAST ---------- */
+.penjualan-page .toast-wrap {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.penjualan-page .toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 300px;
+    max-width: 380px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--success);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    padding: 14px 16px;
+    pointer-events: auto;
+    color: var(--t-base);
+}
+
+.penjualan-page .toast.toast--error {
+    border-left-color: var(--danger);
+}
+
+.penjualan-page .toast-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--success-soft);
+    color: var(--success);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.penjualan-page .toast.toast--error .toast-icon {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.penjualan-page .toast-body {
+    flex: 1;
+}
+
+.penjualan-page .toast-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--t-base);
+    margin: 0 0 2px;
+}
+
+.penjualan-page .toast-text {
+    font-size: 12.5px;
+    color: var(--t-muted);
+    margin: 0;
+}
+
+.penjualan-page .toast-close {
+    border: none;
+    background: transparent;
+    color: var(--t-light);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+@media (max-width: 560px) {
+    .penjualan-page .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .penjualan-page .form-group--full {
+        grid-column: auto;
+    }
+}

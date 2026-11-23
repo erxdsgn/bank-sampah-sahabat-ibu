@@ -14,16 +14,16 @@ class BarangKeluar extends Model
         'id_kategori',
         'id_admin',
         'tanggal',
-        'berat_gram',
-        'harga_jual_per_gram',
+        'berat',
+        'harga_jual_satuan',
         'total',
         'pembeli',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
-        'berat_gram' => 'decimal:2',
-        'harga_jual_per_gram' => 'decimal:2',
+        'berat' => 'decimal:2',
+        'harga_jual_satuan' => 'decimal:2',
         'total' => 'decimal:2',
     ];
 

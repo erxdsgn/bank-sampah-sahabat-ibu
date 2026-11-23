@@ -39,7 +39,9 @@ class HomeController extends Controller
 
     private function konversi(float $nilai, string $grup): float
     {
-        return $grup === 'kg' ? $nilai / 1000 : $nilai;
+        // ✅ DIPERBAIKI: Data di database sudah berupa angka asli (kg/liter),
+        // jadi tidak perlu dibagi 1000 lagi.
+        return $nilai;
     }
 
     private function formatJumlah(float $nilai, string $grup): string
@@ -75,7 +77,7 @@ class HomeController extends Controller
     {
         $grouped = DB::table('detail_setoran')
             ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
-            ->select('kategori_sampah.satuan', DB::raw('SUM(detail_setoran.berat_gram) as total'))
+            ->select('kategori_sampah.satuan', DB::raw('SUM(detail_setoran.berat) as total'))
             ->groupBy('kategori_sampah.satuan')
             ->get()
             ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
@@ -104,7 +106,7 @@ class HomeController extends Controller
             ->select(
                 'kategori_sampah.satuan',
                 DB::raw('MONTH(penyetoran.tanggal_setoran) as bulan'),
-                DB::raw('SUM(detail_setoran.berat_gram) as total')
+                DB::raw('SUM(detail_setoran.berat) as total')
             )
             ->groupBy('kategori_sampah.satuan', DB::raw('MONTH(penyetoran.tanggal_setoran)'))
             ->get()
@@ -134,7 +136,7 @@ class HomeController extends Controller
                 'kategori_sampah.id_kategori',
                 'kategori_sampah.nama_kategori',
                 'kategori_sampah.satuan',
-                DB::raw('SUM(detail_setoran.berat_gram) as total')
+                DB::raw('SUM(detail_setoran.berat) as total')
             )
             ->groupBy(
                 'kategori_sampah.id_kategori',
@@ -240,7 +242,7 @@ class HomeController extends Controller
             ->select(
                 'detail_setoran.id_setoran',
                 'kategori_sampah.satuan',
-                DB::raw('SUM(detail_setoran.berat_gram) as total')
+                DB::raw('SUM(detail_setoran.berat) as total')
             )
             ->groupBy('detail_setoran.id_setoran', 'kategori_sampah.satuan')
             ->get()

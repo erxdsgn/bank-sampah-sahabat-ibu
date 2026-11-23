@@ -1,9 +1,14 @@
-@import 'tailwindcss';
+@import './style.css';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-}
+/* Import file halaman (jika ada) */
+@import './pages/katalog.css';
+@import './pages/kategori-harga.css';
+@import './pages/keuangan.css';
+@import './pages/pencairan.css';
+@import './pages/penjadwalan-setoran.css';
+@import './pages/verifikasi-setoran.css';
+@import './pages/warga.css';
+@import './pages/penjualan-pengepul.css';
+@import './pages/profil-sesi.css';
+@import './pages/laporan.css';
+@import './pages/login.css';

@@ -1,13 +1,15 @@
 /**
  * vector-map.js
  * ---------------------------------------------------------
- * Peta dunia (jsVectorMap) dengan marker kota. Dipasang otomatis
- * ke setiap elemen [data-vmap] yang ditemukan di halaman.
+ * Peta dunia (jsVectorMap) dengan marker kota.
+ * Dipasang otomatis ke setiap elemen [data-vmap] di halaman.
  *
- * npm install jsvectormap
- * (jangan lupa import peta dunianya juga, lihat contoh di dashboard/index.js)
+ * jsVectorMap di-load via <script src="..."> (UMD global),
+ * bukan ESM import, karena tidak pakai bundler.
+ *
+ * Kalau jsVectorMap tidak ada di halaman, fungsi ini
+ * langsung return tanpa error (safe untuk halaman non-peta).
  */
-import VectorMap from "jsvectormap";
 
 /** Daftar kota yang ditandai di peta */
 const markers = [
@@ -23,7 +25,7 @@ const markers = [
   { name: "Dubai", coords: [25.27, 55.3] },
 ];
 
-/** Simpan instance map per elemen, supaya bisa di-destroy saat re-render (ganti tema) */
+/** Simpan instance map per elemen */
 const mapInstances = new Map();
 
 function getMapColors() {
@@ -40,8 +42,33 @@ function getMapColors() {
   };
 }
 
+/** Ambil constructor jsVectorMap dari global (UMD) */
+function getVectorMapConstructor() {
+  // Beberapa build UMD expose sebagai window.jsVectorMap,
+  // sebagian lagi window.jsVectorMap.default, sebagian lagi window.VectorMap.
+  const candidates = [
+    window.jsVectorMap,
+    window.jsVectorMap?.default,
+    window.VectorMap,
+    window.VectorMap?.default,
+  ];
+  for (const c of candidates) {
+    if (typeof c === "function") return c;
+  }
+  return null;
+}
+
 /** Render (atau re-render) peta pada 1 elemen */
 function renderMap(el) {
+  const VectorMap = getVectorMapConstructor();
+  if (!VectorMap) {
+    console.warn(
+      "[vector-map] jsVectorMap belum tersedia. " +
+      "Pastikan script jsvectormap (UMD) sudah di-load di layout."
+    );
+    return;
+  }
+
   const existing = mapInstances.get(el);
   if (existing) {
     try {
@@ -76,14 +103,14 @@ function renderMap(el) {
   mapInstances.set(el, instance);
 }
 
-/** Render semua peta di halaman (dipanggil saat load & saat ganti tema) */
+/** Render semua peta di halaman */
 export function renderAllMaps() {
   document.querySelectorAll("[data-vmap]").forEach(renderMap);
 }
 
 /**
- * Inisialisasi peta + pasang watcher supaya peta otomatis
- * di-render ulang setiap kali atribut data-theme di <html> berubah.
+ * Inisialisasi peta + watcher tema.
+ * Kalau tidak ada [data-vmap] di halaman, langsung return (aman).
  */
 export function initVectorMaps() {
   if (!document.querySelector("[data-vmap]")) return;
