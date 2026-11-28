@@ -16,6 +16,39 @@ const bannerMeta = {
 let myEditor = null;
 let hapusCtx = null;
 
+function tanggalHariIniLokal() {
+    const now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+        .toISOString()
+        .substring(0, 10);
+}
+
+function setDropdownJenisForm(value = '') {
+    const selectEl = document.getElementById('artikelJenis');
+    const inputEl = document.getElementById('cari_artikelJenis');
+
+    if (selectEl) {
+        if (value) {
+            selectEl.value = value;
+        } else {
+            selectEl.selectedIndex = -1;
+            selectEl.value = '';
+        }
+    }
+
+    initComboSelect('artikelJenis', { readonly: true, placeholderKosong: true });
+
+    if (inputEl) {
+        inputEl.readOnly = true;
+        if (!value) {
+            inputEl.value = '';
+        } else {
+            const selectedOpt = Array.from(selectEl?.options || []).find((o) => o.value === value);
+            inputEl.value = selectedOpt ? selectedOpt.textContent : '';
+        }
+    }
+}
+
 function clearFormErrors(fields) {
     fields.forEach((f) => {
         const el = document.getElementById('err_' + f);
@@ -116,16 +149,20 @@ function isiFormEdit(id) {
     const artikel = dataArtikel.find((item) => Number(item.id_artikel) === Number(id));
     if (!artikel) return;
 
+    const hariIni = tanggalHariIniLokal();
+
     document.getElementById('artikelId').value = artikel.id_artikel;
     document.getElementById('artikelJudul').value = artikel.judul ?? '';
-    document.getElementById('artikelJenis').value = (artikel.jenis === 'acara' ? 'event' : artikel.jenis) ?? 'edukasi';
 
-    // FIX: pastikan tidak ada batasan min/max agar tanggal lampau bisa dipilih
+    const jenisNilai = (artikel.jenis === 'acara' ? 'event' : artikel.jenis) ?? 'edukasi';
+    setDropdownJenisForm(jenisNilai);
+
     const tanggalEl = document.getElementById('artikelTanggal');
     if (tanggalEl) {
-        tanggalEl.removeAttribute('min');
+        tanggalEl.min = hariIni;
         tanggalEl.removeAttribute('max');
-        tanggalEl.value = artikel.tanggal_publish ? artikel.tanggal_publish.split('T')[0].split(' ')[0] : '';
+        const tglTersimpan = artikel.tanggal_publish ? artikel.tanggal_publish.split('T')[0].split(' ')[0] : '';
+        tanggalEl.value = (tglTersimpan && tglTersimpan >= hariIni) ? tglTersimpan : hariIni;
     }
 
     const detectedUrl = extractSingleUrl(artikel.konten ?? '');
@@ -172,11 +209,12 @@ function alihKeForm(mode, id = null) {
     document.getElementById('gambarPreviewWrap').style.display = 'none';
     document.getElementById('gambarLamaInfo').innerHTML = '';
 
-    // FIX: hapus batasan min/max agar hari kemarin (dan tanggal lampau) bisa dipilih
+    const hariIni = tanggalHariIniLokal();
     const tanggalEl = document.getElementById('artikelTanggal');
     if (tanggalEl) {
-        tanggalEl.removeAttribute('min');
+        tanggalEl.min = hariIni;
         tanggalEl.removeAttribute('max');
+        tanggalEl.value = hariIni;
     }
 
     if (myEditor) myEditor.setData('');
@@ -184,6 +222,7 @@ function alihKeForm(mode, id = null) {
     if (mode === 'tambah') {
         document.getElementById('formTitleText').textContent = 'Tambah Konten Artikel & Edukasi Baru';
         document.getElementById('artikelId').value = '';
+        setDropdownJenisForm('');
         pilihModeMedia('gambar');
         pilihSumberKonten('manual');
     } else if (mode === 'edit') {
@@ -198,7 +237,6 @@ function tutupFormFull() {
     document.getElementById('viewForm').style.display = 'none';
     document.getElementById('viewDaftar').style.display = 'grid';
     document.getElementById('wrapperSummary').style.display = 'grid';
-    // FIX: gunakan '' agar kembali ke display: flex dari CSS .hero-actions (bukan 'block')
     document.getElementById('heroActionBtn').style.display = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -212,13 +250,33 @@ function simpanArtikel(aksi) {
     const id = document.getElementById('artikelId').value;
     clearFormErrors(['judul', 'jenis', 'gambar', 'konten', 'link_url', 'tanggal']);
 
+    const jenis = document.getElementById('artikelJenis').value;
+    if (!jenis) {
+        const errJenis = document.getElementById('err_jenis');
+        if (errJenis) errJenis.textContent = 'Silakan pilih jenis / kategori konten.';
+        showToast('Gagal', 'Silakan pilih jenis / kategori konten terlebih dahulu.', 'error');
+        document.getElementById('cari_artikelJenis')?.focus();
+        return;
+    }
+
+    const hariIni = tanggalHariIniLokal();
+    const tanggalInputVal = document.getElementById('artikelTanggal')?.value || '';
+
+    if (aksi === 'draft' && tanggalInputVal && tanggalInputVal < hariIni) {
+        const errTgl = document.getElementById('err_tanggal');
+        if (errTgl) errTgl.textContent = 'Tanggal tidak boleh lebih awal dari hari ini.';
+        showToast('Gagal', 'Tanggal tidak boleh memilih hari sebelumnya.', 'error');
+        document.getElementById('artikelTanggal')?.focus();
+        return;
+    }
+
     const modeMedia = document.getElementById('modeMedia').value;
     const sumberKonten = document.getElementById('sumberKonten').value;
     const linkUrl = document.getElementById('artikelLinkUrl').value.trim();
 
     const formData = new FormData();
     formData.append('judul', document.getElementById('artikelJudul').value.trim());
-    formData.append('jenis', document.getElementById('artikelJenis').value);
+    formData.append('jenis', jenis);
     formData.append('mode_media', modeMedia);
     formData.append('sumber_konten', sumberKonten);
 
@@ -229,15 +287,12 @@ function simpanArtikel(aksi) {
         formData.append('konten', myEditor ? myEditor.getData() : '');
     }
 
-    let tanggalPublish = '';
-    if (aksi === 'publish') {
-        tanggalPublish = document.getElementById('artikelTanggal').value;
-        if (!tanggalPublish) {
-            const d = new Date();
-            tanggalPublish = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-        }
-    }
+    // Jika dipublikasikan otomatis tanggal hari ini; jika draft kosongkan tanggal_publish (atau kirim jadwal jika backend mendukung)
+    const tanggalPublish = (aksi === 'publish') ? hariIni : '';
     formData.append('tanggal_publish', tanggalPublish);
+    if (aksi === 'draft' && tanggalInputVal) {
+        formData.append('tanggal_rencana', tanggalInputVal);
+    }
 
     if (modeMedia === 'gambar') {
         const file = document.getElementById('artikelGambar').files[0];
@@ -443,10 +498,17 @@ Object.assign(window, {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Dropdown sama seperti halaman Keuangan (readonly, pilih dari daftar)
     initComboSelect('perPageSelect', { readonly: true });
     initComboSelect('kategoriArtikel', { readonly: true });
     initComboSelect('statusArtikel', { readonly: true });
+    setDropdownJenisForm('');
+
+    const tanggalEl = document.getElementById('artikelTanggal');
+    if (tanggalEl) {
+        const hariIni = tanggalHariIniLokal();
+        tanggalEl.min = hariIni;
+        tanggalEl.value = hariIni;
+    }
 
     if (typeof window.ClassicEditor !== 'undefined' && document.querySelector('#editorKonten')) {
         window.ClassicEditor
@@ -476,5 +538,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (perPageSelect) perPageSelect.addEventListener('change', () => jalankanFilter(true));
 
     jalankanFilter(true);
-
 });

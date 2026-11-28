@@ -83,7 +83,13 @@ async function syncPengaduanMailbox() {
 
         if (listEl) {
             if (items.length === 0) {
-                listEl.innerHTML = `<div class="dd-empty">Tidak ada pengaduan menunggu.</div>`;
+                listEl.innerHTML = `
+                    <div class="dd-empty">
+                        <span style="font-size: 22px; opacity: .75; margin-bottom: 2px;">📭</span>
+                        <strong>Tidak ada pengaduan menunggu</strong>
+                        <small>Semua laporan warga sudah ditangani.</small>
+                    </div>
+                `;
             } else {
                 listEl.innerHTML = items.map((item) => `
                     <a class="dd-item" href="${escapeHtml(item.url || "/admin/pages/pengaduan")}">
@@ -129,23 +135,7 @@ export function renderTopbar(crumbsString) {
                 </button>
 
                 <div class="dd-wrap">
-                    <button class="icon-btn" type="button" data-dropdown aria-label="Notifications">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                        </svg>
-                        <span class="count danger">3</span>
-                    </button>
-                    <div class="dd-menu" role="menu">
-                        <div class="dd-head">Notifications</div>
-                        <div class="dd-list">
-                            <a class="dd-item" href="#"><div class="dd-avatar a1">JD</div><div class="dd-body"><div class="dd-text"><strong>John Doe</strong> liked your <em>post</em></div></div></a>
-                        </div>
-                        <a class="dd-footer" href="#">View all notifications →</a>
-                    </div>
-                </div>
-
-                <div class="dd-wrap">
-                    <button class="icon-btn" type="button" data-dropdown aria-label="Pengaduan Masuk">
+                    <button class="icon-btn" type="button" data-dropdown aria-label="Pengaduan Masuk" title="Pengaduan Masuk">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>
                         </svg>

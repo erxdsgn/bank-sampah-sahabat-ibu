@@ -24,27 +24,41 @@ class AuthController extends Controller
      */
     public function registerWarga(Request $request)
     {
+        // Bersihkan spasi nomor rekening jika dikirim dengan format spasi 4 digit
+        if ($request->filled('nomor_rekening')) {
+            $request->merge([
+                'nomor_rekening' => preg_replace('/\s+/', '', $request->nomor_rekening),
+            ]);
+        }
+
         $validator = Validator::make($request->all(), [
-            'nik'                     => 'required|string|digits:16|unique:warga,nik',
+            'nik'                     => 'required|string|digits:16|regex:/^[0-9]{16}$/|unique:warga,nik',
             'nama'                    => 'required|string|max:100',
             'email'                   => 'required|email:rfc,dns|max:100|unique:users,email',
             'password'                => 'required|string|min:8',
-            'no_hp'                   => 'nullable|string|max:20',
+            'no_hp'                   => 'nullable|string|min:10|max:14|regex:/^(08|628)[0-9]{7,11}$/',
             'jumlah_anggota_keluarga' => 'nullable|integer|min:1',
             'nama_bank_ewallet'       => 'nullable|string|max:50',
-            'nomor_rekening'          => 'nullable|string|max:50',
+            'nomor_rekening'          => 'nullable|string|min:6|max:16|regex:/^[0-9]+$/',
             'nama_pemilik_rekening'   => 'nullable|string|max:100',
             'alamat'                  => 'nullable|string|max:255',
         ], [
-            'nik.required'      => 'NIK wajib diisi.',
-            'nik.digits'        => 'NIK harus berjumlah 16 digit.',
-            'nik.unique'        => 'NIK sudah terdaftar.',
-            'nama.required'     => 'Nama lengkap wajib diisi.',
-            'email.required'    => 'Email login wajib diisi.',
-            'email.email'       => 'Format email tidak valid atau domain email tidak aktif.',
-            'email.unique'      => 'Email sudah terdaftar.',
-            'password.required' => 'Password wajib diisi.',
-            'password.min'      => 'Password minimal 8 karakter.',
+            'nik.required'           => 'NIK wajib diisi.',
+            'nik.digits'             => 'NIK harus berjumlah 16 digit.',
+            'nik.regex'              => 'NIK hanya boleh berisi angka.',
+            'nik.unique'             => 'NIK sudah terdaftar.',
+            'nama.required'          => 'Nama lengkap wajib diisi.',
+            'email.required'         => 'Email login wajib diisi.',
+            'email.email'            => 'Format email tidak valid atau domain email tidak aktif.',
+            'email.unique'           => 'Email sudah terdaftar.',
+            'password.required'      => 'Password wajib diisi.',
+            'password.min'           => 'Password minimal 8 karakter.',
+            'no_hp.min'              => 'Nomor HP/WA minimal 10 digit.',
+            'no_hp.max'              => 'Nomor HP/WA maksimal 14 digit.',
+            'no_hp.regex'            => 'Nomor HP/WA harus berupa angka dan diawali dengan 08 atau 628.',
+            'nomor_rekening.min'     => 'Nomor rekening/e-wallet minimal 6 digit.',
+            'nomor_rekening.max'     => 'Nomor rekening/e-wallet maksimal 16 digit.',
+            'nomor_rekening.regex'   => 'Nomor rekening/e-wallet hanya boleh berisi angka.',
         ]);
 
         if ($validator->fails()) {
@@ -259,6 +273,12 @@ class AuthController extends Controller
         $user = $request->user();
         $warga = $user->warga;
 
+        if ($request->filled('nomor_rekening')) {
+            $request->merge([
+                'nomor_rekening' => preg_replace('/\s+/', '', $request->nomor_rekening),
+            ]);
+        }
+
         if ($request->filled('kelompok') && $warga->kelompok !== null && $warga->kelompok !== $request->kelompok) {
             if ($warga->kelompok_updated_at) {
                 $lastUpdated = Carbon::parse($warga->kelompok_updated_at);
@@ -278,19 +298,25 @@ class AuthController extends Controller
             'email'                   => 'required|email:rfc,dns|max:100|unique:users,email,' . $user->id,
             'nama'                    => 'required|string|max:100',
             'kelompok'                => 'nullable|string|max:50',
-            'no_hp'                   => 'nullable|string|max:20',
+            'no_hp'                   => 'nullable|string|min:10|max:14|regex:/^(08|628)[0-9]{7,11}$/',
             'jumlah_anggota_keluarga' => 'nullable|integer|min:1',
             'nama_bank_ewallet'       => 'nullable|string|max:50',
-            'nomor_rekening'          => 'nullable|string|max:50',
+            'nomor_rekening'          => 'nullable|string|min:6|max:16|regex:/^[0-9]+$/',
             'nama_pemilik_rekening'   => 'nullable|string|max:100',
             'alamat'                  => 'nullable|string|max:255',
         ], [
-            'username.required' => 'Username wajib diisi.',
-            'username.unique'   => 'Username sudah digunakan orang lain.',
-            'email.required'    => 'Email wajib diisi.',
-            'email.email'       => 'Format email tidak valid.',
-            'email.unique'      => 'Email sudah terdaftar.',
-            'nama.required'     => 'Nama lengkap wajib diisi.',
+            'username.required'    => 'Username wajib diisi.',
+            'username.unique'      => 'Username sudah digunakan orang lain.',
+            'email.required'       => 'Email wajib diisi.',
+            'email.email'          => 'Format email tidak valid.',
+            'email.unique'         => 'Email sudah terdaftar.',
+            'nama.required'        => 'Nama lengkap wajib diisi.',
+            'no_hp.min'            => 'Nomor HP/WA minimal 10 digit.',
+            'no_hp.max'            => 'Nomor HP/WA maksimal 14 digit.',
+            'no_hp.regex'          => 'Nomor HP/WA harus berupa angka dan diawali dengan 08 atau 628.',
+            'nomor_rekening.min'   => 'Nomor rekening/e-wallet minimal 6 digit.',
+            'nomor_rekening.max'   => 'Nomor rekening/e-wallet maksimal 16 digit.',
+            'nomor_rekening.regex' => 'Nomor rekening/e-wallet hanya boleh berisi angka.',
         ]);
 
         if ($validator->fails()) {

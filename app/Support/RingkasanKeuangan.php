@@ -83,7 +83,6 @@ class RingkasanKeuangan
                 $r->tanggal_setoran,
                 'Pengeluaran',
                 'Pembelian Sampah',
-                // ✅ DIPERBAIKI: Menghapus kata "gram" karena total_berat sekarang menyimpan angka asli (kg/liter/pcs)
                 'Setoran sampah ' . ($r->nama ?? '-') . ' (' . number_format((float) $r->total_berat, 2, ',', '.') . ')',
                 $r->total_nilai
             ));
@@ -111,20 +110,22 @@ class RingkasanKeuangan
     {
         return DB::table('barang_keluar as b')
             ->leftJoin('kategori_sampah as k', 'k.id_kategori', '=', 'b.id_kategori')
-            // ✅ DIPERBAIKI: Menggunakan 'b.berat' (sesuaikan dengan nama kolom baru di tabel barang_keluar)
-            ->select('b.tanggal', 'b.total', 'b.berat', 'b.pembeli', 'k.nama_kategori')
+            ->select('b.tanggal', 'b.total', 'b.berat', 'b.pembeli', 'k.nama_kategori', 'k.satuan')
             ->get()
-            ->map(fn ($r) => self::baris(
-                'penjualan',
-                null,
-                $r->tanggal,
-                'Pemasukan',
-                'Penjualan Sampah',
-                // ✅ DIPERBAIKI: Menghapus kata "gram"
-                'Penjualan ' . number_format((float) $r->berat, 2, ',', '.') . ' unit '
-                    . ($r->nama_kategori ?? '') . ' ke ' . ($r->pembeli ?? '-'),
-                $r->total
-            ));
+            ->map(function ($r) {
+                $satuan = $r->satuan ?: 'kg';
+
+                return self::baris(
+                    'penjualan',
+                    null,
+                    $r->tanggal,
+                    'Pemasukan',
+                    'Penjualan Sampah',
+                    'Penjualan ' . number_format((float) $r->berat, 2, ',', '.') . ' ' . $satuan . ' '
+                        . ($r->nama_kategori ?? '') . ' ke ' . ($r->pembeli ?? '-'),
+                    $r->total
+                );
+            });
     }
 
     private static function baris(string $sumber, ?int $idKas, $tanggal, string $jenis, ?string $kategori, ?string $keterangan, $jumlah): object
@@ -135,7 +136,7 @@ class RingkasanKeuangan
             'id_kas'       => $idKas,
             'sumber'       => $sumber,
             'sumber_label' => self::LABEL[$sumber],
-            'otomatis'     => $sumber !== 'kas',
+            'otomatis   '     => $sumber !== 'kas',
             'tanggal'      => $tgl->toDateString(),
             'periode'      => $tgl->translatedFormat('F Y'),
             'jenis'        => $jenis,

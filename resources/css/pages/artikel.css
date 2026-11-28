@@ -52,7 +52,7 @@ html[data-theme="dark"] .artikel-page textarea {
     color-scheme: dark;
 }
 
-/* ---------- HERO ALIGNMENT (FIX: tombol sejajar judul) ---------- */
+/* ---------- HERO ALIGNMENT ---------- */
 .artikel-page .hero {
     display: flex;
     align-items: center;
@@ -402,7 +402,7 @@ html[data-theme="dark"] .artikel-page textarea {
     color: var(--text-secondary);
 }
 
-/* ---------- EMPTY STATE (sama seperti halaman lain) ---------- */
+/* ---------- EMPTY STATE ---------- */
 .artikel-page .empty-row td,
 .artikel-page .catalog-empty {
     text-align: center;
@@ -419,7 +419,6 @@ html[data-theme="dark"] .artikel-page textarea {
     background: var(--table-row);
 }
 
-/* Hasil pencarian kosong: tampil lewat JS */
 .artikel-page .catalog-empty {
     display: none;
 }
@@ -562,6 +561,7 @@ html[data-theme="dark"] .artikel-page textarea {
 /* FULL PAGE FORM */
 .artikel-page .form-full-view {
     padding: 24px;
+    overflow: visible;
     animation: artikelFadeIn .2s ease;
 }
 
@@ -635,6 +635,18 @@ html[data-theme="dark"] .artikel-page textarea {
 .artikel-page .form-control:focus {
     border-color: #1E9E66;
     box-shadow: 0 0 0 3px rgba(30, 158, 102, .12);
+}
+
+.artikel-page .form-group .combo {
+    width: 100%;
+}
+
+.artikel-page .form-group .combo-input {
+    height: 42px;
+    font-size: 13.5px;
+    background: var(--input-bg);
+    color: var(--text);
+    border-color: var(--border);
 }
 
 /* CKEDITOR */

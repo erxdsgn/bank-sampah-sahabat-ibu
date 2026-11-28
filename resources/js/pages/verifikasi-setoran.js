@@ -196,6 +196,13 @@ function tutupModal(id) {
     if (el) el.classList.remove('active');
 }
 
+function bukaLightboxFoto(src) {
+    if (!src) return;
+    const img = document.getElementById('lightboxFotoImg');
+    if (img) img.src = src;
+    bukaModal('modalLightboxFoto');
+}
+
 function formatRupiah(angka) {
     return 'Rp ' + (Number(angka) || 0).toLocaleString('id-ID', {
         maximumFractionDigits: 2
@@ -490,7 +497,7 @@ function bukaVerifikasi(item, allowEdit = true) {
         rejected: ['Ditolak', 'status-badge--rejected']
     };
     const [statusTeks, statusKelas] = statusMap[item.status] || statusMap.rejected;
-    statusEl.className = 'status-badge verif-status-spacer ' + statusKelas;
+    statusEl.className = 'status-badge verif-status-right ' + statusKelas;
     statusEl.textContent = statusTeks;
 
     document.getElementById('verifAlasan').value = item.catatan_admin || '';
@@ -505,14 +512,17 @@ function bukaVerifikasi(item, allowEdit = true) {
 
     const fotoEl = document.getElementById('verifFoto');
     const fotoKosong = document.getElementById('verifFotoKosong');
+    const fotoHint = document.getElementById('verifFotoHint');
 
     if (item.foto_bukti) {
         fotoEl.src = '/storage/' + item.foto_bukti;
         fotoEl.style.display = 'block';
         fotoKosong.style.display = 'none';
+        if (fotoHint) fotoHint.style.display = 'inline-block';
     } else {
         fotoEl.style.display = 'none';
         fotoKosong.style.display = 'block';
+        if (fotoHint) fotoHint.style.display = 'none';
     }
 
     verifEditor.setItems(item.items, bisaDiedit);
@@ -581,7 +591,7 @@ function bukaTambahSetoran() {
     const today = `${year}-${month}-${day}`;
 
     const inputTanggal = document.getElementById('tambahTanggal');
-    if(inputTanggal) inputTanggal.value = today;
+    if (inputTanggal) inputTanggal.value = today;
 
     tambahEditor.setItems([{}], true);
     bukaModal('modalTambah');
@@ -822,6 +832,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
+            const lightbox = document.getElementById('modalLightboxFoto');
+            if (lightbox && lightbox.classList.contains('active')) {
+                lightbox.classList.remove('active');
+                return;
+            }
             document.querySelectorAll('.modal-overlay.active').forEach(function(overlay) {
                 overlay.classList.remove('active');
             });
@@ -834,6 +849,7 @@ document.addEventListener('DOMContentLoaded', function() {
 Object.assign(window, {
     bukaModal,
     tutupModal,
+    bukaLightboxFoto,
     bukaVerifikasi,
     prosesVerifikasi,
     bukaTambahSetoran,

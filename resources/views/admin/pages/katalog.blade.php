@@ -19,7 +19,6 @@
                 <p class="hero-sub">Kelola informasi produk hasil daur ulang Bank Sampah</p>
             </div>
             <div class="hero-actions">
-                {{-- Perbaikan: Panggil fungsi yang sudah di-expose ke window --}}
                 <button class="btn btn--primary" type="button" onclick="bukaModalTambah()">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 5v14M5 12h14"></path>
@@ -77,7 +76,6 @@
                             </div>
 
                             <div class="catalog-actions">
-                                {{-- Menggunakan id_produk sesuai database --}}
                                 <button class="icon-btn" title="Lihat Detail" type="button"
                                     onclick="lihatDetail({{ $produk->id_produk }})">
                                     <svg viewBox="0 0 24 24">
@@ -160,7 +158,10 @@
                     <button class="modal-close" type="button" onclick="tutupModal('modalDetail')">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <img id="detailfoto" class="preview-img preview-img--besar" src="" alt="Preview">
+                    <div id="detailfotoWrap" class="detail-foto-wrap" onclick="bukaLightboxGambar()" title="Klik untuk memperbesar gambar">
+                        <img id="detailfoto" class="preview-img preview-img--besar" src="" alt="Preview">
+                        <span class="detail-foto-hint">🔍 Klik untuk perbesar</span>
+                    </div>
                     <div id="detailfotoKosong" class="catalog-img-kosong catalog-img-kosong--besar">📸 Tidak ada foto
                     </div>
                     <div class="detail-grid">
@@ -188,6 +189,15 @@
             </div>
         </div>
 
+        {{-- MODAL LIGHTBOX GAMBAR PENUH --}}
+        <div class="modal-overlay lightbox-overlay" id="modalLightbox">
+            <button class="lightbox-close" type="button" aria-label="Tutup" onclick="tutupModal('modalLightbox')">&times;</button>
+            <div class="lightbox-content">
+                <img id="lightboxImg" class="lightbox-img" src="" alt="Pratinjau Gambar Penuh">
+                <div id="lightboxCaption" class="lightbox-caption"></div>
+            </div>
+        </div>
+
         {{-- MODAL TAMBAH --}}
         <div class="modal-overlay" id="modalTambah">
             <div class="modal-box">
@@ -205,7 +215,6 @@
                         <div class="form-grid">
                             <div class="form-group form-group--full">
                                 <label for="tambahfoto">Foto Produk</label>
-                                {{-- Tambahkan accept untuk HEIC --}}
                                 <input class="form-control" type="file" id="tambahfoto" accept="image/jpeg,image/png,image/jpg,image/webp,image/heic,image/heif,.heic,.heif"
                                     required>
                                 <span class="field-hint">Format JPG, PNG, WEBP, atau HEIC. Maksimal 2MB.</span>
@@ -321,7 +330,6 @@
 @endsection
 
 @push('scripts')
-    {{-- Tambahkan library heic2any --}}
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 
     <script>
@@ -333,20 +341,17 @@
             gambar: @json(asset('storage')),
         };
 
-        // Skrip untuk konversi HEIC ke JPG secara otomatis
         document.addEventListener('DOMContentLoaded', function() {
-            // Konversi untuk Form Tambah
             const inputTambah = document.getElementById('tambahfoto');
             if (inputTambah) {
-                inputTambah.addEventListener('change', async function(e) {
+                inputTambah.addEventListener('change', async function() {
                     await convertHeicToJpg(this);
                 });
             }
 
-            // Konversi untuk Form Edit
             const inputEdit = document.getElementById('editfoto');
             if (inputEdit) {
-                inputEdit.addEventListener('change', async function(e) {
+                inputEdit.addEventListener('change', async function() {
                     await convertHeicToJpg(this);
                 });
             }
@@ -357,9 +362,6 @@
 
                 if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif') || file.type === 'image/heic') {
                     try {
-                        // Tampilkan efek loading (opsional, bisa disesuaikan)
-                        const originalLabel = inputElement.previousElementSibling;
-
                         const convertedBlob = await heic2any({
                             blob: file,
                             toType: "image/jpeg",
@@ -375,8 +377,7 @@
                         dataTransfer.items.add(newFile);
                         inputElement.files = dataTransfer.files;
 
-                        // Tampilkan notifikasi ke user
-                        if(window.showToast) {
+                        if (window.showToast) {
                             window.showToast('Info', 'Foto HEIC berhasil dikonversi ke JPG.', 'success');
                         }
                     } catch (error) {
@@ -389,6 +390,5 @@
         });
     </script>
 
-    {{-- Panggil JS khusus katalog via Vite --}}
     @vite('resources/js/pages/katalog.js')
 @endpush

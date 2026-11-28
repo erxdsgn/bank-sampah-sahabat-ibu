@@ -645,6 +645,12 @@ html[data-theme='dark'] .dashboard-page textarea {
     line-height: 1.2;
 }
 
+.dashboard-page .chart-center-value .chart-center-line {
+    display: block;
+    font-size: 13.5px;
+    line-height: 1.3;
+}
+
 .dashboard-page .chart-center-sub {
     display: block;
     font-size: 10px;

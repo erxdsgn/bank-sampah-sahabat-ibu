@@ -20,7 +20,7 @@ class HomeController extends Controller
     private function grupSatuan(?string $satuan): string
     {
         $satuan = strtolower(trim((string) $satuan));
-        if ($satuan === 'gram') {
+        if (in_array($satuan, ['gram', 'gr', 'g'], true)) {
             return 'kg';
         }
         return $satuan !== '' ? $satuan : 'lainnya';
@@ -40,6 +40,25 @@ class HomeController extends Controller
     private function konversi(float $nilai, string $grup): float
     {
         return $nilai;
+    }
+
+    private function konversiDariSatuanAsli(float $nilai, ?string $satuanAsli): float
+    {
+        $satuan = strtolower(trim((string) $satuanAsli));
+        if (in_array($satuan, ['gram', 'gr', 'g'], true)) {
+            return $nilai / 1000;
+        }
+        return $nilai;
+    }
+
+    private function ekspresiSatuanDetail(): string
+    {
+        return "COALESCE(NULLIF(TRIM(detail_setoran.satuan), ''), kategori_sampah.satuan)";
+    }
+
+    private function ekspresiJumlahDetail(): string
+    {
+        return "COALESCE(detail_setoran.jumlah, detail_setoran.berat, 0)";
     }
 
     private function formatJumlah(float $nilai, string $grup): string
@@ -93,6 +112,9 @@ class HomeController extends Controller
      */
     private function hitungSampahMasukRentang(int $bulanAwal, int $bulanAkhir, int $tahun): array
     {
+        $satuanExpr = $this->ekspresiSatuanDetail();
+        $jumlahExpr = $this->ekspresiJumlahDetail();
+
         $query = DB::table('detail_setoran')
             ->join('penyetoran', 'detail_setoran.id_setoran', '=', 'penyetoran.id_setoran')
             ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
@@ -102,15 +124,21 @@ class HomeController extends Controller
         $this->applySetoranMasukValid($query);
 
         $grouped = $query
-            ->select('kategori_sampah.satuan', DB::raw('SUM(detail_setoran.berat) as total'))
-            ->groupBy('kategori_sampah.satuan')
+            ->select(
+                DB::raw("{$satuanExpr} as satuan_aktual"),
+                DB::raw("SUM({$jumlahExpr}) as total")
+            )
+            ->groupBy(DB::raw($satuanExpr))
             ->get()
-            ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan_aktual))
             ->sortBy(fn($rows, $grup) => $grup === 'kg' ? '0' : $grup);
 
         $result = [];
         foreach ($grouped as $grup => $rows) {
-            $result[(string) $grup] = $this->konversi((float) collect($rows)->sum('total'), (string) $grup);
+            $totalGrup = collect($rows)->sum(
+                fn($r) => $this->konversiDariSatuanAsli((float) $r->total, $r->satuan_aktual)
+            );
+            $result[(string) $grup] = round($this->konversi((float) $totalGrup, (string) $grup), 2);
         }
 
         return $result;
@@ -122,6 +150,9 @@ class HomeController extends Controller
      */
     private function hitungSampahTersediaPerSatuan(): array
     {
+        $satuanExpr = $this->ekspresiSatuanDetail();
+        $jumlahExpr = $this->ekspresiJumlahDetail();
+
         $masukQuery = DB::table('detail_setoran')
             ->join('penyetoran', 'detail_setoran.id_setoran', '=', 'penyetoran.id_setoran')
             ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori');
@@ -129,19 +160,26 @@ class HomeController extends Controller
         $this->applySetoranMasukValid($masukQuery);
 
         $masukPerGrup = $masukQuery
-            ->select('kategori_sampah.satuan', DB::raw('SUM(detail_setoran.berat) as total'))
-            ->groupBy('kategori_sampah.satuan')
+            ->select(
+                DB::raw("{$satuanExpr} as satuan_aktual"),
+                DB::raw("SUM({$jumlahExpr}) as total")
+            )
+            ->groupBy(DB::raw($satuanExpr))
             ->get()
-            ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
-            ->map(fn($rows) => (float) collect($rows)->sum('total'));
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan_aktual))
+            ->map(fn($rows) => (float) collect($rows)->sum(
+                fn($r) => $this->konversiDariSatuanAsli((float) $r->total, $r->satuan_aktual)
+            ));
 
         $keluarPerGrup = DB::table('barang_keluar')
             ->join('kategori_sampah', 'barang_keluar.id_kategori', '=', 'kategori_sampah.id_kategori')
-            ->select('kategori_sampah.satuan', DB::raw('SUM(barang_keluar.berat) as total'))
+            ->select('kategori_sampah.satuan as satuan_aktual', DB::raw('SUM(barang_keluar.berat) as total'))
             ->groupBy('kategori_sampah.satuan')
             ->get()
-            ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
-            ->map(fn($rows) => (float) collect($rows)->sum('total'));
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan_aktual))
+            ->map(fn($rows) => (float) collect($rows)->sum(
+                fn($r) => $this->konversiDariSatuanAsli((float) $r->total, $r->satuan_aktual)
+            ));
 
         $semuaGrup = $masukPerGrup->keys()
             ->merge($keluarPerGrup->keys())
@@ -152,7 +190,7 @@ class HomeController extends Controller
         foreach ($semuaGrup as $grup) {
             $grupKey = (string) $grup;
             $sisa = (float) ($masukPerGrup[$grupKey] ?? 0) - (float) ($keluarPerGrup[$grupKey] ?? 0);
-            $tersedia[$grupKey] = $this->konversi(max(0.0, $sisa), $grupKey);
+            $tersedia[$grupKey] = round($this->konversi(max(0.0, $sisa), $grupKey), 2);
         }
 
         return $tersedia;
@@ -160,6 +198,9 @@ class HomeController extends Controller
 
     private function hitungTotalPerGrup(): array
     {
+        $satuanExpr = $this->ekspresiSatuanDetail();
+        $jumlahExpr = $this->ekspresiJumlahDetail();
+
         $query = DB::table('detail_setoran')
             ->join('penyetoran', 'detail_setoran.id_setoran', '=', 'penyetoran.id_setoran')
             ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori');
@@ -167,18 +208,21 @@ class HomeController extends Controller
         $this->applySetoranMasukValid($query);
 
         $grouped = $query
-            ->select('kategori_sampah.satuan', DB::raw('SUM(detail_setoran.berat) as total'))
-            ->groupBy('kategori_sampah.satuan')
+            ->select(
+                DB::raw("{$satuanExpr} as satuan_aktual"),
+                DB::raw("SUM({$jumlahExpr}) as total")
+            )
+            ->groupBy(DB::raw($satuanExpr))
             ->get()
-            ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan_aktual))
             ->sortBy(fn($rows, $grup) => $grup === 'kg' ? '0' : $grup);
 
         $result = [];
         foreach ($grouped as $grup => $rows) {
             $result[(string) $grup] = collect($rows)
                 ->map(fn($r) => [
-                    'satuan' => isset($r->satuan) ? (string) $r->satuan : null,
-                    'total'  => (float) ($r->total ?? 0),
+                    'satuan' => isset($r->satuan_aktual) ? (string) $r->satuan_aktual : null,
+                    'total'  => round($this->konversiDariSatuanAsli((float) ($r->total ?? 0), $r->satuan_aktual), 2),
                 ])
                 ->values()
                 ->all();
@@ -192,6 +236,9 @@ class HomeController extends Controller
      */
     private function hitungSetoranPerBulan(int $tahun): array
     {
+        $satuanExpr = $this->ekspresiSatuanDetail();
+        $jumlahExpr = $this->ekspresiJumlahDetail();
+
         $query = DB::table('detail_setoran')
             ->join('penyetoran', 'detail_setoran.id_setoran', '=', 'penyetoran.id_setoran')
             ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
@@ -201,22 +248,25 @@ class HomeController extends Controller
 
         $rowsAll = $query
             ->select(
-                'kategori_sampah.satuan',
+                DB::raw("{$satuanExpr} as satuan_aktual"),
                 DB::raw('MONTH(penyetoran.tanggal_setoran) as bulan'),
-                DB::raw('SUM(detail_setoran.berat) as total')
+                DB::raw("SUM({$jumlahExpr}) as total")
             )
-            ->groupBy('kategori_sampah.satuan', DB::raw('MONTH(penyetoran.tanggal_setoran)'))
+            ->groupBy(DB::raw($satuanExpr), DB::raw('MONTH(penyetoran.tanggal_setoran)'))
             ->get()
-            ->groupBy(fn($r) => $this->grupSatuan($r->satuan));
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan_aktual));
 
         $result = [];
         foreach ($rowsAll as $grup => $rows) {
             $grupKey = (string) $grup;
             $perBulan = [];
             foreach (collect($rows)->groupBy('bulan') as $bulan => $items) {
+                $totalBulan = collect($items)->sum(
+                    fn($r) => $this->konversiDariSatuanAsli((float) $r->total, $r->satuan_aktual)
+                );
                 $perBulan[] = [
                     'bulan' => (int) $bulan,
-                    'total' => $this->konversi((float) collect($items)->sum('total'), $grupKey),
+                    'total' => round($this->konversi((float) $totalBulan, $grupKey), 2),
                 ];
             }
             $result[$grupKey] = $perBulan;
@@ -230,6 +280,9 @@ class HomeController extends Controller
      */
     private function hitungStatistikJenisSampah(int $tahun, int $bulan = 0): array
     {
+        $satuanExpr = $this->ekspresiSatuanDetail();
+        $jumlahExpr = $this->ekspresiJumlahDetail();
+
         $query = DB::table('detail_setoran')
             ->join('penyetoran', 'detail_setoran.id_setoran', '=', 'penyetoran.id_setoran')
             ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
@@ -245,25 +298,32 @@ class HomeController extends Controller
             ->select(
                 'kategori_sampah.id_kategori',
                 'kategori_sampah.nama_kategori',
-                'kategori_sampah.satuan',
-                DB::raw('SUM(detail_setoran.berat) as total')
+                DB::raw("{$satuanExpr} as satuan_aktual"),
+                DB::raw("SUM({$jumlahExpr}) as total")
             )
             ->groupBy(
                 'kategori_sampah.id_kategori',
                 'kategori_sampah.nama_kategori',
-                'kategori_sampah.satuan'
+                DB::raw($satuanExpr)
             )
             ->get()
-            ->groupBy(fn($r) => $this->grupSatuan($r->satuan));
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan_aktual));
 
         $result = [];
         foreach ($rowsAll as $grup => $rows) {
             $grupKey = (string) $grup;
             $items = collect($rows)
-                ->map(fn($r) => [
-                    'nama'  => (string) ($r->nama_kategori ?? 'Tanpa nama'),
-                    'total' => $this->konversi((float) ($r->total ?? 0), $grupKey),
-                ])
+                ->groupBy('id_kategori')
+                ->map(function ($katRows) use ($grupKey) {
+                    $first = $katRows->first();
+                    $totalKat = $katRows->sum(
+                        fn($r) => $this->konversiDariSatuanAsli((float) ($r->total ?? 0), $r->satuan_aktual)
+                    );
+                    return [
+                        'nama'  => (string) ($first->nama_kategori ?? 'Tanpa nama'),
+                        'total' => round($this->konversi((float) $totalKat, $grupKey), 2),
+                    ];
+                })
                 ->sortByDesc('total')
                 ->values()
                 ->all();
@@ -345,12 +405,12 @@ class HomeController extends Controller
         $urutGrup = fn($rows, $grup) => $grup === 'kg' ? '0' : $grup;
 
         // ===== CACHE: total per satuan 5 menit =====
-        $rawTotalPerGrup = cache()->remember('dash.total_per_grup', 300, fn() => $this->hitungTotalPerGrup());
+        $rawTotalPerGrup = cache()->remember('dash.total_per_grup_v2', 300, fn() => $this->hitungTotalPerGrup());
         $isValidTotalPerGrup = is_array($rawTotalPerGrup)
             && collect($rawTotalPerGrup)->every(fn($rows) => is_array($rows) && collect($rows)->every(fn($r) => is_array($r)));
 
         if (!$isValidTotalPerGrup) {
-            cache()->forget('dash.total_per_grup');
+            cache()->forget('dash.total_per_grup_v2');
             $rawTotalPerGrup = $this->hitungTotalPerGrup();
         }
 
@@ -399,23 +459,31 @@ class HomeController extends Controller
             ->limit(10)
             ->get();
 
+        $satuanExpr = $this->ekspresiSatuanDetail();
+        $jumlahExpr = $this->ekspresiJumlahDetail();
+
         $detailPerSetoran = DB::table('detail_setoran')
             ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
             ->whereIn('detail_setoran.id_setoran', $riwayatSetoran->pluck('id_setoran'))
             ->select(
                 'detail_setoran.id_setoran',
-                'kategori_sampah.satuan',
-                DB::raw('SUM(detail_setoran.berat) as total')
+                DB::raw("{$satuanExpr} as satuan_aktual"),
+                DB::raw("SUM({$jumlahExpr}) as total")
             )
-            ->groupBy('detail_setoran.id_setoran', 'kategori_sampah.satuan')
+            ->groupBy('detail_setoran.id_setoran', DB::raw($satuanExpr))
             ->get()
             ->groupBy('id_setoran');
 
         $riwayatSetoran->transform(function ($setoran) use ($detailPerSetoran, $urutGrup) {
             $setoran->jumlah_text = ($detailPerSetoran[$setoran->id_setoran] ?? collect())
-                ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
+                ->groupBy(fn($r) => $this->grupSatuan($r->satuan_aktual))
                 ->sortBy($urutGrup)
-                ->map(fn($rows, $grup) => $this->formatJumlah((float) $rows->sum('total'), $grup))
+                ->map(function ($rows, $grup) {
+                    $total = collect($rows)->sum(
+                        fn($r) => $this->konversiDariSatuanAsli((float) $r->total, $r->satuan_aktual)
+                    );
+                    return $this->formatJumlah($total, $grup);
+                })
                 ->implode(', ') ?: '-';
             return $setoran;
         });

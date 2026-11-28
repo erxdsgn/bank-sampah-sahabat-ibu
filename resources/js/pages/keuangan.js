@@ -5,6 +5,7 @@ import { renderPagination } from '../utils/paginations';
 const dataKeuangan = window.__KEUANGAN_DATA__ || {};
 const saldoKasSistem = Number(dataKeuangan.saldoKas ?? 0);
 const storeUrl = dataKeuangan.storeUrl || '';
+const MAKSIMAL_NOMINAL = 50000000;
 
 let keuanganPage = 1;
 let transaksiAkanDihapus = null;
@@ -14,6 +15,73 @@ function tanggalHariIniLokal() {
     return new Date(now.getTime() - now.getTimezoneOffset() * 60000)
         .toISOString()
         .substring(0, 10);
+}
+
+function posisikanDropdownModal(input, list) {
+    if (!input || !list || !input.closest('.modal-box')) return;
+
+    const rect = input.getBoundingClientRect();
+    const ruangBawahViewport = Math.max(80, window.innerHeight - rect.bottom - 12);
+
+    list.style.position = 'fixed';
+    list.style.top = `${rect.bottom + 4}px`;
+    list.style.left = `${rect.left}px`;
+    list.style.width = `${rect.width}px`;
+    list.style.right = 'auto';
+    list.style.maxHeight = `${Math.min(200, ruangBawahViewport)}px`;
+    list.style.zIndex = '1050';
+}
+
+function parseNominal(nilaiTeks) {
+    const hanyaDigit = String(nilaiTeks || '').replace(/\D/g, '');
+    return hanyaDigit ? parseInt(hanyaDigit, 10) : 0;
+}
+
+function formatRibuanTitik(angka) {
+    if (!angka) return '';
+    return Number(angka).toLocaleString('id-ID');
+}
+
+function initInputNominal() {
+    const input = document.getElementById('transaksiJumlah');
+    if (!input) return;
+
+    input.addEventListener('input', function() {
+        let angka = parseNominal(this.value);
+        if (angka > MAKSIMAL_NOMINAL) {
+            angka = MAKSIMAL_NOMINAL;
+        }
+        this.value = angka > 0 ? formatRibuanTitik(angka) : '';
+    });
+
+    input.addEventListener('keydown', function(e) {
+        const tombolDiizinkan = [
+            'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+            'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'
+        ];
+        if (tombolDiizinkan.includes(e.key)) return;
+        if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())) return;
+        if (!/^\d$/.test(e.key)) {
+            e.preventDefault();
+        }
+    });
+}
+
+function resetDropdownJenisModal() {
+    const jenisEl = document.getElementById('transaksiJenis');
+    const cariJenisEl = document.getElementById('cari_transaksiJenis');
+
+    if (jenisEl) {
+        jenisEl.selectedIndex = -1;
+        jenisEl.value = '';
+    }
+
+    initComboSelect('transaksiJenis', { readonly: true, placeholderKosong: true });
+
+    if (cariJenisEl) {
+        cariJenisEl.value = '';
+        cariJenisEl.readOnly = true;
+    }
 }
 
 function bukaModal(id) {
@@ -136,15 +204,15 @@ function bukaModalTambah() {
     const form = document.getElementById('formTransaksi');
     if (form) form.reset();
 
-    const jenisEl = document.getElementById('transaksiJenis');
-    if (jenisEl) jenisEl.value = '';
-    initComboSelect('transaksiJenis', { placeholderKosong: true });
+    resetDropdownJenisModal();
 
     const tanggal = document.getElementById('transaksiTanggal');
     if (tanggal) {
         const hariIni = tanggalHariIniLokal();
         tanggal.min = hariIni;
+        tanggal.max = hariIni;
         tanggal.value = hariIni;
+        tanggal.readOnly = true;
     }
 
     bukaModal('modalTransaksi');
@@ -154,19 +222,24 @@ function simpanTransaksi(event) {
     event.preventDefault();
 
     const jenis = document.getElementById('transaksiJenis').value;
-    const tanggalVal = document.getElementById('transaksiTanggal').value;
-    const jumlah = parseFloat(document.getElementById('transaksiJumlah').value) || 0;
-    const hariIni = tanggalHariIniLokal();
+    const tanggalVal = tanggalHariIniLokal();
+    const jumlah = parseNominal(document.getElementById('transaksiJumlah').value);
 
-    if (!jenis) {
-        keuanganShowToast('Gagal menyimpan', 'Silakan pilih jenis transaksi.', 'error');
+    if (!jenis || !['Pemasukan', 'Pengeluaran'].includes(jenis)) {
+        keuanganShowToast('Gagal menyimpan', 'Silakan pilih jenis transaksi (Pemasukan atau Pengeluaran).', 'error');
         document.getElementById('cari_transaksiJenis')?.focus();
         return false;
     }
 
-    if (!tanggalVal || tanggalVal < hariIni) {
-        keuanganShowToast('Kesalahan Tanggal', 'Tanggal transaksi tidak boleh mundur (lebih awal dari hari ini).', 'error');
-        document.getElementById('transaksiTanggal')?.focus();
+    if (jumlah < 1) {
+        keuanganShowToast('Gagal menyimpan', 'Nominal jumlah harus lebih dari Rp 0.', 'error');
+        document.getElementById('transaksiJumlah')?.focus();
+        return false;
+    }
+
+    if (jumlah > MAKSIMAL_NOMINAL) {
+        keuanganShowToast('Gagal menyimpan', 'Nominal jumlah maksimal Rp 50.000.000.', 'error');
+        document.getElementById('transaksiJumlah')?.focus();
         return false;
     }
 
@@ -182,9 +255,9 @@ function simpanTransaksi(event) {
     const payload = {
         jenis: jenis,
         tanggal: tanggalVal,
-        kategori: document.getElementById('transaksiKategori').value,
+        kategori: document.getElementById('transaksiKategori').value.trim(),
         jumlah: jumlah,
-        keterangan: document.getElementById('transaksiKeterangan').value
+        keterangan: document.getElementById('transaksiKeterangan').value.trim()
     };
 
     fetch(storeUrl, {
@@ -288,8 +361,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const tanggalInput = document.getElementById('transaksiTanggal');
     if (tanggalInput) {
-        tanggalInput.min = tanggalHariIniLokal();
+        const hariIni = tanggalHariIniLokal();
+        tanggalInput.min = hariIni;
+        tanggalInput.max = hariIni;
+        tanggalInput.value = hariIni;
+        tanggalInput.readOnly = true;
     }
+
+    initInputNominal();
 
     const searchInput = document.getElementById('searchKeuangan');
     const filterSumber = document.getElementById('filterSumber');
@@ -307,20 +386,34 @@ document.addEventListener('DOMContentLoaded', function() {
     initComboSelect('filterSumber', { readonly: true });
     initComboSelect('filterJenis', { readonly: true });
     initComboSelect('filterPeriode', { readonly: true });
-    initComboSelect('transaksiJenis', { placeholderKosong: true });
+    resetDropdownJenisModal();
+
+    const inputJenisModal = document.getElementById('cari_transaksiJenis');
+    const listJenisModal = document.getElementById('list_transaksiJenis');
+    if (inputJenisModal && listJenisModal) {
+        const sesuaikanPosisi = () => requestAnimationFrame(() => posisikanDropdownModal(inputJenisModal, listJenisModal));
+        inputJenisModal.addEventListener('focus', sesuaikanPosisi);
+        inputJenisModal.addEventListener('click', sesuaikanPosisi);
+        window.addEventListener('resize', () => {
+            if (listJenisModal.classList.contains('show')) sesuaikanPosisi();
+        });
+        document.querySelector('#modalTransaksi .modal-body')?.addEventListener('scroll', () => {
+            if (listJenisModal.classList.contains('show')) sesuaikanPosisi();
+        });
+    }
 
     renderTabel();
 
     document.querySelectorAll('.keuangan-page .modal-overlay').forEach(function(overlay) {
         overlay.addEventListener('click', function(e) {
-            if (e.target === overlay) overlay.classList.remove('active');
+            if (e.target === overlay) tutupModal(overlay.id);
         });
     });
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             document.querySelectorAll('.keuangan-page .modal-overlay.active').forEach(function(overlay) {
-                overlay.classList.remove('active');
+                tutupModal(overlay.id);
             });
         }
     });

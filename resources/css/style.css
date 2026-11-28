@@ -869,6 +869,41 @@ body.has-drawer-open .drawer-backdrop {
     color: var(--primary-dark);
 }
 
+.dd-empty {
+    align-items: center;
+    color: var(--t-muted);
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+    gap: 4px;
+    justify-content: center;
+    line-height: 1.5;
+    padding: 28px 20px;
+    text-align: center;
+}
+
+.dd-empty strong {
+    color: var(--t-base);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.dd-empty small {
+    color: var(--t-light);
+    font-size: 12px;
+}
+
+.d-topbar .icon-btn:focus,
+.d-topbar .icon-btn:focus-visible {
+    box-shadow: 0 0 0 3px var(--primary-soft);
+    outline: none;
+}
+
+.d-topbar .dd-wrap.is-open > .icon-btn {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
 .dd-menu.dd-profile {
     min-width: 220px;
 }

@@ -38,7 +38,7 @@ function tutupModal(id) {
     document.getElementById(id)?.classList.remove('active');
 }
 
-/* ========== Detail ========== */
+/* ========== Detail & Lightbox Gambar ========== */
 
 function lihatDetail(id) {
     const produk = data.find((p) => Number(getProdukId(p)) === Number(id));
@@ -49,19 +49,35 @@ function lihatDetail(id) {
     document.getElementById('detailHarga').textContent = formatRupiah(produk.harga);
     document.getElementById('detailStok').textContent = produk.stok;
 
+    const wrap = document.getElementById('detailfotoWrap');
     const img = document.getElementById('detailfoto');
     const kosong = document.getElementById('detailfotoKosong');
 
     if (produk.foto) {
         img.src = imgUrl(produk.foto);
+        img.alt = produk.nama_produk || 'Preview';
         img.style.display = 'block';
+        if (wrap) wrap.style.display = 'block';
         kosong.style.display = 'none';
     } else {
         img.style.display = 'none';
+        if (wrap) wrap.style.display = 'none';
         kosong.style.display = 'flex';
     }
 
     bukaModal('modalDetail');
+}
+
+function bukaLightboxGambar() {
+    const imgDetail = document.getElementById('detailfoto');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxCaption = document.getElementById('lightboxCaption');
+
+    if (!imgDetail || !imgDetail.src || imgDetail.style.display === 'none') return;
+
+    lightboxImg.src = imgDetail.src;
+    lightboxCaption.textContent = document.getElementById('detailNama')?.textContent || '';
+    bukaModal('modalLightbox');
 }
 
 /* ========== Tambah ========== */
@@ -115,8 +131,8 @@ function bukaModalEdit(id) {
     document.getElementById('editId').value = getProdukId(produk);
     document.getElementById('editNama').value = produk.nama_produk || '';
     document.getElementById('editDeskripsi').value = produk.deskripsi || '';
-    document.getElementById('editHarga').value = produk.harga || '';
-    document.getElementById('editStok').value = produk.stok || '';
+    document.getElementById('editHarga').value = produk.harga != null ? Math.round(Number(produk.harga)) : '';
+    document.getElementById('editStok').value = produk.stok != null ? Math.round(Number(produk.stok)) : '';
     document.getElementById('editfoto').value = '';
 
     const img = document.getElementById('editfotoPreview');
@@ -267,9 +283,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Tutup modal dengan Escape
+    // Tutup modal dengan Escape (tutup lightbox terlebih dahulu jika terbuka)
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
+            const lightbox = document.getElementById('modalLightbox');
+            if (lightbox && lightbox.classList.contains('active')) {
+                lightbox.classList.remove('active');
+                return;
+            }
             document.querySelectorAll('.modal-overlay.active').forEach((el) => {
                 el.classList.remove('active');
             });
@@ -289,6 +310,7 @@ Object.assign(window, {
     bukaModal,
     tutupModal,
     lihatDetail,
+    bukaLightboxGambar,
     bukaModalTambah,
     simpanTambah,
     bukaModalEdit,

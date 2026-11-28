@@ -40,7 +40,8 @@
             10 => 'Okt',
             11 => 'Nov',
             12 => 'Des',
-        ];$namaBulanFull = [
+        ];
+        $namaBulanFull = [
             1 => 'Januari',
             2 => 'Februari',
             3 => 'Maret',
@@ -59,9 +60,15 @@
         $bAkhir = (int) ($bulanAkhir ?? 6);
         $thnDipilih = (int) ($tahunDipilih ?? $waktuLokal->year);
         $blnStat = (int) ($bulanStatistik ?? 0);
-        $listTahun =$daftarTahun ?? [$thnDipilih];$satuanDipilih = request('satuan', 'semua');
+        $listTahun = $daftarTahun ?? [$thnDipilih];
 
-        $selisihBulan = max(1, $bAkhir -$bAwal + 1);
+        $defaultSatuan = $opsi->first()['key'] ?? 'kg';
+        $satuanDipilih = request('satuan');
+        if (!$satuanDipilih || !$opsi->contains('key', $satuanDipilih)) {
+            $satuanDipilih = $defaultSatuan;
+        }
+
+        $selisihBulan = max(1, $bAkhir - $bAwal + 1);
     @endphp
 
     <div class="dashboard-page">
@@ -77,7 +84,7 @@
                         <span>Sistem Manajemen Bank Sampah</span>
                     </div>
 
-                    <h1 class="welcome-title">{{ $sapaan }}, {{$namaAdmin }}!</h1>
+                    <h1 class="welcome-title">{{ $sapaan }}, {{ $namaAdmin }}!</h1>
                     <p class="welcome-sub">
                         Pantau akumulasi sampah masuk, kelola verifikasi setoran warga, dan cek arus kas bank sampah secara
                         real-time.
@@ -132,8 +139,8 @@
                             </div>
                             <select name="bulan_awal" id="filterBulanAwal" class="combo-hidden" tabindex="-1"
                                 aria-hidden="true">
-                                @foreach ($namaBulan as $num =>$labelBln)
-                                    <option value="{{ $num }}" {{ $bAwal ===$num ? 'selected' : '' }}>
+                                @foreach ($namaBulan as $num => $labelBln)
+                                    <option value="{{ $num }}" {{ $bAwal === $num ? 'selected' : '' }}>
                                         {{ $labelBln }}</option>
                                 @endforeach
                             </select>
@@ -147,8 +154,8 @@
                             </div>
                             <select name="bulan_akhir" id="filterBulanAkhir" class="combo-hidden" tabindex="-1"
                                 aria-hidden="true">
-                                @foreach ($namaBulan as $num =>$labelBln)
-                                    <option value="{{ $num }}" {{ $bAkhir ===$num ? 'selected' : '' }}>
+                                @foreach ($namaBulan as $num => $labelBln)
+                                    <option value="{{ $num }}" {{ $bAkhir === $num ? 'selected' : '' }}>
                                         {{ $labelBln }}</option>
                                 @endforeach
                             </select>
@@ -163,7 +170,7 @@
                         </div>
                         <select name="tahun" id="filterTahun" class="combo-hidden" tabindex="-1" aria-hidden="true">
                             @foreach ($listTahun as $thn)
-                                <option value="{{ $thn }}" {{ $thnDipilih === (int)$thn ? 'selected' : '' }}>
+                                <option value="{{ $thn }}" {{ $thnDipilih === (int) $thn ? 'selected' : '' }}>
                                     {{ $thn }}</option>
                             @endforeach
                         </select>
@@ -189,9 +196,8 @@
                         </div>
                         <select name="satuan" id="satuanFilter" class="combo-hidden" tabindex="-1"
                             aria-hidden="true">
-                            <option value="semua" {{ $satuanDipilih === 'semua' ? 'selected' : '' }}>Semua</option>
                             @foreach ($opsi as $o)
-                                <option value="{{ $o['key'] }}" {{ $satuanDipilih ===$o['key'] ? 'selected' : '' }}>
+                                <option value="{{ $o['key'] }}" {{ $satuanDipilih === $o['key'] ? 'selected' : '' }}>
                                     {{ $o['label'] }}</option>
                             @endforeach
                         </select>
@@ -356,7 +362,7 @@
                         </div>
                         <select id="satuanBulanan" class="combo-hidden" tabindex="-1" aria-hidden="true">
                             @foreach ($opsi as $o)
-                                <option value="{{ $o['key'] }}" {{ $satuanDipilih ===$o['key'] ? 'selected' : '' }}>
+                                <option value="{{ $o['key'] }}" {{ $satuanDipilih === $o['key'] ? 'selected' : '' }}>
                                     {{ $o['label'] }}</option>
                             @endforeach
                         </select>
@@ -376,7 +382,7 @@
                     <div>
                         <h2 class="card-title">Statistik Jenis Sampah</h2>
                         <p class="card-sub">
-                            {{ $blnStat > 0 ? $namaBulanFull[$blnStat] . ' ' . $thnDipilih : 'Tahun ' .$thnDipilih . ' (Semua Bulan)' }}
+                            {{ $blnStat > 0 ? $namaBulanFull[$blnStat] . ' ' . $thnDipilih : 'Tahun ' . $thnDipilih . ' (Semua Bulan)' }}
                         </p>
                     </div>
                     <div class="chart-controls">
@@ -412,8 +418,8 @@
                         </div>
                         <select id="selectBulanStatistik" class="combo-hidden" tabindex="-1" aria-hidden="true">
                             <option value="0" {{ $blnStat === 0 ? 'selected' : '' }}>Semua Bulan</option>
-                            @foreach ($namaBulanFull as $num =>$labelBln)
-                                <option value="{{ $num }}" {{ $blnStat ===$num ? 'selected' : '' }}>
+                            @foreach ($namaBulanFull as $num => $labelBln)
+                                <option value="{{ $num }}" {{ $blnStat === $num ? 'selected' : '' }}>
                                     {{ $labelBln }}</option>
                             @endforeach
                         </select>
@@ -475,7 +481,7 @@
                         </tr>
                     </thead>
                     <tbody id="riwayatTableBody">
-                        @forelse ($riwayat as   $setoran)
+                        @forelse ($riwayat as $setoran)
                             <tr data-row-riwayat>
                                 <td class="riwayat-no"></td>
                                 <td>{{ \Carbon\Carbon::parse($setoran->tanggal_setoran)->format('d/m/Y') }}</td>

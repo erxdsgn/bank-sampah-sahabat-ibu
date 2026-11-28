@@ -52,7 +52,6 @@
         'event'   => ['label' => 'Banner Event',   'icon' => '📅', 'class' => 'banner-grad--event'],
         'artikel' => ['label' => 'Banner Artikel', 'icon' => '📰', 'class' => 'banner-grad--artikel'],
     ];
-
 @endphp
 
 <div class="artikel-page">
@@ -389,9 +388,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="artikelJenis">Jenis / Kategori Konten <span class="text-danger">*</span></label>
-                    <select id="artikelJenis" class="form-control" required>
-                        <option value="">-- Pilih Jenis Konten --</option>
+                    <label for="cari_artikelJenis">Jenis / Kategori Konten <span class="text-danger">*</span></label>
+                    <div class="combo combo--arrow" id="combo_artikelJenis">
+                        <input type="text" id="cari_artikelJenis" class="combo-input" placeholder="Pilih jenis konten" readonly autocomplete="off">
+                        <div class="combo-list" id="list_artikelJenis"></div>
+                    </div>
+                    <select id="artikelJenis" class="combo-hidden" tabindex="-1" aria-hidden="true" required>
                         <option value="edukasi">Edukasi Sampah</option>
                         <option value="artikel">Artikel</option>
                         <option value="event">Event</option>
@@ -401,9 +403,7 @@
 
                 <div class="form-group">
                     <label for="artikelTanggal">Tanggal Publikasi</label>
-                    {{-- FIX: tidak ada atribut min sehingga tanggal lampau (hari kemarin) bisa dipilih --}}
-                    <input type="date" id="artikelTanggal" class="form-control">
-                    <span class="field-hint">Kosongkan jika ingin menjadikannya sebagai draft. Tanggal lampau tetap bisa dipilih untuk publikasi mundur.</span>
+                    <input type="date" id="artikelTanggal" class="form-control" value="{{ now()->format('Y-m-d') }}" min="{{ now()->format('Y-m-d') }}">
                     <span class="form-error" id="err_tanggal"></span>
                 </div>
 

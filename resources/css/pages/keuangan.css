@@ -522,6 +522,21 @@ html[data-theme="dark"] .keuangan-page .modal-overlay {
     height: 38px;
 }
 
+/* Input tanggal otomatis hari ini (tidak dapat diubah) */
+.keuangan-page .form-group input[readonly]:not(.combo-input) {
+    background: var(--bg-muted);
+    color: var(--t-muted);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Dropdown di dalam modal melayang di depan popup (tidak terpotong overflow modal) */
+.keuangan-page .modal-box .combo-list {
+    position: fixed;
+    right: auto;
+    z-index: 1050;
+}
+
 .keuangan-page .form-group textarea {
     resize: vertical;
     min-height: 82px;

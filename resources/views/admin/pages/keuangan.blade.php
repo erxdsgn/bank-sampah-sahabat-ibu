@@ -12,8 +12,6 @@
 <div class="keuangan-page">
 
     @php
-        // Statistik dihitung dari koleksi $transaksi yang sama dengan tabel,
-        // sehingga transaksi otomatis (setoran, pencairan, penjualan) ikut terhitung.
         $totalPemasukanTampil   = (float) $transaksi->where('jenis', 'Pemasukan')->sum('jumlah');
         $totalPengeluaranTampil = (float) $transaksi->where('jenis', 'Pengeluaran')->sum('jumlah');
         $saldoKasTampil         = $totalPemasukanTampil - $totalPengeluaranTampil;
@@ -199,7 +197,7 @@
                     @php
                         $sortedTransaksi = $transaksi->sort(function ($a, $b) {
                             if ($a->tanggal === $b->tanggal) {
-                                return $b->id_kas <=> $a->id_kas;
+                                return ($b->id_kas ?? 0) <=> ($a->id_kas ?? 0);
                             }
                             return $b->tanggal <=> $a->tanggal;
                         });
@@ -237,8 +235,8 @@
                                         </svg>
                                     </button>
 
-                                    {{-- Hapus --}}
-                                    @unless ($item->otomatis)
+                                    {{-- Hapus (hanya untuk kas manual) --}}
+                                    @if (empty($item->otomatis))
                                         <button class="icon-btn danger" title="Hapus Transaksi" type="button" onclick="hapusTransaksi({{ Js::from($item) }})">
                                             <svg viewBox="0 0 24 24">
                                                 <polyline points="3 6 5 6 21 6"></polyline>
@@ -246,7 +244,7 @@
                                                 <path d="M10 11v6M14 11v6"></path>
                                             </svg>
                                         </button>
-                                    @endunless
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -322,11 +320,10 @@
                         <div class="form-group">
                             <label for="cari_transaksiJenis">Jenis Transaksi</label>
                             <div class="combo combo--arrow" id="combo_transaksiJenis">
-                                <input type="text" id="cari_transaksiJenis" class="combo-input" autocomplete="off">
+                                <input type="text" id="cari_transaksiJenis" class="combo-input" placeholder="Pilih jenis transaksi" readonly autocomplete="off">
                                 <div class="combo-list" id="list_transaksiJenis"></div>
                             </div>
                             <select id="transaksiJenis" class="combo-hidden" tabindex="-1" aria-hidden="true">
-                                <option value="">Pilih jenis transaksi</option>
                                 <option value="Pemasukan">Pemasukan</option>
                                 <option value="Pengeluaran">Pengeluaran</option>
                             </select>
@@ -334,27 +331,27 @@
 
                         <div class="form-group">
                             <label for="transaksiTanggal">Tanggal</label>
-                            <input type="date" id="transaksiTanggal" min="{{ now()->format('Y-m-d') }}" required>
+                            <input type="date" id="transaksiTanggal" value="{{ now()->format('Y-m-d') }}" readonly required>
                         </div>
 
                         <div class="form-group">
                             <label for="transaksiKategori">Kategori</label>
-                            <input type="text" id="transaksiKategori" placeholder="Contoh: Operasional" required>
+                            <input type="text" id="transaksiKategori" placeholder="Contoh: Operasional" maxlength="100" required>
                         </div>
 
                         <div class="form-group">
                             <label for="transaksiJumlah">Jumlah (Rp)</label>
-                            <input type="number" id="transaksiJumlah" min="0" placeholder="0" required>
+                            <input type="text" id="transaksiJumlah" inputmode="numeric" placeholder="0" autocomplete="off" required>
                         </div>
 
                         <div class="form-group form-group--full">
                             <label for="transaksiKeterangan">Keterangan</label>
-                            <textarea id="transaksiKeterangan" rows="3" placeholder="Tambahkan keterangan transaksi..."></textarea>
+                            <textarea id="transaksiKeterangan" rows="3" placeholder="Tambahkan keterangan transaksi..." required></textarea>
                         </div>
                     </div>
 
                     <p class="form-note">
-                        Catatan: transaksi yang sudah disimpan tidak dapat diedit, hanya dapat dilihat atau dihapus.
+                        Catatan: transaksi yang sudah disimpan tidak dapat diedit, hanya dapat dilihat atau dihapus. Maksimal nominal Rp 50.000.000.
                     </p>
                 </div>
 

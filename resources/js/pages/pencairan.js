@@ -42,6 +42,18 @@ function pencairanShowToast(title, text, type = 'success') {
     setTimeout(() => toast.remove(), 3500);
 }
 
+function posisikanDropdownModal(input, list) {
+    if (!input.closest('.modal-box')) return;
+
+    const rect = input.getBoundingClientRect();
+    const ruangBawahViewport = Math.max(80, window.innerHeight - rect.bottom - 12);
+
+    list.style.top = `${rect.bottom + 4}px`;
+    list.style.left = `${rect.left}px`;
+    list.style.width = `${rect.width}px`;
+    list.style.maxHeight = `${Math.min(200, ruangBawahViewport)}px`;
+}
+
 function syncPencairanCombo(selectId) {
     if (pencairanComboRegistry[selectId]) pencairanComboRegistry[selectId]();
 }
@@ -71,6 +83,7 @@ function initPencairanSelectCombo(selectId, onChange) {
         ).join('');
         aktif = -1;
         list.classList.add('show');
+        posisikanDropdownModal(input, list);
     }
 
     function tutup() {
@@ -169,6 +182,12 @@ function initComboWarga() {
             : '<div class="combo-empty">Warga tidak ditemukan</div>';
     }
 
+    function buka(keyword) {
+        renderList(keyword);
+        list.classList.add('show');
+        posisikanDropdownModal(input, list);
+    }
+
     function pilih(value) {
         const d = data.find(x => x.value === String(value));
         if (!d) return;
@@ -201,13 +220,11 @@ function initComboWarga() {
 
     input.addEventListener('focus', function() {
         this.select();
-        renderList('');
-        list.classList.add('show');
+        buka('');
     });
 
     input.addEventListener('input', function() {
-        renderList(this.value);
-        list.classList.add('show');
+        buka(this.value);
     });
 
     input.addEventListener('blur', tutup);
@@ -216,8 +233,7 @@ function initComboWarga() {
         if (e.key === 'ArrowDown') {
             e.preventDefault();
             if (!list.classList.contains('show')) {
-                renderList(this.value);
-                list.classList.add('show');
+                buka(this.value);
             }
             sorot(1);
         } else if (e.key === 'ArrowUp') {
@@ -558,6 +574,23 @@ document.addEventListener('DOMContentLoaded', function() {
         overlay.addEventListener('click', function(e) {
             if (e.target === overlay) overlay.classList.remove('active');
         });
+    });
+
+    // Tutup / perbarui posisi dropdown modal jika area scroll modal digeser atau layar di-resize
+    document.querySelectorAll('.pencairan-page .modal-body').forEach(function(body) {
+        body.addEventListener('scroll', function() {
+            const listAktif = body.querySelector('.combo-list.show');
+            if (!listAktif) return;
+            const input = listAktif.closest('.combo')?.querySelector('.combo-input');
+            if (input) posisikanDropdownModal(input, listAktif);
+        });
+    });
+
+    window.addEventListener('resize', function() {
+        const listAktif = document.querySelector('.pencairan-page .modal-box .combo-list.show');
+        if (!listAktif) return;
+        const input = listAktif.closest('.combo')?.querySelector('.combo-input');
+        if (input) posisikanDropdownModal(input, listAktif);
     });
 
     document.addEventListener('keydown', function(e) {

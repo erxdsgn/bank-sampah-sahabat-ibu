@@ -597,6 +597,13 @@
     display: block;
 }
 
+/* Dropdown di dalam modal: melayang di depan popup (tidak terpotong overflow modal) */
+.pencairan-page .modal-box .combo-list {
+    position: fixed;
+    right: auto;
+    z-index: 1050;
+}
+
 .pencairan-page .combo--up .combo-list {
     top: auto;
     bottom: calc(100% + 4px);

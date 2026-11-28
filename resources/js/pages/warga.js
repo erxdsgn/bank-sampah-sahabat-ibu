@@ -16,6 +16,8 @@ const DAFTAR_BANK_EWALLET = [
     'LinkAja',
 ];
 
+const MAX_DIGIT_REKENING = 16;
+
 let wargaAkanDihapus = null;
 const comboSelectRegistry = {};
 
@@ -50,8 +52,55 @@ function showToast(title, text, type = 'success') {
     setTimeout(hapusToast, 3500);
 }
 
+/* ---------- INPUT HANYA ANGKA (NIK & NO. WA) ---------- */
+function initInputHanyaAngka(inputId, maxDigits) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    if (maxDigits) input.maxLength = maxDigits;
+
+    input.addEventListener('input', function () {
+        const cleaned = this.value.replace(/\D/g, '');
+        this.value = maxDigits ? cleaned.slice(0, maxDigits) : cleaned;
+    });
+}
+
+/* ---------- FORMAT NOMOR REKENING (SPASI PER 4 ANGKA & MAX DIGIT) ---------- */
+function formatNomorRekening(value, maxDigits = MAX_DIGIT_REKENING) {
+    const digitsOnly = String(value ?? '').replace(/\D/g, '').slice(0, maxDigits);
+    return digitsOnly.replace(/(\d{4})(?=\d)/g, '$1 ');
+}
+
+function initInputNomorRekening(inputId, maxDigits = MAX_DIGIT_REKENING) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    input.maxLength = maxDigits + Math.floor((maxDigits - 1) / 4);
+
+    input.addEventListener('input', function () {
+        const start = this.selectionStart ?? this.value.length;
+        const digitsBeforeCursor = this.value
+            .slice(0, start)
+            .replace(/\D/g, '')
+            .slice(0, maxDigits).length;
+
+        const formatted = formatNomorRekening(this.value, maxDigits);
+        this.value = formatted;
+
+        let newCursor = 0;
+        let countedDigits = 0;
+        while (newCursor < formatted.length && countedDigits < digitsBeforeCursor) {
+            if (/\d/.test(formatted[newCursor])) {
+                countedDigits++;
+            }
+            newCursor++;
+        }
+        this.setSelectionRange(newCursor, newCursor);
+    });
+}
+
 /* ---------- RESET COMBO (SELECT) ---------- */
-function resetComboBank(selectId) {
+function resetComboSelect(selectId) {
     const select = document.getElementById(selectId);
     if (select) select.value = '';
     if (comboSelectRegistry[selectId]) comboSelectRegistry[selectId]();
@@ -61,7 +110,8 @@ function bukaModal(id) {
     if (id === 'modalTambah') {
         const form = document.getElementById('formTambahWarga');
         if (form) form.reset();
-        resetComboBank('tambahBank');
+        resetComboSelect('tambahKelompok');
+        resetComboSelect('tambahBank');
     }
     const el = document.getElementById(id);
     if (el) el.classList.add('active');
@@ -131,10 +181,20 @@ function formatKelompokWarga(warga) {
     const nilai = String(raw).trim().toUpperCase();
 
     if (!nilai) return '-';
-    if (nilai === 'A' || nilai.startsWith('A ') || nilai === 'KELOMPOK A' || nilai.includes('PERUMAHAN') && !nilai.includes('LUAR')) {
+    if (
+        nilai === 'A' ||
+        nilai.startsWith('A ') ||
+        nilai === 'KELOMPOK A' ||
+        (nilai.includes('PERUMAHAN') && !nilai.includes('LUAR'))
+    ) {
         return 'A (Perumahan)';
     }
-    if (nilai === 'B' || nilai.startsWith('B ') || nilai === 'KELOMPOK B' || nilai.includes('LUAR PERUMAHAN')) {
+    if (
+        nilai === 'B' ||
+        nilai.startsWith('B ') ||
+        nilai === 'KELOMPOK B' ||
+        nilai.includes('LUAR PERUMAHAN')
+    ) {
         return 'B (Luar Perumahan)';
     }
 
@@ -155,11 +215,16 @@ function initComboSelect(selectId) {
 
     function sync() {
         const o = select.options[select.selectedIndex];
-        input.value = o ? teks(o) : '';
+        if (!o || o.value === '') {
+            input.value = '';
+        } else {
+            input.value = teks(o);
+        }
     }
 
     function buka() {
-        list.innerHTML = Array.from(select.options)
+        const options = Array.from(select.options).filter((o) => o.value !== '');
+        list.innerHTML = options
             .map(
                 (o) =>
                     `<div class="combo-item${o.value === select.value ? ' is-selected' : ''}" data-value="${escapeHtml(o.value)}">${escapeHtml(teks(o))}</div>`,
@@ -254,6 +319,14 @@ function initComboBankSelect(selectId) {
 /* ---------- SIMPAN TAMBAH WARGA ---------- */
 function simpanTambahWarga(event) {
     event.preventDefault();
+
+    const nikMurni = document.getElementById('tambahNik').value.replace(/\D/g, '');
+    if (!/^\d{16}$/.test(nikMurni)) {
+        showToast('Peringatan', 'NIK harus terdiri dari tepat 16 digit angka.', 'error');
+        document.getElementById('tambahNik').focus();
+        return false;
+    }
+
     const emailInput = document.getElementById('tambahEmail').value.trim();
     if (!emailInput) {
         showToast(
@@ -264,17 +337,33 @@ function simpanTambahWarga(event) {
         return false;
     }
 
+    const noHpMurni = document.getElementById('tambahHp').value.replace(/\D/g, '');
+    if (!/^(08|628)\d{7,12}$/.test(noHpMurni)) {
+        showToast(
+            'Peringatan',
+            'No. HP / WA harus berupa angka dan diawali dengan 08 atau 628 (minimal 10 digit).',
+            'error',
+        );
+        document.getElementById('tambahHp').focus();
+        return false;
+    }
+
+    const noRekeningMurni = document
+        .getElementById('tambahNoRekening')
+        .value.replace(/\D/g, '')
+        .slice(0, MAX_DIGIT_REKENING);
+
     const payload = {
-        nik: document.getElementById('tambahNik').value,
+        nik: nikMurni,
         nama: document.getElementById('tambahNama').value,
         email: emailInput,
         password: document.getElementById('tambahPassword').value,
-        no_hp: document.getElementById('tambahHp').value,
+        no_hp: noHpMurni,
         kelompok: document.getElementById('tambahKelompok').value,
         jumlah_anggota_keluarga: document.getElementById('tambahKeluarga').value,
         alamat: document.getElementById('tambahAlamat').value,
         nama_bank_ewallet: document.getElementById('tambahBank').value,
-        nomor_rekening: document.getElementById('tambahNoRekening').value,
+        nomor_rekening: noRekeningMurni,
         nama_pemilik_rekening: document.getElementById('tambahPemilikRekening').value,
     };
 
@@ -305,7 +394,8 @@ function simpanTambahWarga(event) {
         .then(() => {
             tutupModal('modalTambah');
             document.getElementById('formTambahWarga').reset();
-            resetComboBank('tambahBank');
+            resetComboSelect('tambahKelompok');
+            resetComboSelect('tambahBank');
             showToast('Berhasil', 'Data warga baru telah ditambahkan.');
             setTimeout(() => window.location.reload(), 800);
         })
@@ -335,7 +425,9 @@ function lihatWarga(warga) {
     document.getElementById('detailTanggal').textContent = formatTanggal(warga.tanggal_daftar);
     document.getElementById('detailAlamat').textContent = warga.alamat || '-';
     document.getElementById('detailBank').textContent = warga.nama_bank_ewallet || '-';
-    document.getElementById('detailNoRekening').textContent = warga.nomor_rekening || '-';
+    document.getElementById('detailNoRekening').textContent = warga.nomor_rekening
+        ? formatNomorRekening(warga.nomor_rekening)
+        : '-';
     document.getElementById('detailPemilikRekening').textContent =
         warga.nama_pemilik_rekening || '-';
     document.getElementById('detailStatusRekening').textContent = warga.nama_bank_ewallet
@@ -372,7 +464,10 @@ function editWarga(warga) {
     document.getElementById('editRingkasan').innerHTML =
         `<div class="er-nama">${escapeHtml(warga.nama || '-')}</div>` +
         baris('Bank / E-Wallet', warga.nama_bank_ewallet) +
-        baris('No. Rekening', warga.nomor_rekening) +
+        baris(
+            'No. Rekening',
+            warga.nomor_rekening ? formatNomorRekening(warga.nomor_rekening) : '-',
+        ) +
         baris('Pemilik', warga.nama_pemilik_rekening) +
         (adaRekening
             ? ''
@@ -511,8 +606,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const filtered = allRows.filter(function (row) {
             const matchSearch = !keyword || row.textContent.toLowerCase().includes(keyword);
-            const matchStatusWarga = statusWargaFilter === 'all' || row.dataset.wargaStatus === statusWargaFilter;
-            const matchStatusRek = statusRekFilter === 'all' || row.dataset.status === statusRekFilter;
+            const matchStatusWarga =
+                statusWargaFilter === 'all' || row.dataset.wargaStatus === statusWargaFilter;
+            const matchStatusRek =
+                statusRekFilter === 'all' || row.dataset.status === statusRekFilter;
 
             return matchSearch && matchStatusWarga && matchStatusRek;
         });
@@ -591,6 +688,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     initSegStatusRekening();
+    initInputHanyaAngka('tambahNik', 16);
+    initInputHanyaAngka('tambahHp', 14);
+    initInputNomorRekening('tambahNoRekening', MAX_DIGIT_REKENING);
 
     initComboSelect('perPageSelect');
     initComboSelect('filterStatusWarga');

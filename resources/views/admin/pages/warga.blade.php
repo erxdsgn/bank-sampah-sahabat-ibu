@@ -344,18 +344,35 @@
                 <form id="formTambahWarga" onsubmit="return simpanTambahWarga(event)">
                     <div class="modal-body">
                         <div class="form-grid">
-                            <div class="form-group"><label>NIK</label><input type="text" id="tambahNik"
-                                    class="form-control" maxlength="16" required placeholder="Masukkan NIK 16 digit">
+                            <div class="form-group">
+                                <label>NIK</label>
+                                <input type="text" id="tambahNik" class="form-control" inputmode="numeric"
+                                    maxlength="16" required placeholder="Masukkan NIK 16 digit" autocomplete="off">
                             </div>
-                            <div class="form-group"><label>Nama Lengkap</label><input type="text" id="tambahNama"
-                                    class="form-control" required placeholder="Nama lengkap warga"></div>
-                            <div class="form-group"><label>Email Login</label><input type="email" id="tambahEmail"
-                                    class="form-control" required placeholder="contoh@domain.com"></div>
-                            <div class="form-group"><label>Password Login</label><input type="password"
-                                    id="tambahPassword" class="form-control" minlength="8" required
-                                    placeholder="Minimal 8 karakter"></div>
-                            <div class="form-group"><label>No. HP</label><input type="text" id="tambahHp"
-                                    class="form-control" maxlength="14" required placeholder="08xxxxxxxxxx"></div>
+
+                            <div class="form-group">
+                                <label>Nama Lengkap</label>
+                                <input type="text" id="tambahNama" class="form-control" required
+                                    placeholder="Nama lengkap warga">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Email Login</label>
+                                <input type="email" id="tambahEmail" class="form-control" required
+                                    placeholder="contoh@gmail.com">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Password Login</label>
+                                <input type="password" id="tambahPassword" class="form-control" minlength="8" required
+                                    placeholder="Minimal 8 karakter">
+                            </div>
+
+                            <div class="form-group">
+                                <label>No. HP / WA</label>
+                                <input type="text" id="tambahHp" class="form-control" inputmode="numeric"
+                                    maxlength="14" required placeholder="08  atau 628" autocomplete="off">
+                            </div>
 
                             <div class="form-group">
                                 <label>Kelompok Warga</label>
@@ -386,9 +403,11 @@
                                 </div>
                             </div>
 
-                            <div class="form-group"><label>No. Rekening</label><input type="text"
-                                    id="tambahNoRekening" class="form-control" maxlength="30"
-                                    placeholder="Nomor rekening / e-wallet"></div>
+                            <div class="form-group">
+                                <label>No. Rekening</label>
+                                <input type="text" id="tambahNoRekening" class="form-control" inputmode="numeric"
+                                    maxlength="19" placeholder="0000 0000 0000 0000" autocomplete="off">
+                            </div>
                             <div class="form-group"><label>Nama Pemilik Rekening</label><input type="text"
                                     id="tambahPemilikRekening" class="form-control"
                                     placeholder="Nama pada akun rekening / e-wallet"></div>

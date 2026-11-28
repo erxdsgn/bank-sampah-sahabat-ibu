@@ -1,5 +1,4 @@
 import { initComboSelect } from '../utils/combo-select';
-import { formatAngka } from '../utils/helpers';
 import { renderPagination } from '../utils/paginations';
 import { getChartTheme, observeThemeChange } from '../utils/chart-theme';
 
@@ -80,6 +79,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterSatuan = document.getElementById('satuanFilter');
     const selectBulanan = document.getElementById('satuanBulanan');
 
+    function getSatuanTerpilih() {
+        const fallback = opsiSatuan[0]?.key || 'kg';
+        if (filterSatuan && filterSatuan.value) {
+            return temukanKeySatuan(filterSatuan.value) || filterSatuan.value;
+        }
+        return fallback;
+    }
+
     function sinkronComboDariSelect(selectId, displayText) {
         const displayEl = document.getElementById(`cari_${selectId}`);
         if (displayEl && displayText) {
@@ -87,24 +94,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function setSatuanBulanan(keyBaru, triggerUpdate = true) {
-        if (!keyBaru) return;
-        const matchedKey = temukanKeySatuan(keyBaru, dataBulananPerSatuan) || keyBaru;
-
-        if (selectBulanan) {
-            const opsiCocok = Array.from(selectBulanan.options).find(
-                (opt) => String(opt.value).trim().toLowerCase() === String(matchedKey).trim().toLowerCase()
-            );
-            if (opsiCocok) {
-                selectBulanan.value = opsiCocok.value;
-                sinkronComboDariSelect('satuanBulanan', opsiCocok.text.trim());
-            } else {
-                sinkronComboDariSelect('satuanBulanan', labelSatuan(matchedKey));
-            }
-        }
-
-        if (triggerUpdate) {
-            updateBulanan();
+    function setSelectDanCombo(selectEl, selectId, keyBaru) {
+        if (!selectEl || !keyBaru) return;
+        const matchedKey = temukanKeySatuan(keyBaru) || keyBaru;
+        const opsiCocok = Array.from(selectEl.options).find(
+            (opt) => String(opt.value).trim().toLowerCase() === String(matchedKey).trim().toLowerCase()
+        );
+        if (opsiCocok) {
+            selectEl.value = opsiCocok.value;
+            sinkronComboDariSelect(selectId, opsiCocok.text.trim());
+        } else {
+            sinkronComboDariSelect(selectId, labelSatuan(matchedKey));
         }
     }
 
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el && el.value) {
             return temukanKeySatuan(el.value, dataBulananPerSatuan) || el.value;
         }
-        return opsiSatuan.length ? opsiSatuan[0].key : null;
+        return getSatuanTerpilih();
     }
 
     function tampilPesan(canvas, kotak, teks) {
@@ -129,67 +129,69 @@ document.addEventListener('DOMContentLoaded', () => {
         if (kotak) kotak.style.display = 'none';
     }
 
-    function hubungkanNilaiSatuanFilter(targetId, sumberData, descId) {
-        const targetEl = document.getElementById(targetId);
-        if (!targetEl || !filterSatuan) return;
+    function perbaruiKartuRingkasan() {
+        const satuan = getSatuanTerpilih();
 
-        const descEl = descId ? document.getElementById(descId) : null;
-        const descAsli = descEl ? descEl.textContent : '';
+        const elRentang = document.getElementById('nilaiSampahRentang');
+        if (elRentang) {
+            const keyRentang = temukanKeySatuan(satuan, dataRentangPerSatuan) || satuan;
+            const nilaiRentang = Number((dataRentangPerSatuan || {})[keyRentang] ?? 0);
+            elRentang.textContent = formatNilaiDenganSatuan(nilaiRentang, keyRentang);
+        }
 
-        const setDesc = (teks) => {
-            if (descEl) descEl.textContent = teks;
-        };
+        const elTersedia = document.getElementById('nilaiSampahTersedia');
+        if (elTersedia) {
+            const keyTersedia = temukanKeySatuan(satuan, dataTersediaPerSatuan) || satuan;
+            const nilaiTersedia = Number((dataTersediaPerSatuan || {})[keyTersedia] ?? 0);
+            elTersedia.textContent = formatNilaiDenganSatuan(nilaiTersedia, keyTersedia);
+        }
+    }
 
-        const perbarui = () => {
-            const filterVal = filterSatuan.value || 'semua';
+    function terapkanPerubahanSatuan(satuanBaru, sumber = 'filter') {
+        if (!satuanBaru) return;
 
-            if (filterVal === 'semua') {
-                const entries = Object.entries(sumberData || {});
-                // Hanya satuan yang benar-benar punya data (> 0)
-                const berdata = entries.filter(([, v]) => Number(v) > 0);
+        if (sumber !== 'filter' && filterSatuan) {
+            setSelectDanCombo(filterSatuan, 'satuanFilter', satuanBaru);
+        }
+        if (sumber !== 'bulanan' && selectBulanan) {
+            setSelectDanCombo(selectBulanan, 'satuanBulanan', satuanBaru);
+        }
 
-                if (berdata.length === 0) {
-                    const fallbackSatuan = opsiSatuan[0]?.key || 'kg';
-                    targetEl.textContent = formatNilaiDenganSatuan(0, fallbackSatuan);
-                    setDesc(descAsli);
-                    return;
-                }
-                if (berdata.length === 1) {
-                    const [k, v] = berdata[0];
-                    targetEl.textContent = formatNilaiDenganSatuan(v, k);
-                    setDesc(descAsli);
-                    return;
-                }
-                // 2+ satuan: ringkas jadi jumlah satuan agar tidak menumpuk
-                targetEl.textContent = `${berdata.length} Satuan`;
-                setDesc('Pilih satuan untuk lihat detail');
-            } else {
-                const keyCocok = temukanKeySatuan(filterVal, sumberData) || filterVal;
-                const nilai = Number((sumberData || {})[keyCocok] ?? 0);
-                targetEl.textContent = formatNilaiDenganSatuan(nilai, keyCocok);
-                setDesc(descAsli);
-            }
-        };
-
-        filterSatuan.addEventListener('change', () => {
-            const filterVal = filterSatuan.value || 'semua';
-            if (filterVal !== 'semua') {
-                setSatuanBulanan(filterVal, false);
-            }
-            perbarui();
-            updateBulanan();
-            renderListJenis();
-            if (modeAktif === 'donut' && chartJenis) {
-                updateJenis();
-            }
-        });
-        perbarui();
+        perbaruiKartuRingkasan();
+        updateBulanan();
+        renderListJenis();
+        if (modeAktif === 'donut' && chartJenis) {
+            updateJenis();
+        }
     }
 
     if (filterSatuan) {
-        hubungkanNilaiSatuanFilter('nilaiSampahRentang', dataRentangPerSatuan, 'descSampahRentang');
-        hubungkanNilaiSatuanFilter('nilaiSampahTersedia', dataTersediaPerSatuan, 'descSampahTersedia');
+        filterSatuan.addEventListener('change', () => {
+            terapkanPerubahanSatuan(filterSatuan.value, 'filter');
+        });
     }
+
+    const listFilterEl = document.getElementById('list_satuanFilter');
+    if (listFilterEl && filterSatuan) {
+        listFilterEl.addEventListener('click', (e) => {
+            const optionEl = e.target.closest('[data-value], .combo-item, .combo-option, li, div');
+            if (!optionEl) return;
+
+            const rawVal = (optionEl.dataset?.value ?? optionEl.textContent ?? '').trim();
+            if (!rawVal) return;
+
+            const matchedOpt = Array.from(filterSatuan.options).find(
+                (opt) =>
+                    String(opt.value).trim().toLowerCase() === rawVal.toLowerCase() ||
+                    String(opt.text).trim().toLowerCase() === rawVal.toLowerCase()
+            );
+            if (matchedOpt) {
+                terapkanPerubahanSatuan(matchedOpt.value, 'filter');
+            }
+        });
+    }
+
+    perbaruiKartuRingkasan();
 
     const selectBulanStatistik = document.getElementById('selectBulanStatistik');
     const hiddenBulanStatistik = document.getElementById('hiddenBulanStatistik');
@@ -345,10 +347,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     tooltip: {
                         callbacks: {
                             label: (ctx) =>
-                                formatAngka(
+                                formatNilaiDenganSatuan(
                                     ctx.parsed.y,
-                                    satuanAktif('satuanBulanan'),
-                                    opsiSatuan
+                                    satuanAktif('satuanBulanan')
                                 ),
                         },
                     },
@@ -416,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
             );
 
             if (matchedOpt) {
-                setSatuanBulanan(matchedOpt.value, true);
+                terapkanPerubahanSatuan(matchedOpt.value, 'bulanan');
             }
         });
     }
@@ -426,8 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectBulanan) {
             sinkronComboDariSelect('satuanBulanan', labelSatuan(selectBulanan.value));
             selectBulanan.addEventListener('change', () => {
-                sinkronComboDariSelect('satuanBulanan', labelSatuan(selectBulanan.value));
-                updateBulanan();
+                terapkanPerubahanSatuan(selectBulanan.value, 'bulanan');
             });
         }
     } else if (canvasBulanan) {
@@ -441,32 +441,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let modeAktif = 'daftar';
 
     function getJenisData() {
-        const filterVal = filterSatuan ? (filterSatuan.value || 'semua') : 'semua';
-        let items = [];
-
-        if (filterVal === 'semua') {
-            Object.entries(dataJenisPerSatuan).forEach(([satuan, arr]) => {
-                keArray(arr).forEach((item) => {
-                    items.push({
-                        nama: item.nama,
-                        total: Number(item.total) || 0,
-                        satuan,
-                    });
-                });
-            });
-        } else {
-            const keyCocok = temukanKeySatuan(filterVal, dataJenisPerSatuan) || filterVal;
-            keArray(dataJenisPerSatuan[keyCocok]).forEach((item) => {
-                items.push({
-                    nama: item.nama,
-                    total: Number(item.total) || 0,
-                    satuan: keyCocok,
-                });
-            });
-        }
+        const satuan = getSatuanTerpilih();
+        const keyCocok = temukanKeySatuan(satuan, dataJenisPerSatuan) || satuan;
+        const items = keArray(dataJenisPerSatuan[keyCocok]).map((item) => ({
+            nama: item.nama,
+            total: Number(item.total) || 0,
+            satuan: keyCocok,
+        }));
 
         items.sort((a, b) => b.total - a.total);
-        return { items, filterVal };
+        return { items, satuan: keyCocok };
     }
 
     function renderListJenis() {
@@ -475,23 +459,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchInput = document.getElementById('cariJenisSampah');
         if (!listEl || !totalBadge) return;
 
-        const { items, filterVal } = getJenisData();
+        const { items, satuan } = getJenisData();
+        const totalKeseluruhan = items.reduce((acc, it) => acc + it.total, 0);
 
-        const totalPerSatuan = {};
-        items.forEach((it) => {
-            totalPerSatuan[it.satuan] = (totalPerSatuan[it.satuan] || 0) + it.total;
-        });
-
-        const entriesTotal = Object.entries(totalPerSatuan);
-        if (entriesTotal.length === 0) {
-            const defaultSatuan = filterVal !== 'semua' ? filterVal : (opsiSatuan[0]?.key || 'kg');
-            totalBadge.textContent = `Total: ${formatNilaiDenganSatuan(0, defaultSatuan)}`;
-        } else {
-            const totalText = entriesTotal
-                .map(([sat, val]) => formatNilaiDenganSatuan(val, sat))
-                .join(' · ');
-            totalBadge.textContent = `Total: ${totalText}`;
-        }
+        totalBadge.textContent = `Total: ${formatNilaiDenganSatuan(totalKeseluruhan, satuan)}`;
 
         const keyword = (searchInput?.value || '').toLowerCase().trim();
         let html = '';
@@ -501,9 +472,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (keyword && !String(item.nama || '').toLowerCase().includes(keyword)) return;
             adaHasil = true;
 
-            const totalSatuanItem = totalPerSatuan[item.satuan] || item.total || 1;
-            const persen = totalSatuanItem > 0 ? Math.min(100, (item.total / totalSatuanItem) * 100) : 0;
-            const label = labelSatuan(item.satuan) || 'Kg';
+            const persen = totalKeseluruhan > 0 ? Math.min(100, (item.total / totalKeseluruhan) * 100) : 0;
+            const label = labelSatuan(item.satuan);
             const nilaiFormatted = formatNilaiDenganSatuan(item.total, item.satuan);
 
             html += `
@@ -524,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!adaHasil) {
             const msg = items.length === 0
-                ? 'Belum ada data.'
+                ? `Belum ada data satuan ${labelSatuan(satuan)}.`
                 : `Tidak ada hasil untuk "${keyword}".`;
             html = `<div style="text-align:center; padding: 20px; color: var(--t-muted); font-size:13px;">${msg}</div>`;
         }
@@ -532,14 +502,13 @@ document.addEventListener('DOMContentLoaded', () => {
         listEl.innerHTML = html;
     }
 
-    function renderCenterLabelJenis(total, key) {
+    function renderCenterLabelJenis(total, satuan) {
         const elValue = document.getElementById('jenisCenterValue');
         if (!elValue) return;
-        const satuanEfektif = key || (opsiSatuan[0]?.key || 'kg');
-        elValue.textContent = formatNilaiDenganSatuan(total, satuanEfektif);
+        elValue.textContent = formatNilaiDenganSatuan(total, satuan);
     }
 
-    function renderLegendJenis(items, key) {
+    function renderLegendJenis(items, satuan) {
         const legend = document.getElementById('jenisLegend');
         if (!legend) return;
 
@@ -555,12 +524,11 @@ document.addEventListener('DOMContentLoaded', () => {
             .map((item, i) => {
                 const warna = WARNA[i % WARNA.length];
                 const namaAman = String(item.nama || '').replace(/"/g, '&quot;');
-                const satuanItem = key || item.satuan || (opsiSatuan[0]?.key || 'kg');
                 return `
                     <div class="chart-legend-item">
                         <span class="chart-legend-dot" style="background:${warna}"></span>
                         <span class="chart-legend-name" title="${namaAman}">${namaAman}</span>
-                        <span class="chart-legend-value">${formatNilaiDenganSatuan(item.total, satuanItem)}</span>
+                        <span class="chart-legend-value">${formatNilaiDenganSatuan(item.total, satuan)}</span>
                     </div>
                 `;
             })
@@ -571,8 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const canvasJenis = document.getElementById('jenisSampahChart');
         if (!canvasJenis || typeof window.Chart === 'undefined') return;
 
-        const { items, filterVal } = getJenisData();
-        const key = filterVal === 'semua' ? null : filterVal;
+        const { items, satuan } = getJenisData();
         const nama = items.map((i) => i.nama);
         const nilai = items.map((i) => i.total);
 
@@ -598,9 +565,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
-                                const it = items[ctx.dataIndex];
-                                const sat = key || it?.satuan || (opsiSatuan[0]?.key || 'kg');
-                                return ` ${ctx.label}: ${formatNilaiDenganSatuan(ctx.parsed, sat)}`;
+                                const satAktif = getSatuanTerpilih();
+                                return ` ${ctx.label}: ${formatNilaiDenganSatuan(ctx.parsed, satAktif)}`;
                             },
                         },
                     },
@@ -616,8 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const kosongJenis = document.getElementById('jenisKosong');
         if (!chartJenis) return;
 
-        const { items, filterVal } = getJenisData();
-        const key = filterVal === 'semua' ? null : filterVal;
+        const { items, satuan } = getJenisData();
         const nama = items.map((i) => i.nama);
         const nilai = items.map((i) => i.total);
         const total = nilai.reduce((a, b) => a + b, 0);
@@ -629,14 +594,18 @@ document.addEventListener('DOMContentLoaded', () => {
         );
         chartJenis.update();
 
-        renderCenterLabelJenis(total, key);
-        renderLegendJenis(items, key);
+        renderCenterLabelJenis(total, satuan);
+        renderLegendJenis(items, satuan);
 
         if (total > 0) {
             tampilCanvas(canvasJenis, kosongJenis);
         } else {
-            tampilPesan(canvasJenis, kosongJenis, 'Belum ada data setoran untuk ditampilkan.');
-            renderLegendJenis([], key);
+            tampilPesan(
+                canvasJenis,
+                kosongJenis,
+                `Belum ada data setoran ${labelSatuan(satuan)} untuk ditampilkan.`
+            );
+            renderLegendJenis([], satuan);
         }
     }
 
