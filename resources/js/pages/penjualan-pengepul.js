@@ -3,6 +3,13 @@ import { renderPagination } from '../utils/paginations';
 
 const pageData = window.__PENJUALAN_DATA__ || {};
 
+// Satuan yang boleh desimal (berbasis berat/volume)
+const SATUAN_DESIMAL = ['kg', 'liter'];
+
+function satuanBolehDesimal(satuan) {
+    return SATUAN_DESIMAL.includes((satuan || '').toLowerCase());
+}
+
 function tanggalLokalHariIni() {
     const d = new Date();
     return d.getFullYear() + '-' +
@@ -52,17 +59,45 @@ function hitungTotal() {
 
 function onSelectKategori(data) {
     const inputHarga = document.getElementById('tambahHargaSatuan');
+    const inputKuantitas = document.getElementById('tambahKuantitas');
     const labelSatuans = document.querySelectorAll('.label-satuan');
 
     if (data) {
+        const satuan = (data.satuan || 'kg').toLowerCase();
+
         labelSatuans.forEach(el => {
             el.textContent = data.satuan;
         });
-        if (inputHarga) inputHarga.focus();
+
+        if (inputKuantitas) {
+            if (satuanBolehDesimal(satuan)) {
+                inputKuantitas.step = 'any';
+                inputKuantitas.min = '0.01';
+                inputKuantitas.setAttribute('inputmode', 'decimal');
+            } else {
+                inputKuantitas.step = '1';
+                inputKuantitas.min = '1';
+                inputKuantitas.setAttribute('inputmode', 'numeric');
+                // Kalau sebelumnya berisi desimal, bulatkan ke atas
+                const val = parseFloat(inputKuantitas.value);
+                if (!isNaN(val) && !Number.isInteger(val)) {
+                    inputKuantitas.value = Math.ceil(val);
+                }
+            }
+        }
+
+        if (inputHarga) {
+            inputHarga.step = 'any';
+            inputHarga.focus();
+        }
     } else {
         labelSatuans.forEach(el => {
             el.textContent = 'Satuan';
         });
+        if (inputKuantitas) {
+            inputKuantitas.step = 'any';
+            inputKuantitas.min = '0.01';
+        }
     }
     hitungTotal();
 }
@@ -83,9 +118,19 @@ function bukaModal(id) {
         setVal('tambahHargaSatuan', '');
         setVal('tambahKuantitas', '');
 
+        const listKategori = document.getElementById('listKategori');
+        if (listKategori) listKategori.classList.remove('show');
+
         document.querySelectorAll('.label-satuan').forEach(el => {
             el.textContent = 'Satuan';
         });
+
+        // Reset step input kuantitas ke default (any) saat modal dibuka
+        const inputKuantitas = document.getElementById('tambahKuantitas');
+        if (inputKuantitas) {
+            inputKuantitas.step = 'any';
+            inputKuantitas.min = '0.01';
+        }
 
         const totalDisplay = document.getElementById('totalHargaDisplay');
         if (totalDisplay) totalDisplay.textContent = 'Rp 0';
@@ -217,7 +262,7 @@ function initGenericCombo(wrapId, selectId, inputId, listId, onSelectCallback) {
         aktif = -1;
 
         list.innerHTML = hasil.length
-            ? hasil.map((d, index) => `<div class="combo-item" data-index="${index}" data-value="${escapeHtml(d.value)}">${escapeHtml(d.label)}</div>`).join('')
+            ? hasil.map((d, index) => `<div class="combo-item${d.value === select.value ? ' is-selected' : ''}" data-index="${index}" data-value="${escapeHtml(d.value)}">${escapeHtml(d.label)}</div>`).join('')
             : '<div class="combo-empty">Data tidak ditemukan</div>';
     }
 
@@ -311,8 +356,8 @@ function simpanPenjualan(event) {
 
     const namaPembeli = document.getElementById('tambahPembeli')?.value.trim();
     const idKategori = document.getElementById('tambahKategori')?.value;
-    const kuantitas = document.getElementById('tambahKuantitas')?.value;
-    const hargaSatuan = document.getElementById('tambahHargaSatuan')?.value;
+    const kuantitas = parseFloat(document.getElementById('tambahKuantitas')?.value);
+    const hargaSatuan = parseFloat(document.getElementById('tambahHargaSatuan')?.value);
 
     if (!namaPembeli) {
         showToast('Gagal menyimpan', 'Silakan masukkan nama pengepul terlebih dahulu.', 'error');
@@ -326,12 +371,48 @@ function simpanPenjualan(event) {
         return false;
     }
 
-    if (!hargaSatuan || parseFloat(hargaSatuan) <= 0) {
+    if (!hargaSatuan || hargaSatuan <= 0) {
         showToast('Gagal menyimpan', 'Silakan masukkan harga jual yang valid.', 'error');
         document.getElementById('tambahHargaSatuan')?.focus();
         return false;
     }
 
+    if (!kuantitas || kuantitas <= 0) {
+        showToast('Gagal menyimpan', 'Silakan masukkan kuantitas yang valid.', 'error');
+        document.getElementById('tambahKuantitas')?.focus();
+        return false;
+    }
+
+    // Ambil satuan dari option terpilih
+    const selectKategori = document.getElementById('tambahKategori');
+    const optTerpilih = selectKategori.options[selectKategori.selectedIndex];
+    const satuan = (optTerpilih?.dataset.satuan || 'kg').toLowerCase();
+
+    // Validasi integer untuk satuan pasti utuh (pcs, set, unit)
+    if (!satuanBolehDesimal(satuan) && !Number.isInteger(kuantitas)) {
+        showToast(
+            'Gagal menyimpan',
+            `Kuantitas untuk satuan ${satuan} harus bilangan bulat (tanpa desimal).`,
+            'error'
+        );
+        document.getElementById('tambahKuantitas')?.focus();
+        return false;
+    }
+
+    // Validasi stok (opsional)
+    const stokRaw = optTerpilih?.dataset.stok || '0';
+    const stokTersedia = parseFloat(String(stokRaw).replace(/\./g, '').replace(',', '.')) || 0;
+    if (stokTersedia > 0 && kuantitas > stokTersedia) {
+        showToast(
+            'Gagal menyimpan',
+            `Kuantitas melebihi stok tersedia (${stokRaw} ${satuan}).`,
+            'error'
+        );
+        document.getElementById('tambahKuantitas')?.focus();
+        return false;
+    }
+
+    // Simpan apa adanya — sesuai satuan saat itu
     const payload = {
         pembeli: namaPembeli,
         id_kategori: idKategori,
@@ -386,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const filtered = rows.filter(r => r.textContent.toLowerCase().includes(keyword));
 
         if (kosongCari) {
-            kosongCari.style.display = (rows.length > 0 && filtered.length === 0) ? '' : 'none';
+            kosongCari.style.display = (rows.length > 0 && filtered.length === 0) ? 'block' : 'none';
         }
 
         const perPage = parseInt(perPageSelect ? perPageSelect.value : 10, 10);

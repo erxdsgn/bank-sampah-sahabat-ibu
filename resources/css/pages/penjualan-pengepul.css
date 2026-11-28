@@ -2,6 +2,34 @@
    PENJUALAN SAMPAH PAGE — STYLES UNIK
    ========================================================= */
 
+.penjualan-page .hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.penjualan-page .hero-text {
+    max-width: 580px;
+}
+
+.penjualan-page .hero-title {
+    margin-bottom: 4px;
+}
+
+.penjualan-page .hero-sub {
+    margin-bottom: 0;
+}
+
+.penjualan-page .hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
 .penjualan-page .table-responsive {
     width: 100%;
     overflow-x: auto;
@@ -393,6 +421,14 @@
     color: var(--danger);
 }
 
+.penjualan-page .toast-icon svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+}
+
 .penjualan-page .toast-body {
     flex: 1;
 }
@@ -416,6 +452,17 @@
     color: var(--t-light);
     font-size: 16px;
     cursor: pointer;
+}
+
+@media (max-width: 760px) {
+    .penjualan-page .hero-actions {
+        width: 100%;
+    }
+
+    .penjualan-page .hero-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 @media (max-width: 560px) {

@@ -8,22 +8,11 @@
     @vite('resources/css/pages/artikel.css')
 @endpush
 
-@php
-    $labelJenisMap = $labelJenis ?? [
-        'edukasi' => ['Edukasi Sampah', 'badge--info'],
-        'artikel' => ['Artikel', 'badge--info'],
-        'event'   => ['Event', 'badge--purple'],
-        'acara'   => ['Event', 'badge--purple'],
-    ];
-    $labelJenisText = array_map(fn($v) => $v[0], $labelJenisMap);
-@endphp
-
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/@ckeditor/ckeditor5-build-classic@41.4.2/build/ckeditor.js"></script>
     <script>
         window.__ARTIKEL_DATA__ = {
             items: @json($artikel),
-            labelJenis: @json($labelJenisText),
             urls: {
                 store: "{{ route('admin.artikel.store') }}",
                 update: "{{ url('/admin/pages/artikel') }}/:id",
@@ -42,7 +31,14 @@
     $totalKonten = $artikel->count();
     $totalPublikasi = $artikel->whereNotNull('tanggal_publish')->count();
     $totalDraft = $artikel->whereNull('tanggal_publish')->count();
-    $totalAcara = $artikel->whereIn('jenis', ['event', 'acara'])->count();
+
+    // Rincian per kategori (untuk keterangan kartu Total Konten)
+    $totalEdukasi = $artikel->where('jenis', 'edukasi')->count();
+    $totalArtikelJenis = $artikel->where('jenis', 'artikel')->count();
+    $totalEvent = $artikel->whereIn('jenis', ['event', 'acara'])->count();
+
+    // Konten yang terakhir dipublikasikan
+    $terakhirPublish = $artikel->whereNotNull('tanggal_publish')->sortByDesc('tanggal_publish')->first();
 
     $labelJenis = [
         'edukasi' => ['Edukasi Sampah', 'badge--info'],
@@ -57,7 +53,6 @@
         'artikel' => ['label' => 'Banner Artikel', 'icon' => '📰', 'class' => 'banner-grad--artikel'],
     ];
 
-    $preview = $artikel->whereNotNull('tanggal_publish')->first() ?? $artikel->first();
 @endphp
 
 <div class="artikel-page">
@@ -105,7 +100,9 @@
                 </div>
             </div>
 
-            <div class="summary-info">Seluruh artikel & edukasi</div>
+            <div class="summary-info">
+                {{ $totalEdukasi }} Edukasi · {{ $totalArtikelJenis }} Artikel · {{ $totalEvent }} Event
+            </div>
         </div>
 
 
@@ -123,7 +120,13 @@
                 </div>
             </div>
 
-            <div class="summary-info">Sudah tampil di aplikasi warga</div>
+            <div class="summary-info">
+                @if ($totalKonten > 0)
+                    {{ round(($totalPublikasi / $totalKonten) * 100) }}% dari total, sudah tampil di aplikasi warga
+                @else
+                    Sudah tampil di aplikasi warga
+                @endif
+            </div>
         </div>
 
 
@@ -142,15 +145,17 @@
                 </div>
             </div>
 
-            <div class="summary-info">Belum ditayangkan</div>
+            <div class="summary-info">Belum ditayangkan, siap dipublikasikan</div>
         </div>
 
 
         <div class="summary-card">
             <div class="summary-card-top">
                 <div>
-                    <div class="summary-label">Acara Mendatang</div>
-                    <div class="summary-value">{{ $totalAcara }}</div>
+                    <div class="summary-label">Publikasi Terakhir</div>
+                    <div class="summary-value">
+                        {{ $terakhirPublish ? \Carbon\Carbon::parse($terakhirPublish->tanggal_publish)->format('d/m/Y') : '-' }}
+                    </div>
                 </div>
 
                 <div class="summary-icon">
@@ -162,13 +167,15 @@
                 </div>
             </div>
 
-            <div class="summary-info">Segera hadir</div>
+            <div class="summary-info">
+                {{ $terakhirPublish ? \Illuminate\Support\Str::limit($terakhirPublish->judul, 40) : 'Belum ada konten dipublikasikan' }}
+            </div>
         </div>
 
     </section>
 
 
-    {{-- VIEW UTAMA: DAFTAR KONTEN & PREVIEW MOBILE --}}
+    {{-- VIEW UTAMA: DAFTAR KONTEN --}}
     <div class="artikel-columns" id="viewDaftar">
 
         <section class="card">
@@ -355,35 +362,6 @@
 
         </section>
 
-
-        {{-- PREVIEW MOBILE --}}
-        <section class="card preview-card">
-            <div class="preview-head">
-                <h3 class="card-title">Preview Aplikasi Mobile</h3>
-            </div>
-
-            <div class="form-group preview-select-group">
-                <div class="combo" id="combo_previewSelector">
-                    <input type="text" id="cari_previewSelector" class="combo-input" placeholder="Pilih konten..." autocomplete="off" {{ $artikel->isEmpty() ? 'disabled' : '' }}>
-                    <div class="combo-list" id="list_previewSelector"></div>
-                </div>
-                <select id="previewSelector" class="combo-hidden" tabindex="-1" aria-hidden="true">
-                    @forelse($artikel as $item)
-                        <option value="{{ $item->id_artikel }}" @selected($preview && $preview->id_artikel === $item->id_artikel)>
-                            {{ $item->judul }} {{ $item->tanggal_publish ? '' : '(Draft)' }}
-                        </option>
-                    @empty
-                        <option value="">Belum ada konten</option>
-                    @endforelse
-                </select>
-            </div>
-
-            <div class="phone">
-                <div class="phone-header">← &nbsp; Baca Artikel</div>
-                <div class="phone-body" id="phonePreviewBody"></div>
-            </div>
-        </section>
-
     </div>
 
 
@@ -423,8 +401,9 @@
 
                 <div class="form-group">
                     <label for="artikelTanggal">Tanggal Publikasi</label>
+                    {{-- FIX: tidak ada atribut min sehingga tanggal lampau (hari kemarin) bisa dipilih --}}
                     <input type="date" id="artikelTanggal" class="form-control">
-                    <span class="field-hint">Kosongkan jika ingin menjadikannya sebagai draft.</span>
+                    <span class="field-hint">Kosongkan jika ingin menjadikannya sebagai draft. Tanggal lampau tetap bisa dipilih untuk publikasi mundur.</span>
                     <span class="form-error" id="err_tanggal"></span>
                 </div>
 

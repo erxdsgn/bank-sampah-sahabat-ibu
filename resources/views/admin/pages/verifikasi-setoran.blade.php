@@ -13,7 +13,10 @@
 
     @php
         $fmtHarga = fn($n) => rtrim(rtrim(number_format((float) $n, 2, ',', '.'), '0'), ',');
-        $fmtJumlah = fn($n) => rtrim(rtrim(number_format((float) $n, 3, ',', '.'), '0'), ',');
+        // kg & liter boleh desimal (2 digit), satuan lain (pcs, set, unit, gram) bilangan bulat
+        $fmtJumlah = fn($n, $satuan = 'gram') => in_array($satuan, ['kg', 'liter'], true)
+            ? number_format((float) $n, 2, ',', '.')
+            : number_format((float) $n, 0, ',', '.');
 
         $kategoriMap = $kategoriSampah->keyBy(function ($k) {
             return $k->id_kategori ?? $k->id;
@@ -62,25 +65,25 @@
         <div class="hero-actions">
             <div class="stat-chip">
                 <span class="stat-dot stat-dot--amber"></span>
-                <div>
-                    <div class="stat-num">{{ $setoran->where('status', 'pending')->count() }}</div>
-                    <div class="stat-label">Menunggu</div>
+                <div class="stat-text">
+                    <span class="stat-num">{{ $setoran->where('status', 'pending')->count() }}</span>
+                    <span class="stat-label">Menunggu</span>
                 </div>
             </div>
 
             <div class="stat-chip">
                 <span class="stat-dot stat-dot--green"></span>
-                <div>
-                    <div class="stat-num">{{ $setoran->where('status', 'approved')->count() }}</div>
-                    <div class="stat-label">Disetujui</div>
+                <div class="stat-text">
+                    <span class="stat-num">{{ $setoran->where('status', 'approved')->count() }}</span>
+                    <span class="stat-label">Disetujui</span>
                 </div>
             </div>
 
             <div class="stat-chip">
                 <span class="stat-dot stat-dot--red"></span>
-                <div>
-                    <div class="stat-num">{{ $setoran->where('status', 'rejected')->count() }}</div>
-                    <div class="stat-label">Ditolak</div>
+                <div class="stat-text">
+                    <span class="stat-num">{{ $setoran->where('status', 'rejected')->count() }}</span>
+                    <span class="stat-label">Ditolak</span>
                 </div>
             </div>
 
@@ -95,7 +98,6 @@
     </section>
 
     <section class="card">
-        {{-- SEARCH + FILTER --}}
         <div class="table-toolbar">
             <div class="table-search">
                 <svg viewBox="0 0 24 24">
@@ -115,7 +117,6 @@
             </div>
         </div>
 
-        {{-- TABLE --}}
         <div class="table-responsive">
             <table class="data-table" id="setoranTable">
                 <thead>
@@ -132,7 +133,7 @@
                 </thead>
 
                 <tbody>
-                    @forelse($setoran as $index => $item)
+                    @forelse ($setoran as $index => $item)
                         @php
                             $rowKey = $item->getKey();
                             $details = $detailMap[$rowKey] ?? collect();
@@ -146,9 +147,9 @@
                                         'id_detail' => $d->id_detail_setoran ?? ($d->id_detail ?? ($d->id ?? null)),
                                         'id_kategori' => $katId,
                                         'nama_kategori' => optional($kat)->nama_kategori
-                                                            ?? optional($kat)->nama_lengkap
-                                                            ?? optional($kat)->nama
-                                                            ?? optional($d->kategori)->nama_kategori,
+                                            ?? optional($kat)->nama_lengkap
+                                            ?? optional($kat)->nama
+                                            ?? optional($d->kategori)->nama_kategori,
                                         'satuan' => $normalisasiSatuan(
                                             $d->satuan ?? (optional($kat)->satuan ?? 'gram'),
                                         ),
@@ -167,9 +168,9 @@
                                         'id_detail' => null,
                                         'id_kategori' => $katLamaId,
                                         'nama_kategori' => optional($katLama)->nama_kategori
-                                                            ?? optional($katLama)->nama_lengkap
-                                                            ?? optional($item->kategori)->nama_kategori
-                                                            ?? optional($item->kategori)->nama,
+                                            ?? optional($katLama)->nama_lengkap
+                                            ?? optional($item->kategori)->nama_kategori
+                                            ?? optional($item->kategori)->nama,
                                         'satuan' => $normalisasiSatuan($item->satuan ?? 'gram'),
                                         'jumlah' => (float) ($item->jumlah_satuan ?? ($item->jumlah ?? ($item->total_berat ?? 0))),
                                     ],
@@ -177,9 +178,10 @@
                             }
 
                             $namaList = collect($items)->pluck('nama_kategori')->filter()->unique()->values();
+                            $jumlahJenis = count($items);
 
-                            $totalNilai = $item->total_nilai ??
-                                $details->sum(function ($d) {
+                            $totalNilai = $item->total_nilai
+                                ?? $details->sum(function ($d) {
                                     return (float) ($d->subtotal ?? 0);
                                 });
 
@@ -214,40 +216,33 @@
 
                             <td>
                                 @if ($namaList->isEmpty())
-                                    <span class="kategori-tag">-</span>
+                                    -
+                                @elseif ($jumlahJenis > 1)
+                                    {{ $jumlahJenis }} jenis
+                                    <span class="sr-only">{{ $namaList->implode(', ') }}</span>
                                 @else
-                                    <div class="kategori-stack">
-                                        @foreach ($namaList->take(2) as $nm)
-                                            <span class="kategori-tag">{{ $nm }}</span>
-                                        @endforeach
-
-                                        @if ($namaList->count() > 2)
-                                            <span class="kategori-tag kategori-tag--more"
-                                                title="{{ $namaList->slice(2)->implode(', ') }}">
-                                                +{{ $namaList->count() - 2 }} lainnya
-                                            </span>
-                                            <span class="sr-only">{{ $namaList->slice(2)->implode(', ') }}</span>
-                                        @endif
-                                    </div>
+                                    {{ $namaList->first() }}
                                 @endif
                             </td>
 
                             <td>
-                                @if (count($row['items']) > 1)
-                                    <strong>{{ count($row['items']) }} jenis</strong>
+                                @if ($jumlahJenis > 1)
+                                    {{ $jumlahJenis }} jenis
                                 @else
-                                    <strong>{{ $fmtJumlah($row['items'][0]['jumlah'] ?? 0) }}</strong>
-                                    <span class="unit">{{ $row['items'][0]['satuan'] ?? 'gram' }}</span>
+                                    {{ $fmtJumlah($row['items'][0]['jumlah'] ?? 0, $row['items'][0]['satuan'] ?? 'gram') }}
+                                    {{ $row['items'][0]['satuan'] ?? 'gram' }}
                                 @endif
                             </td>
 
                             <td>
-                                <strong>Rp {{ number_format($row['total_nilai'], 0, ',', '.') }}</strong>
+                                <strong class="saldo">
+                                    Rp {{ number_format($row['total_nilai'], 0, ',', '.') }}
+                                </strong>
                             </td>
 
                             <td>
                                 @if ($tanggal)
-                                    {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d F Y') }}
+                                    {{ \Carbon\Carbon::parse($tanggal)->format('d/m/Y') }}
                                 @else
                                     -
                                 @endif
@@ -256,7 +251,7 @@
                             <td>
                                 @if ($item->status === 'pending')
                                     <span class="status-badge status-badge--pending">Menunggu</span>
-                                @elseif($item->status === 'approved')
+                                @elseif ($item->status === 'approved')
                                     <span class="status-badge status-badge--approved">Disetujui</span>
                                 @else
                                     <span class="status-badge status-badge--rejected">Ditolak</span>
@@ -265,14 +260,29 @@
 
                             <td>
                                 <div class="table-actions">
-                                    <button class="icon-btn {{ $item->status === 'pending' ? 'icon-btn--primary' : '' }}"
-                                        title="{{ $item->status === 'pending' ? 'Lihat Detail & Verifikasi' : 'Lihat Detail' }}"
-                                        type="button" onclick="bukaVerifikasi({{ Js::from($row) }})">
+                                    <button class="icon-btn"
+                                        title="Lihat Detail Setoran"
+                                        aria-label="Lihat Detail Setoran"
+                                        type="button"
+                                        onclick="bukaVerifikasi({{ Js::from($row) }}, false)">
                                         <svg viewBox="0 0 24 24">
                                             <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path>
                                             <circle cx="12" cy="12" r="2.5"></circle>
                                         </svg>
                                     </button>
+
+                                    @if ($item->status === 'pending')
+                                        <button class="icon-btn icon-btn--edit"
+                                            title="Edit & Verifikasi Setoran"
+                                            aria-label="Edit & Verifikasi Setoran"
+                                            type="button"
+                                            onclick="bukaVerifikasi({{ Js::from($row) }}, true)">
+                                            <svg viewBox="0 0 24 24">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -295,7 +305,6 @@
             </div>
         </div>
 
-        {{-- FOOTER --}}
         <div class="table-footer">
             <div class="table-info" id="tableInfoPagination">Menampilkan data...</div>
 
@@ -320,10 +329,8 @@
         </div>
     </section>
 
-    {{-- TOAST --}}
     <div class="toast-wrap" id="verifikasiToastWrap"></div>
 
-    {{-- Sumber opsi kategori; disalin ke setiap baris rincian sampah --}}
     <select id="masterKategori" class="combo-hidden" tabindex="-1" aria-hidden="true">
         <option value="" data-harga="0" data-satuan="" disabled selected>
             -- Pilih Kategori Sampah --
@@ -349,14 +356,13 @@
         @endforeach
     </select>
 
-    {{-- MODAL VERIFIKASI --}}
     <div class="modal-overlay" id="modalVerifikasi">
         <div class="modal-box modal-box--wide">
             <div class="modal-head">
                 <h3 class="modal-title">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                     <span id="verifJudul">Verifikasi Setoran</span>
                 </h3>
@@ -407,8 +413,8 @@
                             <span class="val" id="verifEstimasi">Rp 0</span>
                         </div>
 
-                        <span class="field-sub">
-                            Sesuaikan jenis dan jumlah dengan hasil pengecekan ulang jika berbeda.
+                        <span class="field-sub" id="verifHintEdit">
+                            Sesuaikan jenis dan jumlah dengan hasil pengecekan ulang sebelum menyetujui.
                         </span>
                     </div>
 
@@ -429,14 +435,13 @@
                         Tolak
                     </button>
                     <button class="btn btn--primary" type="submit" id="btnSetujuiSetoran">
-                        Setujui &amp; Proses Saldo
+                        Simpan &amp; Setujui Saldo
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    {{-- MODAL TAMBAH SETORAN --}}
     <div class="modal-overlay" id="modalTambah">
         <div class="modal-box modal-box--wide">
             <div class="modal-head">
@@ -476,7 +481,8 @@
 
                         <div class="form-group form-group--full">
                             <label for="tambahTanggal">Tanggal Setoran</label>
-                            <input type="date" id="tambahTanggal" required disabled>
+                            <!-- INPUT TANGGAL DISEMBUNYIKAN & OTOMATIS TERISI OLEH JS -->
+                            <input type="hidden" id="tambahTanggal" required>
                         </div>
 
                         <div class="form-group form-group--full">

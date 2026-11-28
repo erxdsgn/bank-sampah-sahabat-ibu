@@ -32,6 +32,7 @@ class Warga extends Model
         'status_rekening',
         'kelompok',
         'kelompok_updated_at',
+        'status',
     ];
 
     protected $casts = [
@@ -41,9 +42,11 @@ class Warga extends Model
         'kelompok_updated_at' => 'datetime',
     ];
 
-    /**
-     * Relasi balik ke akun pusat (User)
-     */
+    public function scopeAktif($query)
+    {
+        return $query->where('status', 'aktif');
+    }
+
     public function user()
     {
         // Disesuaikan dari 'user_id' menjadi 'id_user'

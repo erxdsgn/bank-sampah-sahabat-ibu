@@ -2,6 +2,37 @@
    KATEGORI HARGA PAGE — STYLES UNIK
    ========================================================= */
 
+/* ---------- HERO SECTION (Agar tombol sejajar judul) ---------- */
+.kategori-page .hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 0;
+}
+
+.kategori-page .hero-text {
+    max-width: 600px;
+}
+
+.kategori-page .hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 0;
+}
+
+.kategori-page .hero-title {
+    margin-bottom: 4px;
+}
+
+.kategori-page .hero-sub {
+    margin-bottom: 0;
+}
+
 /* ---------- SUMMARY ---------- */
 .summary-grid {
     display: grid;
@@ -173,6 +204,11 @@
     border-top-right-radius: 8px;
 }
 
+.data-table thead th.col-aksi,
+.data-table tbody td.col-aksi {
+    text-align: center;
+}
+
 .data-table tbody td {
     border-bottom: 1px solid var(--border-soft);
     padding: 12px 14px;
@@ -206,22 +242,52 @@
     margin-right: 4px;
 }
 
+/* ---------- AKSI TOMBOL TABEL (DI-ALIGMENT HINGGA RAPIS & PRESISI) ---------- */
 .table-actions {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
 }
 
 .table-actions .icon-btn {
     width: 32px;
     height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid var(--border);
     background: var(--bg-card);
     color: var(--t-muted);
     border-radius: 8px;
+    cursor: pointer;
+    transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.table-actions .icon-btn svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    display: block;
 }
 
 .table-actions .icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--t-base);
+    border-color: var(--t-light);
+}
+
+.table-actions .icon-btn--edit {
+    color: var(--t-muted);
+    border-color: var(--border);
+}
+
+.table-actions .icon-btn--edit:hover {
     background: var(--bg-hover);
     color: var(--t-base);
     border-color: var(--t-light);
@@ -283,7 +349,6 @@
 .modal-box {
     width: 100%;
     max-width: 540px;
-    max-height: calc(100vh - 40px);
     display: flex;
     flex-direction: column;
     background: var(--bg-card);
@@ -291,7 +356,7 @@
     border: 1px solid var(--border);
     border-radius: 14px;
     box-shadow: var(--shadow-lg);
-    overflow: hidden;
+    overflow: visible;
     animation: modalPop .18s ease-out;
 }
 
@@ -317,6 +382,8 @@
     gap: 12px;
     padding: 16px 20px;
     border-bottom: 1px solid var(--border);
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
     flex-shrink: 0;
 }
 
@@ -350,7 +417,7 @@
 
 .modal-box .modal-body {
     padding: 20px;
-    overflow-y: auto;
+    overflow: visible;
     flex: 1 1 auto;
     color: var(--t-base);
 }
@@ -368,7 +435,11 @@
     padding: 14px 20px;
     border-top: 1px solid var(--border);
     background: var(--bg-card);
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
     flex-shrink: 0;
+    position: relative;
+    z-index: 1;
 }
 
 .modal-foot--center {
@@ -399,10 +470,16 @@
 }
 
 .form-group {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     gap: 6px;
     min-width: 0;
+}
+
+.form-group:focus-within {
+    z-index: 50;
 }
 
 .form-group--full {
@@ -450,6 +527,30 @@
     justify-content: flex-end;
 }
 
+.modal-box .combo {
+    position: relative;
+    z-index: 2;
+}
+
+.modal-box .combo:focus-within,
+.modal-box .combo.is-open,
+.modal-box .combo.open,
+.modal-box .combo.active,
+.modal-box .combo.combo--flip-up {
+    z-index: 80;
+}
+
+.modal-box .combo-list {
+    position: absolute;
+    z-index: 90;
+}
+
+.combo.combo--flip-up .combo-list,
+.combo.combo--up .combo-list {
+    top: auto;
+    bottom: calc(100% + 4px);
+}
+
 /* ---------- KONFIRMASI HAPUS ---------- */
 .confirm-icon {
     width: 52px;
@@ -468,6 +569,8 @@
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .confirm-title {

@@ -9,6 +9,13 @@ const storeUrl = dataKeuangan.storeUrl || '';
 let keuanganPage = 1;
 let transaksiAkanDihapus = null;
 
+function tanggalHariIniLokal() {
+    const now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+        .toISOString()
+        .substring(0, 10);
+}
+
 function bukaModal(id) {
     const modal = document.getElementById(id);
     if (modal) {
@@ -135,9 +142,9 @@ function bukaModalTambah() {
 
     const tanggal = document.getElementById('transaksiTanggal');
     if (tanggal) {
-        const now = new Date();
-        const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().substring(0, 10);
-        tanggal.value = localDate;
+        const hariIni = tanggalHariIniLokal();
+        tanggal.min = hariIni;
+        tanggal.value = hariIni;
     }
 
     bukaModal('modalTransaksi');
@@ -147,11 +154,19 @@ function simpanTransaksi(event) {
     event.preventDefault();
 
     const jenis = document.getElementById('transaksiJenis').value;
+    const tanggalVal = document.getElementById('transaksiTanggal').value;
     const jumlah = parseFloat(document.getElementById('transaksiJumlah').value) || 0;
+    const hariIni = tanggalHariIniLokal();
 
     if (!jenis) {
         keuanganShowToast('Gagal menyimpan', 'Silakan pilih jenis transaksi.', 'error');
         document.getElementById('cari_transaksiJenis')?.focus();
+        return false;
+    }
+
+    if (!tanggalVal || tanggalVal < hariIni) {
+        keuanganShowToast('Kesalahan Tanggal', 'Tanggal transaksi tidak boleh mundur (lebih awal dari hari ini).', 'error');
+        document.getElementById('transaksiTanggal')?.focus();
         return false;
     }
 
@@ -166,7 +181,7 @@ function simpanTransaksi(event) {
 
     const payload = {
         jenis: jenis,
-        tanggal: document.getElementById('transaksiTanggal').value,
+        tanggal: tanggalVal,
         kategori: document.getElementById('transaksiKategori').value,
         jumlah: jumlah,
         keterangan: document.getElementById('transaksiKeterangan').value
@@ -269,6 +284,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (dataKeuangan.flashError) {
         keuanganShowToast('Gagal', dataKeuangan.flashError, 'error');
+    }
+
+    const tanggalInput = document.getElementById('transaksiTanggal');
+    if (tanggalInput) {
+        tanggalInput.min = tanggalHariIniLokal();
     }
 
     const searchInput = document.getElementById('searchKeuangan');

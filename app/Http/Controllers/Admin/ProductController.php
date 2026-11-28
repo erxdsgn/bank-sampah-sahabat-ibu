@@ -10,9 +10,6 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    /**
-     * Menampilkan katalog produk
-     */
     public function index()
     {
         $katalogProduk = Product::orderByDesc('tanggal_upload')
@@ -22,10 +19,6 @@ class ProductController extends Controller
         return view('admin.pages.katalog', compact('katalogProduk'));
     }
 
-
-    /**
-     * Menyimpan produk baru
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -33,19 +26,17 @@ class ProductController extends Controller
             'harga'       => 'required|numeric|min:1|max:500000',
             'stok'        => 'required|integer|min:1|max:500',
             'deskripsi'   => 'nullable|string|max:500',
-            'foto'        => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            // Menggunakan mimes agar menerima HEIC jika JS gagal mengonversi
+            'foto'        => 'required|file|mimes:jpeg,png,jpg,webp,heic,heif|max:2048',
         ], [
-            // Kustom pesan error agar lebih komunikatif (opsional)
             'nama_produk.regex' => 'Nama produk hanya boleh berisi huruf dan spasi.',
             'deskripsi.max'     => 'Deskripsi maksimal 500 karakter.',
             'harga.max'         => 'Harga produk maksimal Rp 500.000.',
             'stok.max'          => 'Stok produk maksimal 500 unit.',
         ]);
 
-        // Simpan foto ke storage/app/public/products
         $fotoPath = $request->file('foto')->store('products', 'public');
 
-        // Simpan data produk
         $produk = Product::create([
             'id_admin'       => Auth::id() ?? 1,
             'nama_produk'    => $request->nama_produk,
@@ -63,21 +54,12 @@ class ProductController extends Controller
         ], 201);
     }
 
-
-    /**
-     * Menampilkan detail produk
-     */
     public function show($id)
     {
         $produk = Product::findOrFail($id);
-
         return response()->json($produk);
     }
 
-
-    /**
-     * Mengubah produk
-     */
     public function update(Request $request, $id)
     {
         $produk = Product::findOrFail($id);
@@ -87,7 +69,7 @@ class ProductController extends Controller
             'harga'       => 'required|numeric|min:1|max:500000',
             'stok'        => 'required|integer|min:1|max:500',
             'deskripsi'   => 'nullable|string|max:500',
-            'foto'        => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'foto'        => 'nullable|file|mimes:jpeg,png,jpg,webp,heic,heif|max:2048',
         ], [
             'nama_produk.regex' => 'Nama produk hanya boleh berisi huruf dan spasi.',
             'deskripsi.max'     => 'Deskripsi maksimal 500 karakter.',
@@ -102,20 +84,11 @@ class ProductController extends Controller
             'deskripsi'   => $request->deskripsi,
         ];
 
-        // Jika user mengganti foto
         if ($request->hasFile('foto')) {
-
-            // Hapus foto lama
-            if (
-                $produk->foto &&
-                Storage::disk('public')->exists($produk->foto)
-            ) {
+            if ($produk->foto && Storage::disk('public')->exists($produk->foto)) {
                 Storage::disk('public')->delete($produk->foto);
             }
-
-            // Simpan foto baru
-            $data['foto'] = $request->file('foto')
-                ->store('products', 'public');
+            $data['foto'] = $request->file('foto')->store('products', 'public');
         }
 
         $produk->update($data);
@@ -127,23 +100,14 @@ class ProductController extends Controller
         ]);
     }
 
-
-    /**
-     * Menghapus produk
-     */
     public function destroy($id)
     {
         $produk = Product::findOrFail($id);
 
-        // Hapus foto dari storage
-        if (
-            $produk->foto &&
-            Storage::disk('public')->exists($produk->foto)
-        ) {
+        if ($produk->foto && Storage::disk('public')->exists($produk->foto)) {
             Storage::disk('public')->delete($produk->foto);
         }
 
-        // Hapus data produk
         $produk->delete();
 
         return response()->json([

@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title') · {{ config('app.name', 'Adminator') }}</title>
+    <title>@yield('title') · {{ config('app.name', 'Gemi') }}</title>
 
     {{-- Set tema sebelum render (mencegah flash) --}}
     <script>
@@ -20,15 +20,26 @@
         }();
     </script>
 
-    {{-- Slot tambahan untuk CSS per halaman --}}
+    <!-- Tailwind CSS (Pastikan ini ada jika Anda menggunakan class Tailwind) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100%;
+            overflow-x: hidden;
+        }
+    </style>
+
     @stack('styles')
 </head>
-<body>
-<div class="auth-shell">
-    @yield('content')
-</div>
+<body class="bg-[#f4f9f4] text-slate-800 antialiased">
+    <div class="auth-shell w-full min-h-screen">
+        @yield('content')
+    </div>
 
-{{-- Slot tambahan untuk JS per halaman --}}
-@stack('scripts')
+    @stack('scripts')
 </body>
 </html>

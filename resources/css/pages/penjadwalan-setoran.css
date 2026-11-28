@@ -42,6 +42,45 @@
     text-align: center;
 }
 
+/* ---------- HERO & TOOLBAR ALIGNMENT ---------- */
+.penjadwalan-page .hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.penjadwalan-page .hero-text {
+    max-width: 600px;
+}
+
+.penjadwalan-page .hero-title {
+    margin-bottom: 4px;
+}
+
+.penjadwalan-page .hero-sub {
+    margin-bottom: 0;
+}
+
+.penjadwalan-page .hero-actions,
+.penjadwalan-page .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.penjadwalan-page .hero-actions .btn,
+.penjadwalan-page .toolbar-right .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
 /* ---------- SUMMARY ---------- */
 .penjadwalan-page .summary-grid {
     display: grid;
@@ -57,6 +96,7 @@
     border-radius: 14px;
     padding: 18px;
     box-shadow: var(--shadow-card);
+    user-select: none;
 }
 
 .penjadwalan-page .summary-card-top {
@@ -219,10 +259,25 @@
     gap: 6px;
 }
 
+.penjadwalan-page .icon-btn--edit {
+    color: var(--t-muted);
+    border-color: var(--border);
+}
+
+.penjadwalan-page .icon-btn--edit:hover {
+    background: var(--bg-hover);
+    color: var(--t-base);
+    border-color: var(--t-light);
+}
+
 .penjadwalan-page .icon-btn--danger {
     color: var(--danger);
+}
+
+.penjadwalan-page .icon-btn--danger:hover {
     background: var(--danger-soft);
     border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+    color: var(--danger);
 }
 
 .penjadwalan-page .per-page .combo {
@@ -807,6 +862,16 @@
     color: var(--danger);
 }
 
+.penjadwalan-page .toast-icon svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .penjadwalan-page .toast-body {
     flex: 1;
 }
@@ -834,6 +899,17 @@
 @media (max-width: 1100px) {
     .penjadwalan-page .summary-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .penjadwalan-page .hero-actions {
+        width: 100%;
+    }
+
+    .penjadwalan-page .hero-actions .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 

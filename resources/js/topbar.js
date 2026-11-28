@@ -4,6 +4,8 @@
  * Topbar Admin (Hamburger, Search, Dropdown, Theme, Logout)
  */
 
+import { updateSidebarPengaduanBadge } from "./sidebar.js";
+
 /* =========================================================
  * BREADCRUMB
  * ========================================================= */
@@ -51,6 +53,55 @@ function getCsrfToken() {
 }
 
 /* =========================================================
+ * PENGADUAN MAILBOX SYNC
+ * ========================================================= */
+
+async function syncPengaduanMailbox() {
+    const countEl = document.querySelector("[data-pengaduan-count]");
+    const listEl = document.querySelector("[data-pengaduan-list]");
+    if (!countEl && !listEl) return;
+
+    try {
+        const response = await fetch("/admin/pages/pengaduan/summary", {
+            headers: {
+                "Accept": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        });
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        const total = Number(payload.menunggu_count) || 0;
+        const items = Array.isArray(payload.terbaru) ? payload.terbaru : [];
+
+        if (countEl) {
+            countEl.textContent = total > 99 ? "99+" : String(total);
+            countEl.classList.toggle("is-hidden", total <= 0);
+        }
+
+        updateSidebarPengaduanBadge(total);
+
+        if (listEl) {
+            if (items.length === 0) {
+                listEl.innerHTML = `<div class="dd-empty">Tidak ada pengaduan menunggu.</div>`;
+            } else {
+                listEl.innerHTML = items.map((item) => `
+                    <a class="dd-item" href="${escapeHtml(item.url || "/admin/pages/pengaduan")}">
+                        <div class="dd-avatar a1">${escapeHtml(item.inisial || "W")}</div>
+                        <div class="dd-body">
+                            <div class="dd-row-head"><strong>${escapeHtml(item.nama || "Warga")}</strong></div>
+                            <div class="dd-text">${escapeHtml(item.judul || "")}</div>
+                        </div>
+                    </a>
+                `).join("");
+            }
+        }
+    } catch (_) {
+        // Abaikan jika gagal memuat saat offline atau berpindah halaman
+    }
+}
+
+/* =========================================================
  * RENDER TOPBAR
  * ========================================================= */
 
@@ -94,16 +145,18 @@ export function renderTopbar(crumbsString) {
                 </div>
 
                 <div class="dd-wrap">
-                    <button class="icon-btn" type="button" data-dropdown aria-label="Messages">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-                        <span class="count info">3</span>
+                    <button class="icon-btn" type="button" data-dropdown aria-label="Pengaduan Masuk">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>
+                        </svg>
+                        <span class="count info is-hidden" data-pengaduan-count>0</span>
                     </button>
                     <div class="dd-menu" role="menu">
-                        <div class="dd-head">Messages</div>
-                        <div class="dd-list">
-                            <a class="dd-item" href="#"><div class="dd-avatar a1">JD</div><div class="dd-body"><div class="dd-row-head"><strong>John Doe</strong></div></div></a>
+                        <div class="dd-head">Pengaduan Masuk</div>
+                        <div class="dd-list" data-pengaduan-list>
+                            <div class="dd-empty">Memuat pengaduan...</div>
                         </div>
-                        <a class="dd-footer" href="#">View all messages →</a>
+                        <a class="dd-footer" href="/admin/pages/pengaduan">Lihat semua pengaduan →</a>
                     </div>
                 </div>
 
@@ -315,6 +368,8 @@ function toggleSidebar() {
  * ========================================================= */
 
 export function initTopbarEvents() {
+    syncPengaduanMailbox();
+
     if (window.__topbarEventsInitialized) {
         updateThemeIcon();
         return;

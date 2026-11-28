@@ -2,11 +2,35 @@
    DATA WARGA PAGE — STYLES UNIK
    ========================================================= */
 
+/* ---------- HERO SECTION (Diperbaiki agar sejajar & tidak terlalu tinggi) ---------- */
+.warga-page .hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 0;
+}
+
+.warga-page .hero-text {
+    max-width: 600px;
+}
+
 .warga-page .hero-actions {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
     align-items: center;
+    margin-top: 0;
+}
+
+.warga-page .hero-title {
+    margin-bottom: 4px;
+}
+
+.warga-page .hero-sub {
+    margin-bottom: 0;
 }
 
 .warga-page .hero-actions .btn svg {
@@ -59,7 +83,7 @@
 }
 
 .warga-page .stat-icon--blue {
-    background: rgba(59, 130, 246, .14);
+    background: rgba(59, 130, 246, 0.14);
     color: #60a5fa;
 }
 
@@ -90,6 +114,19 @@
     color: var(--t-base);
 }
 
+/* ---------- TOOLBAR FILTER SAMPING-SAMPINGAN ---------- */
+.warga-page .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.warga-page .toolbar-right .combo {
+    width: auto;
+    min-width: 155px;
+}
+
 /* ---------- FILTER PILLS ---------- */
 .warga-page .filter-pills {
     display: flex;
@@ -107,7 +144,7 @@
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
-    transition: .15s ease;
+    transition: 0.15s ease;
 }
 
 .warga-page .fpill:hover {
@@ -135,6 +172,16 @@
     background: var(--bg-card);
     color: var(--t-base);
 }
+
+/* --- PENGATURAN LEBAR KOLOM SPESIFIK (CARA 2) --- */
+.warga-page .data-table th:nth-child(1) { width: 4%; }  /* No */
+.warga-page .data-table th:nth-child(2) { width: 22%; } /* Warga (Diperlebar) */
+.warga-page .data-table th:nth-child(3) { width: 14%; } /* No HP */
+.warga-page .data-table th:nth-child(4) { width: 13%; } /* Kelompok */
+.warga-page .data-table th:nth-child(5) { width: 10%; } /* Status */
+.warga-page .data-table th:nth-child(6) { width: 12%; } /* Saldo */
+.warga-page .data-table th:nth-child(7) { width: 15%; } /* Rekening */
+.warga-page .data-table th:nth-child(8) { width: 10%; } /* Aksi */
 
 .warga-page .data-table th {
     background: var(--bg-muted);
@@ -199,6 +246,10 @@
 .warga-page .user-name {
     font-weight: 700;
     color: var(--t-base);
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .warga-page .saldo-text {
@@ -225,7 +276,7 @@
 
 .warga-page .bank-main > strong {
     display: block;
-    max-width: 150px;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -233,7 +284,7 @@
 
 .warga-page .bank-info .bank-number {
     display: block;
-    max-width: 180px;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -353,7 +404,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, .55);
+    background: rgba(15, 23, 42, 0.55);
     align-items: center;
     justify-content: center;
     padding: 20px;
@@ -377,7 +428,7 @@
     border-radius: 14px;
     box-shadow: var(--shadow-lg);
     color: var(--t-base);
-    animation: wargaModalPop .15s ease-out;
+    animation: wargaModalPop 0.15s ease-out;
 }
 
 .warga-page .modal-box--sm {
@@ -387,7 +438,7 @@
 @keyframes wargaModalPop {
     from {
         opacity: 0;
-        transform: translateY(8px) scale(.98);
+        transform: translateY(8px) scale(0.98);
     }
 
     to {
@@ -573,7 +624,7 @@
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: .03em;
+    letter-spacing: 0.03em;
     color: var(--t-light);
     display: block;
 }
@@ -631,22 +682,35 @@
     resize: vertical;
 }
 
-/* ---------- COMBOBOX ---------- */
+/* ---------- COMBOBOX (anti-clip & selalu di depan) ---------- */
 .warga-page .combo {
     position: relative;
+    width: 100%;
 }
 
 .warga-page .combo-input {
     width: 100%;
+    padding: 9px 30px 9px 12px;
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 9px 12px;
     font-size: 13px;
     font-family: inherit;
+    line-height: 1.4;
     outline: none;
     box-sizing: border-box;
-    background: var(--bg-card);
+    background-color: var(--bg-card);
     color: var(--t-base);
+    cursor: pointer;
+    transition: none;
+    min-height: 38px;
+}
+
+.warga-page .combo-input:focus,
+.warga-page .combo-input:focus-visible {
+    border-color: var(--success);
+    box-shadow: none;
+    outline: none;
+    padding: 9px 30px 9px 12px;
 }
 
 .warga-page .combo-hidden {
@@ -655,12 +719,10 @@
 
 .warga-page .combo--up .combo-list {
     top: auto;
-    bottom: calc(100% + 4px);
+    bottom: calc(100% + 6px);
 }
 
 .warga-page .combo--arrow .combo-input {
-    cursor: pointer;
-    padding-right: 30px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 9px center;
@@ -670,20 +732,33 @@
 .warga-page .combo-list {
     display: none;
     position: absolute;
-    top: calc(100% + 4px);
+    top: calc(100% + 6px);
     left: 0;
     right: 0;
-    max-height: 180px;
+    max-height: 220px;
     overflow-y: auto;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
     box-shadow: var(--shadow-lg);
-    z-index: 60;
+    z-index: 9999;
 }
 
 .warga-page .combo-list.show {
     display: block;
+}
+
+.warga-page .modal-body:has(.combo-list.show) {
+    overflow-y: visible;
+    overflow-x: visible;
+}
+
+.warga-page .modal-box:has(.combo-list.show) {
+    overflow: visible;
+}
+
+.warga-page .modal-box > form:has(.combo-list.show) {
+    overflow: visible;
 }
 
 .warga-page .combo-item {
@@ -708,6 +783,13 @@
     font-size: 12px;
     color: var(--t-light);
     text-align: center;
+}
+
+/* ---------- JAGA: footer modal tetap di atas konten ---------- */
+.warga-page .modal-foot {
+    position: relative;
+    z-index: 10;
+    background: var(--bg-card);
 }
 
 /* ---------- EDIT STATUS REKENING ---------- */
@@ -769,7 +851,10 @@
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    transition: background .15s ease, border-color .15s ease, color .15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
 }
 
 .warga-page .seg-btn:hover {
@@ -777,13 +862,13 @@
     color: var(--t-base);
 }
 
-.warga-page .seg-btn.is-active[data-value="verified"] {
+.warga-page .seg-btn.is-active[data-value='verified'] {
     border-color: var(--success);
     background: var(--success-soft);
     color: var(--success);
 }
 
-.warga-page .seg-btn.is-active[data-value="unverified"] {
+.warga-page .seg-btn.is-active[data-value='unverified'] {
     border-color: var(--warning);
     background: var(--warning-soft);
     color: var(--warning);
@@ -814,7 +899,7 @@
     box-shadow: var(--shadow-lg);
     padding: 14px 16px;
     pointer-events: auto;
-    animation: wargaToastIn .18s ease-out;
+    animation: wargaToastIn 0.18s ease-out;
     color: var(--t-base);
 }
 
@@ -883,7 +968,7 @@
 }
 
 .warga-page .toast.toast--leaving {
-    animation: wargaToastOut .18s ease-in forwards;
+    animation: wargaToastOut 0.18s ease-in forwards;
 }
 
 @keyframes wargaToastIn {
@@ -919,6 +1004,16 @@
 
     .warga-page .hero-actions {
         width: 100%;
+    }
+
+    .warga-page .toolbar-right {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .warga-page .toolbar-right .combo {
+        flex: 1 1 140px;
+        min-width: 0;
     }
 
     .warga-page .detail-grid,

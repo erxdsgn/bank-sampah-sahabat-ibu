@@ -200,32 +200,33 @@
                     </h3>
                     <button class="modal-close" type="button" onclick="tutupModal('modalTambah')">&times;</button>
                 </div>
-                <form id="formTambahProduk" onsubmit="return simpanTambah(event)">
+                <form id="formTambahProduk" class="modal-form" onsubmit="return simpanTambah(event)">
                     <div class="modal-body">
                         <div class="form-grid">
                             <div class="form-group form-group--full">
                                 <label for="tambahfoto">Foto Produk</label>
-                                <input type="file" id="tambahfoto" accept="image/jpeg,image/png,image/jpg,image/webp"
+                                {{-- Tambahkan accept untuk HEIC --}}
+                                <input class="form-control" type="file" id="tambahfoto" accept="image/jpeg,image/png,image/jpg,image/webp,image/heic,image/heif,.heic,.heif"
                                     required>
-                                <span class="field-hint">Format JPG, PNG, atau WEBP. Maksimal 2MB.</span>
+                                <span class="field-hint">Format JPG, PNG, WEBP, atau HEIC. Maksimal 2MB.</span>
                             </div>
                             <div class="form-group form-group--full">
                                 <label for="tambahNama">Nama Barang</label>
-                                <input type="text" id="tambahNama" maxlength="80" required>
+                                <input class="form-control" type="text" id="tambahNama" maxlength="80" required>
                             </div>
                             <div class="form-group form-group--full">
                                 <label for="tambahDeskripsi">Deskripsi Produk</label>
-                                <textarea id="tambahDeskripsi" rows="4" maxlength="500"
+                                <textarea class="form-control" id="tambahDeskripsi" rows="4" maxlength="500"
                                     placeholder="Contoh: Tas dari anyaman plastik bekas, tahan air, ukuran 30x25 cm."></textarea>
                                 <span class="field-hint">Opsional, maksimal 500 karakter.</span>
                             </div>
                             <div class="form-group">
                                 <label for="tambahHarga">Harga (Rp)</label>
-                                <input type="number" id="tambahHarga" min="1" max="500000" required>
+                                <input class="form-control" type="number" id="tambahHarga" min="1" max="500000" required>
                             </div>
                             <div class="form-group">
                                 <label for="tambahStok">Stok</label>
-                                <input type="number" id="tambahStok" min="1" max="500" required>
+                                <input class="form-control" type="number" id="tambahStok" min="1" max="500" required>
                             </div>
                         </div>
                     </div>
@@ -250,7 +251,7 @@
                     </h3>
                     <button class="modal-close" type="button" onclick="tutupModal('modalEdit')">&times;</button>
                 </div>
-                <form id="formEditProduk" onsubmit="return simpanEdit(event)">
+                <form id="formEditProduk" class="modal-form" onsubmit="return simpanEdit(event)">
                     <div class="modal-body">
                         <input type="hidden" id="editId">
                         <div class="form-grid">
@@ -262,25 +263,25 @@
                             </div>
                             <div class="form-group form-group--full">
                                 <label for="editfoto">Ganti Foto (opsional)</label>
-                                <input type="file" id="editfoto" accept="image/jpeg,image/png,image/jpg,image/webp">
+                                <input class="form-control" type="file" id="editfoto" accept="image/jpeg,image/png,image/jpg,image/webp,image/heic,image/heif,.heic,.heif">
                                 <span class="field-hint">Biarkan kosong jika tidak ingin mengubah foto. Maks 2MB.</span>
                             </div>
                             <div class="form-group form-group--full">
                                 <label for="editNama">Nama Barang</label>
-                                <input type="text" id="editNama" maxlength="80" required>
+                                <input class="form-control" type="text" id="editNama" maxlength="80" required>
                             </div>
                             <div class="form-group form-group--full">
                                 <label for="editDeskripsi">Deskripsi Produk</label>
-                                <textarea id="editDeskripsi" rows="4" maxlength="500" placeholder="Tulis deskripsi singkat produk."></textarea>
+                                <textarea class="form-control" id="editDeskripsi" rows="4" maxlength="500" placeholder="Tulis deskripsi singkat produk."></textarea>
                                 <span class="field-hint">Opsional, maksimal 500 karakter.</span>
                             </div>
                             <div class="form-group">
                                 <label for="editHarga">Harga (Rp)</label>
-                                <input type="number" id="editHarga" min="1" max="500000" required>
+                                <input class="form-control" type="number" id="editHarga" min="1" max="500000" required>
                             </div>
                             <div class="form-group">
                                 <label for="editStok">Stok</label>
-                                <input type="number" id="editStok" min="1" max="500" required>
+                                <input class="form-control" type="number" id="editStok" min="1" max="500" required>
                             </div>
                         </div>
                     </div>
@@ -320,6 +321,9 @@
 @endsection
 
 @push('scripts')
+    {{-- Tambahkan library heic2any --}}
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+
     <script>
         window.__KATALOG_DATA__ = @json($katalogProduk);
         window.__KATALOG_URLS__ = {
@@ -328,7 +332,63 @@
             destroy: @json(route('admin.katalog.destroy', ['id' => ':id'])),
             gambar: @json(asset('storage')),
         };
+
+        // Skrip untuk konversi HEIC ke JPG secara otomatis
+        document.addEventListener('DOMContentLoaded', function() {
+            // Konversi untuk Form Tambah
+            const inputTambah = document.getElementById('tambahfoto');
+            if (inputTambah) {
+                inputTambah.addEventListener('change', async function(e) {
+                    await convertHeicToJpg(this);
+                });
+            }
+
+            // Konversi untuk Form Edit
+            const inputEdit = document.getElementById('editfoto');
+            if (inputEdit) {
+                inputEdit.addEventListener('change', async function(e) {
+                    await convertHeicToJpg(this);
+                });
+            }
+
+            async function convertHeicToJpg(inputElement) {
+                const file = inputElement.files[0];
+                if (!file) return;
+
+                if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif') || file.type === 'image/heic') {
+                    try {
+                        // Tampilkan efek loading (opsional, bisa disesuaikan)
+                        const originalLabel = inputElement.previousElementSibling;
+
+                        const convertedBlob = await heic2any({
+                            blob: file,
+                            toType: "image/jpeg",
+                            quality: 0.8
+                        });
+
+                        const newFile = new File([convertedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                            type: "image/jpeg",
+                            lastModified: Date.now()
+                        });
+
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(newFile);
+                        inputElement.files = dataTransfer.files;
+
+                        // Tampilkan notifikasi ke user
+                        if(window.showToast) {
+                            window.showToast('Info', 'Foto HEIC berhasil dikonversi ke JPG.', 'success');
+                        }
+                    } catch (error) {
+                        console.error('Gagal konversi HEIC:', error);
+                        alert('Gagal memproses gambar HEIC. Pastikan formatnya benar.');
+                        inputElement.value = '';
+                    }
+                }
+            }
+        });
     </script>
+
     {{-- Panggil JS khusus katalog via Vite --}}
     @vite('resources/js/pages/katalog.js')
 @endpush

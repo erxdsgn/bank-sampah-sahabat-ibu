@@ -11,6 +11,15 @@
 @section('content')
 <div class="keuangan-page">
 
+    @php
+        // Statistik dihitung dari koleksi $transaksi yang sama dengan tabel,
+        // sehingga transaksi otomatis (setoran, pencairan, penjualan) ikut terhitung.
+        $totalPemasukanTampil   = (float) $transaksi->where('jenis', 'Pemasukan')->sum('jumlah');
+        $totalPengeluaranTampil = (float) $transaksi->where('jenis', 'Pengeluaran')->sum('jumlah');
+        $saldoKasTampil         = $totalPemasukanTampil - $totalPengeluaranTampil;
+        $jumlahTransaksiTampil  = $transaksi->count();
+    @endphp
+
     {{-- =========================================================
          HERO SECTION
     ========================================================== --}}
@@ -44,7 +53,7 @@
             <div class="summary-card-top">
                 <div>
                     <div class="summary-label">Total Pemasukan</div>
-                    <div class="summary-value">Rp {{ number_format($totalPemasukan, 0, ',', '.') }}</div>
+                    <div class="summary-value">Rp {{ number_format($totalPemasukanTampil, 0, ',', '.') }}</div>
                 </div>
                 <div class="summary-icon summary-icon--income">
                     <svg viewBox="0 0 24 24">
@@ -61,7 +70,7 @@
             <div class="summary-card-top">
                 <div>
                     <div class="summary-label">Total Pengeluaran</div>
-                    <div class="summary-value">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</div>
+                    <div class="summary-value">Rp {{ number_format($totalPengeluaranTampil, 0, ',', '.') }}</div>
                 </div>
                 <div class="summary-icon summary-icon--expense">
                     <svg viewBox="0 0 24 24">
@@ -78,7 +87,7 @@
             <div class="summary-card-top">
                 <div>
                     <div class="summary-label">Saldo Kas</div>
-                    <div class="summary-value">Rp {{ number_format($saldoKas, 0, ',', '.') }}</div>
+                    <div class="summary-value">{{ $saldoKasTampil < 0 ? '- ' : '' }}Rp {{ number_format(abs($saldoKasTampil), 0, ',', '.') }}</div>
                 </div>
                 <div class="summary-icon summary-icon--cash">
                     <svg viewBox="0 0 24 24">
@@ -96,7 +105,7 @@
             <div class="summary-card-top">
                 <div>
                     <div class="summary-label">Jumlah Transaksi</div>
-                    <div class="summary-value">{{ $jumlahTransaksi }}</div>
+                    <div class="summary-value">{{ number_format($jumlahTransaksiTampil, 0, ',', '.') }}</div>
                 </div>
                 <div class="summary-icon summary-icon--transaction">
                     <svg viewBox="0 0 24 24">
@@ -198,8 +207,8 @@
 
                     @forelse ($sortedTransaksi as $item)
                         <tr data-jenis="{{ $item->jenis }}" data-periode="{{ $item->periode }}" data-sumber="{{ $item->sumber }}">
-                            <td class="nowrap">
-                                {{ \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d/m/Y') }}
+                            <td class="nowrap cell-text">
+                                {{ \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') }}
                             </td>
                             <td>
                                 <span class="badge {{ $item->jenis === 'Pemasukan' ? 'badge--success' : 'badge--danger' }}">
@@ -209,7 +218,7 @@
                             <td>
                                 <strong>{{ $item->kategori }}</strong>
                             </td>
-                            <td class="description-cell">
+                            <td class="description-cell cell-text">
                                 {{ $item->keterangan ?? '-' }}
                             </td>
                             <td>
@@ -325,7 +334,7 @@
 
                         <div class="form-group">
                             <label for="transaksiTanggal">Tanggal</label>
-                            <input type="date" id="transaksiTanggal" required>
+                            <input type="date" id="transaksiTanggal" min="{{ now()->format('Y-m-d') }}" required>
                         </div>
 
                         <div class="form-group">
@@ -439,7 +448,7 @@
 @push('scripts')
     <script>
         window.__KEUANGAN_DATA__ = {
-            saldoKas: @json($saldoKas ?? 0),
+            saldoKas: @json($saldoKasTampil),
             storeUrl: "{{ route('admin.keuangan.store') }}",
             flashSuccess: @json(session('success')),
             flashError: @json(session('error'))

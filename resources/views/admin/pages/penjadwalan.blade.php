@@ -19,7 +19,7 @@
                     \Carbon\Carbon::parse($j->tanggal_setoran)->isToday(),
             )
             ->count();
-        $totalSelesai = $jadwalSetoran->filter(fn($j) => $j->status === 'selesai')->count();
+        $totalDipublikasi = $jadwalSetoran->filter(fn($j) => $j->status === 'dipublikasi')->count();
         $totalDibatalkan = $jadwalSetoran->filter(fn($j) => $j->status === 'dibatalkan')->count();
 
         $jadwalJs = $jadwalSetoran
@@ -38,7 +38,7 @@
             ->values();
 
         $iconEdit =
-            '<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
+            '<svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"></path></svg>';
         $iconHapus =
             '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6 18 20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>';
     @endphp
@@ -72,7 +72,7 @@
         </div>
     </section>
 
-    {{-- SUMMARY CARDS --}}
+    {{-- SUMMARY CARDS (STATIS / TIDAK BISA DIKLIK) --}}
     <section class="summary-grid">
         <div class="summary-card">
             <div class="summary-card-top">
@@ -89,7 +89,7 @@
                     </svg>
                 </div>
             </div>
-            <div class="summary-info">Semua jadwal yang terdaftar</div>
+            <div class="summary-info">Seluruh jadwal setoran terdaftar</div>
         </div>
 
         <div class="summary-card">
@@ -105,14 +105,14 @@
                     </svg>
                 </div>
             </div>
-            <div class="summary-info">Jadwal aktif atau belum lewat</div>
+            <div class="summary-info">Jadwal hari ini atau belum lewat</div>
         </div>
 
         <div class="summary-card">
             <div class="summary-card-top">
                 <div>
-                    <div class="summary-label">Setoran Selesai</div>
-                    <div class="summary-value">{{ $totalSelesai }}</div>
+                    <div class="summary-label">Jadwal Dipublikasi</div>
+                    <div class="summary-value">{{ $totalDipublikasi }}</div>
                 </div>
                 <div class="summary-icon summary-icon--income">
                     <svg viewBox="0 0 24 24">
@@ -121,7 +121,7 @@
                     </svg>
                 </div>
             </div>
-            <div class="summary-info">Pengumpulan sampah selesai</div>
+            <div class="summary-info">Jadwal aktif tampil untuk warga</div>
         </div>
 
         <div class="summary-card">
@@ -192,7 +192,7 @@
                         <th>Nama Agenda Setoran</th>
                         <th>Tanggal Setoran</th>
                         <th>Waktu Operasional</th>
-                        <th>Target Wilayah / ZONASI</th>
+                        <th>Kelompok</th>
                         <th>Kuota Warga</th>
                         <th>Status</th>
                         <th>Aksi</th>
@@ -205,7 +205,9 @@
                                 ? \Carbon\Carbon::parse($jadwal->tanggal_setoran)
                                 : null;
                         @endphp
-                        <tr data-row-kategori data-group="{{ $jadwal->id_jadwal }}">
+                        <tr data-row-kategori data-group="{{ $jadwal->id_jadwal }}"
+                            data-status="{{ $jadwal->status }}"
+                            data-tanggal="{{ $tglSetoran ? $tglSetoran->format('Y-m-d') : '' }}">
                             <td>{{ $index + 1 }}</td>
                             <td><strong>{{ $jadwal->nama_agenda }}</strong></td>
                             <td class="nowrap">
@@ -242,7 +244,7 @@
                             </td>
                             <td>
                                 <div class="table-actions">
-                                    <button class="icon-btn" title="Ubah Status" type="button"
+                                    <button class="icon-btn icon-btn--edit" title="Ubah Status" type="button"
                                         onclick="editJadwalModal({{ Js::from([
                                             'id_jadwal' => $jadwal->id_jadwal,
                                             'nama_agenda' => $jadwal->nama_agenda,
@@ -278,7 +280,7 @@
             <div class="catalog-empty" id="jadwalKosongCari" style="display: none;">
                 <div class="empty-icon">🔍</div>
                 <strong>Data Tidak Ditemukan</strong>
-                <p class="empty-desc">Tidak ada jadwal setoran yang cocok dengan pencarian ini.</p>
+                <p class="empty-desc">Tidak ada jadwal setoran yang cocok dengan pencarian atau filter ini.</p>
             </div>
         </div>
 

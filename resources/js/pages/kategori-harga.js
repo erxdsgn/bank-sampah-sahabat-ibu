@@ -8,7 +8,7 @@ const riwayatData = dataKategori.riwayat || {};
 const daftarKategori = dataKategori.daftar || [];
 const urls = dataKategori.urls || {};
 
-const FIELD_KATEGORI = ['id_induk', 'nama_kategori', 'satuan', 'harga_awal', 'tanggal_awal'];
+const FIELD_KATEGORI = ['nama_kategori', 'satuan', 'harga_awal', 'tanggal_awal'];
 const FIELD_HARGA = ['harga_satuan', 'tanggal_berlaku'];
 const BULAN_SINGKAT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
@@ -56,6 +56,62 @@ async function kirimJson(url, method, payload) {
         throw e;
     }
     return res.json().catch(() => ({}));
+}
+
+/* ---------- AUTO-FLIP DROPDOWN SAAT MENTOK BAWAH ---------- */
+function updateComboFlipPosition(combo) {
+    if (!combo) return;
+    if (combo.classList.contains('combo--up')) {
+        combo.classList.remove('combo--flip-up');
+        return;
+    }
+
+    const trigger = combo.querySelector('.combo-input') || combo;
+    const list = combo.querySelector('.combo-list');
+    const rect = trigger.getBoundingClientRect();
+
+    const listHeight = list
+        ? Math.min(list.scrollHeight || list.offsetHeight || 220, 260)
+        : 220;
+    const gap = 8;
+    const spaceBelow = window.innerHeight - rect.bottom - gap;
+    const spaceAbove = rect.top - gap;
+
+    const shouldFlipUp = spaceBelow < listHeight && spaceAbove > spaceBelow;
+    combo.classList.toggle('combo--flip-up', shouldFlipUp);
+}
+
+function refreshAllComboFlip() {
+    document.querySelectorAll('.combo').forEach(combo => {
+        if (
+            combo.classList.contains('is-open') ||
+            combo.classList.contains('open') ||
+            combo.classList.contains('active') ||
+            combo.contains(document.activeElement)
+        ) {
+            updateComboFlipPosition(combo);
+        }
+    });
+}
+
+function setupAutoFlipCombo() {
+    document.addEventListener('click', (e) => {
+        const combo = e.target.closest('.combo');
+        if (combo) {
+            requestAnimationFrame(() => updateComboFlipPosition(combo));
+            setTimeout(() => updateComboFlipPosition(combo), 0);
+        }
+    }, true);
+
+    document.addEventListener('focusin', (e) => {
+        const combo = e.target.closest?.('.combo');
+        if (combo) {
+            requestAnimationFrame(() => updateComboFlipPosition(combo));
+        }
+    });
+
+    window.addEventListener('resize', refreshAllComboFlip);
+    window.addEventListener('scroll', refreshAllComboFlip, true);
 }
 
 /* ---------- REKAP BULANAN ---------- */
@@ -136,18 +192,11 @@ function renderRekap() {
 }
 
 /* ---------- KATEGORI: TAMBAH / EDIT ---------- */
-function resetOpsiInduk() {
-    document.querySelectorAll('#id_induk option').forEach(o => o.disabled = false);
-    document.getElementById('id_induk').disabled = false;
-}
-
 function bukaModalTambahKategori() {
     document.getElementById('formKategori').reset();
     document.getElementById('kategoriId').value = '';
     document.getElementById('satuan').value = 'kg';
     clearFormErrors(FIELD_KATEGORI);
-    resetOpsiInduk();
-    initComboSelect('id_induk');
     initComboSelect('satuan');
 
     document.getElementById('tanggal_awal').value = tanggalHariIni();
@@ -165,18 +214,9 @@ function editKategoriModal(kategori) {
     document.getElementById('formKategori').reset();
     document.getElementById('kategoriId').value = kategori.id_kategori;
     clearFormErrors(FIELD_KATEGORI);
-    resetOpsiInduk();
-
-    const selfOpt = document.querySelector(`#id_induk option[value="${kategori.id_kategori}"]`);
-    if (selfOpt) selfOpt.disabled = true;
-
-    const selInduk = document.getElementById('id_induk');
-    selInduk.value = kategori.id_induk || '';
-    selInduk.disabled = !!kategori.punya_anak;
 
     document.getElementById('nama_kategori').value = kategori.nama_kategori || '';
     document.getElementById('satuan').value = kategori.satuan || 'kg';
-    initComboSelect('id_induk');
     initComboSelect('satuan');
 
     document.getElementById('blokHargaAwal').style.display = 'none';
@@ -195,9 +235,7 @@ function simpanKategori(event) {
     const btn = document.getElementById('kategoriSubmitBtn');
     clearFormErrors(FIELD_KATEGORI);
 
-    const selInduk = document.getElementById('id_induk');
     const payload = {
-        id_induk: selInduk.value || null,
         nama_kategori: document.getElementById('nama_kategori').value.trim(),
         satuan: document.getElementById('satuan').value,
     };
@@ -398,7 +436,7 @@ function initTabelKategori() {
 
 /* ---------- BOOTSTRAP ---------- */
 document.addEventListener('DOMContentLoaded', function() {
-    initComboSelect('id_induk');
+    setupAutoFlipCombo();
     initComboSelect('satuan');
     initComboSelect('perPageSelect', { readonly: true });
     initComboSelect('rekapTahun', { readonly: true });

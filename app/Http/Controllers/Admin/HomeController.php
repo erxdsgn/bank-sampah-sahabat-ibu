@@ -39,8 +39,6 @@ class HomeController extends Controller
 
     private function konversi(float $nilai, string $grup): float
     {
-        // ✅ DIPERBAIKI: Data di database sudah berupa angka asli (kg/liter),
-        // jadi tidak perlu dibagi 1000 lagi.
         return $nilai;
     }
 
@@ -61,10 +59,27 @@ class HomeController extends Controller
         return $totalPemasukan - $totalPengeluaran;
     }
 
+    /**
+     * Filter query penyetoran yang sah masuk (tidak ditolak/dibatalkan).
+     * Sesuaikan jika di aplikasi Anda hanya status tertentu yang dianggap masuk stok.
+     */
+    private function applySetoranMasukValid($query)
+    {
+        return $query->whereNotIn(DB::raw('LOWER(TRIM(COALESCE(penyetoran.status, "")))'), [
+            'ditolak',
+            'rejected',
+            'batal',
+            'dibatalkan',
+        ]);
+    }
+
     private function hitungStats(): array
     {
+        // Hanya menghitung warga aktif sesuai scopeAktif() pada model Warga
+        $jumlahWargaAktif = (int) Warga::aktif()->count();
+
         return [
-            'jumlahWarga'            => (int) DB::table('warga')->count(),
+            'jumlahWarga'            => $jumlahWargaAktif,
             'jumlahSetoran'          => (int) DB::table('penyetoran')->count(),
             'totalSaldoWarga'        => (float) DB::table('warga')->sum('saldo'),
             'totalPencairanSaldo'    => (float) DB::table('pencairan_saldo')->sum('jumlah'),
@@ -73,10 +88,85 @@ class HomeController extends Controller
         ];
     }
 
+    /**
+     * Total sampah masuk per grup satuan dalam rentang bulan & tahun tertentu.
+     */
+    private function hitungSampahMasukRentang(int $bulanAwal, int $bulanAkhir, int $tahun): array
+    {
+        $query = DB::table('detail_setoran')
+            ->join('penyetoran', 'detail_setoran.id_setoran', '=', 'penyetoran.id_setoran')
+            ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
+            ->whereYear('penyetoran.tanggal_setoran', $tahun)
+            ->whereBetween(DB::raw('MONTH(penyetoran.tanggal_setoran)'), [$bulanAwal, $bulanAkhir]);
+
+        $this->applySetoranMasukValid($query);
+
+        $grouped = $query
+            ->select('kategori_sampah.satuan', DB::raw('SUM(detail_setoran.berat) as total'))
+            ->groupBy('kategori_sampah.satuan')
+            ->get()
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
+            ->sortBy(fn($rows, $grup) => $grup === 'kg' ? '0' : $grup);
+
+        $result = [];
+        foreach ($grouped as $grup => $rows) {
+            $result[(string) $grup] = $this->konversi((float) collect($rows)->sum('total'), (string) $grup);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Total sampah tersedia (dapat diolah / dijual ke pengepul) per grup satuan:
+     * Total sampah masuk valid (seluruh waktu) dikurangi total berat barang keluar ke pengepul.
+     */
+    private function hitungSampahTersediaPerSatuan(): array
+    {
+        $masukQuery = DB::table('detail_setoran')
+            ->join('penyetoran', 'detail_setoran.id_setoran', '=', 'penyetoran.id_setoran')
+            ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori');
+
+        $this->applySetoranMasukValid($masukQuery);
+
+        $masukPerGrup = $masukQuery
+            ->select('kategori_sampah.satuan', DB::raw('SUM(detail_setoran.berat) as total'))
+            ->groupBy('kategori_sampah.satuan')
+            ->get()
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
+            ->map(fn($rows) => (float) collect($rows)->sum('total'));
+
+        $keluarPerGrup = DB::table('barang_keluar')
+            ->join('kategori_sampah', 'barang_keluar.id_kategori', '=', 'kategori_sampah.id_kategori')
+            ->select('kategori_sampah.satuan', DB::raw('SUM(barang_keluar.berat) as total'))
+            ->groupBy('kategori_sampah.satuan')
+            ->get()
+            ->groupBy(fn($r) => $this->grupSatuan($r->satuan))
+            ->map(fn($rows) => (float) collect($rows)->sum('total'));
+
+        $semuaGrup = $masukPerGrup->keys()
+            ->merge($keluarPerGrup->keys())
+            ->unique()
+            ->sortBy(fn($grup) => $grup === 'kg' ? '0' : $grup);
+
+        $tersedia = [];
+        foreach ($semuaGrup as $grup) {
+            $grupKey = (string) $grup;
+            $sisa = (float) ($masukPerGrup[$grupKey] ?? 0) - (float) ($keluarPerGrup[$grupKey] ?? 0);
+            $tersedia[$grupKey] = $this->konversi(max(0.0, $sisa), $grupKey);
+        }
+
+        return $tersedia;
+    }
+
     private function hitungTotalPerGrup(): array
     {
-        $grouped = DB::table('detail_setoran')
-            ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
+        $query = DB::table('detail_setoran')
+            ->join('penyetoran', 'detail_setoran.id_setoran', '=', 'penyetoran.id_setoran')
+            ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori');
+
+        $this->applySetoranMasukValid($query);
+
+        $grouped = $query
             ->select('kategori_sampah.satuan', DB::raw('SUM(detail_setoran.berat) as total'))
             ->groupBy('kategori_sampah.satuan')
             ->get()
@@ -97,12 +187,19 @@ class HomeController extends Controller
         return $result;
     }
 
-    private function hitungSetoranPerBulan(): array
+    /**
+     * Rekap bulanan seluruh bulan (1-12) untuk tahun tertentu.
+     */
+    private function hitungSetoranPerBulan(int $tahun): array
     {
-        $rowsAll = DB::table('detail_setoran')
+        $query = DB::table('detail_setoran')
             ->join('penyetoran', 'detail_setoran.id_setoran', '=', 'penyetoran.id_setoran')
             ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
-            ->whereYear('penyetoran.tanggal_setoran', now()->year)
+            ->whereYear('penyetoran.tanggal_setoran', $tahun);
+
+        $this->applySetoranMasukValid($query);
+
+        $rowsAll = $query
             ->select(
                 'kategori_sampah.satuan',
                 DB::raw('MONTH(penyetoran.tanggal_setoran) as bulan'),
@@ -128,10 +225,23 @@ class HomeController extends Controller
         return $result;
     }
 
-    private function hitungStatistikJenisSampah(): array
+    /**
+     * Statistik jenis sampah untuk tahun tertentu dan opsi filter bulan (0 = seluruh tahun, 1..12 = bulan spesifik).
+     */
+    private function hitungStatistikJenisSampah(int $tahun, int $bulan = 0): array
     {
-        $rowsAll = DB::table('detail_setoran')
+        $query = DB::table('detail_setoran')
+            ->join('penyetoran', 'detail_setoran.id_setoran', '=', 'penyetoran.id_setoran')
             ->join('kategori_sampah', 'detail_setoran.id_kategori', '=', 'kategori_sampah.id_kategori')
+            ->whereYear('penyetoran.tanggal_setoran', $tahun);
+
+        $this->applySetoranMasukValid($query);
+
+        if ($bulan >= 1 && $bulan <= 12) {
+            $query->whereMonth('penyetoran.tanggal_setoran', $bulan);
+        }
+
+        $rowsAll = $query
             ->select(
                 'kategori_sampah.id_kategori',
                 'kategori_sampah.nama_kategori',
@@ -164,8 +274,52 @@ class HomeController extends Controller
         return $result;
     }
 
-    public function index(): View
+    private function daftarTahunTersedia(): array
     {
+        $tahunSetoran = DB::table('penyetoran')
+            ->whereNotNull('tanggal_setoran')
+            ->selectRaw('DISTINCT YEAR(tanggal_setoran) as tahun')
+            ->pluck('tahun')
+            ->filter()
+            ->map(fn($t) => (int) $t);
+
+        $tahunKeluar = DB::table('barang_keluar')
+            ->whereNotNull('tanggal')
+            ->selectRaw('DISTINCT YEAR(tanggal) as tahun')
+            ->pluck('tahun')
+            ->filter()
+            ->map(fn($t) => (int) $t);
+
+        $tahunAktif = (int) now('Asia/Jakarta')->year;
+
+        return $tahunSetoran
+            ->merge($tahunKeluar)
+            ->push($tahunAktif)
+            ->unique()
+            ->sortDesc()
+            ->values()
+            ->all();
+    }
+
+    public function index(Request $request): View
+    {
+        $tahunSekarang = (int) now('Asia/Jakarta')->year;
+        $bulanSekarang = (int) now('Asia/Jakarta')->month;
+
+        $bulanAwal  = max(1, min(12, (int) $request->input('bulan_awal', 1)));
+        $bulanAkhir = max(1, min(12, (int) $request->input('bulan_akhir', min(12, max($bulanAwal, $bulanSekarang)))));
+        if ($bulanAwal > $bulanAkhir) {
+            [$bulanAwal, $bulanAkhir] = [$bulanAkhir, $bulanAwal];
+        }
+
+        $tahunDipilih = (int) $request->input('tahun', $tahunSekarang);
+        if ($tahunDipilih < 2000 || $tahunDipilih > 2100) {
+            $tahunDipilih = $tahunSekarang;
+        }
+
+        $bulanStatistik = max(0, min(12, (int) $request->input('bulan_statistik', 0)));
+        $daftarTahun = $this->daftarTahunTersedia();
+
         // ===== CACHE: saldo kas 5 menit =====
         $rawSaldoKas = cache()->remember('dash.saldo_kas', 300, fn() => $this->hitungSaldoKas());
         if (!is_numeric($rawSaldoKas)) {
@@ -175,9 +329,9 @@ class HomeController extends Controller
         $saldoKas = (float) $rawSaldoKas;
 
         // ===== CACHE: statistik ringkasan 5 menit =====
-        $stats = cache()->remember('dash.stats', 300, fn() => $this->hitungStats());
+        $stats = cache()->remember('dash.stats.aktif', 300, fn() => $this->hitungStats());
         if (!is_array($stats) || empty($stats)) {
-            cache()->forget('dash.stats');
+            cache()->forget('dash.stats.aktif');
             $stats = $this->hitungStats();
         }
 
@@ -203,25 +357,34 @@ class HomeController extends Controller
         $totalPerGrup = collect(is_array($rawTotalPerGrup) ? $rawTotalPerGrup : [])
             ->map(fn($rows) => collect(is_array($rows) ? $rows : []));
 
-        $totalJumlahSampah = $totalPerGrup
-            ->map(fn($rows, $grup) => $this->formatJumlah((float) $rows->sum('total'), (string) $grup))
-            ->values();
-
         $totalJumlahSampahPerSatuan = $totalPerGrup
             ->mapWithKeys(fn($rows, $grup) => [(string) $grup => $this->konversi((float) $rows->sum('total'), (string) $grup)])
             ->all();
 
-        $opsiSatuan = $totalPerGrup
-            ->keys()
-            ->map(fn($grup) => ['key' => (string) $grup, 'label' => $this->labelSatuan((string) $grup)])
+        // Sampah masuk dalam rentang bulan_awal..bulan_akhir pada tahunDipilih
+        $sampahMasukRentangPerSatuan = $this->hitungSampahMasukRentang($bulanAwal, $bulanAkhir, $tahunDipilih);
+
+        // Sampah tersedia (dapat diolah / dijual ke pengepul)
+        $sampahTersediaPerSatuan = $this->hitungSampahTersediaPerSatuan();
+
+        $semuaKeySatuan = collect(array_keys($totalJumlahSampahPerSatuan))
+            ->merge(array_keys($sampahMasukRentangPerSatuan))
+            ->merge(array_keys($sampahTersediaPerSatuan))
+            ->unique()
+            ->sortBy(fn($grup) => $grup === 'kg' ? '0' : $grup)
             ->values();
+
+        $opsiSatuan = $semuaKeySatuan
+            ->map(fn($grup) => ['key' => (string) $grup, 'label' => $this->labelSatuan((string) $grup)]);
 
         if ($opsiSatuan->isEmpty()) {
             $opsiSatuan = collect([['key' => 'kg', 'label' => $this->labelSatuan('kg')]]);
             $totalJumlahSampahPerSatuan = ['kg' => 0];
+            $sampahMasukRentangPerSatuan = ['kg' => 0];
+            $sampahTersediaPerSatuan = ['kg' => 0];
         }
 
-        // ===== Riwayat setoran (tidak di-cache karena butuh real-time) =====
+        // ===== Riwayat setoran =====
         $riwayatSetoran = DB::table('penyetoran')
             ->leftJoin('warga', 'penyetoran.id_warga', '=', 'warga.id_warga')
             ->select(
@@ -257,32 +420,22 @@ class HomeController extends Controller
             return $setoran;
         });
 
-        // ===== CACHE: grafik bulanan 5 menit =====
-        $setoranPerBulan = cache()->remember('dash.setoran_per_bulan', 300, fn() => $this->hitungSetoranPerBulan());
-        $isValidSetoranPerBulan = is_array($setoranPerBulan)
-            && collect($setoranPerBulan)->every(fn($items) => is_array($items) && collect($items)->every(fn($row) => is_array($row)));
-
-        if (!$isValidSetoranPerBulan) {
-            cache()->forget('dash.setoran_per_bulan');
-            $setoranPerBulan = $this->hitungSetoranPerBulan();
-        }
-
-        // ===== CACHE: statistik jenis 5 menit =====
-        $statistikJenisSampah = cache()->remember('dash.statistik_jenis', 300, fn() => $this->hitungStatistikJenisSampah());
-        $isValidStatistikJenis = is_array($statistikJenisSampah)
-            && collect($statistikJenisSampah)->every(fn($items) => is_array($items) && collect($items)->every(fn($row) => is_array($row)));
-
-        if (!$isValidStatistikJenis) {
-            cache()->forget('dash.statistik_jenis');
-            $statistikJenisSampah = $this->hitungStatistikJenisSampah();
-        }
+        // Data grafik bulanan (tahunDipilih) & statistik jenis sampah (tahunDipilih + bulanStatistik)
+        $setoranPerBulan = $this->hitungSetoranPerBulan($tahunDipilih);
+        $statistikJenisSampah = $this->hitungStatistikJenisSampah($tahunDipilih, $bulanStatistik);
 
         return view('admin.pages.dashboard', compact(
             'saldoKas',
             'jumlahWarga',
             'jumlahSetoran',
-            'totalJumlahSampah',
             'totalJumlahSampahPerSatuan',
+            'sampahMasukRentangPerSatuan',
+            'sampahTersediaPerSatuan',
+            'bulanAwal',
+            'bulanAkhir',
+            'tahunDipilih',
+            'bulanStatistik',
+            'daftarTahun',
             'totalSaldoWarga',
             'totalPencairanSaldo',
             'totalPenjualanPengepul',

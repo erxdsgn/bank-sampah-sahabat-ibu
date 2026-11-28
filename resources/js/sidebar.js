@@ -9,8 +9,12 @@ import { navigation } from "./navigation.js";
 /** Render 1 link menu biasa (tanpa children) */
 function renderNavLink(item, activeKey) {
   const activeClass = item.key === activeKey ? " is-active" : "";
+  const badgeText = item.badge?.text ?? "";
+  const isPengaduan = item.key === "pengaduan";
+  const badgeAttr = isPengaduan ? ' data-pengaduan-badge' : "";
+  const badgeHiddenClass = badgeText === "" || badgeText === "0" ? " is-hidden" : "";
   const badge = item.badge
-    ? `<span class="nav-badge ${item.badge.kind}">${item.badge.text}</span>`
+    ? `<span class="nav-badge ${item.badge.kind}${badgeHiddenClass}"${badgeAttr}>${badgeText}</span>`
     : "";
 
   return `
@@ -19,6 +23,18 @@ function renderNavLink(item, activeKey) {
       <span>${item.text}</span>
       ${badge}
     </a>`;
+}
+
+/**
+ * Perbarui angka badge menu Pengaduan Warga di sidebar.
+ */
+export function updateSidebarPengaduanBadge(count) {
+  const badge = document.querySelector("[data-pengaduan-badge]");
+  if (!badge) return;
+
+  const num = Number(count) || 0;
+  badge.textContent = num > 99 ? "99+" : String(num);
+  badge.classList.toggle("is-hidden", num <= 0);
 }
 
 /** Render 1 grup menu collapsible (item yang punya children) */
@@ -30,7 +46,7 @@ function renderNavGroup(item, activeKey) {
   const childrenHtml = item.children
     ? item.children
         .map((child) => {
-          const isChildActive = child.key === activeKey ? ' class="is-active"' : '';
+          const isChildActive = child.key === activeKey ? ' class="is-active"' : "";
           return `<a href="${child.href}"${isChildActive}>${child.text}</a>`;
         })
         .join("")

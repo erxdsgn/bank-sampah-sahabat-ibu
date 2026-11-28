@@ -32,18 +32,26 @@
         };
     };
 
-    $formatSatuan = function ($nilaiDasar, $satuanRaw) use ($normSatuan) {
-        $nilaiDasar = (float) $nilaiDasar;
+    // Satuan yang boleh desimal: hanya kg & liter. Selain itu (gram, pcs, set, unit) bilangan bulat.
+    $satuanDesimal = ['kg', 'liter'];
+
+    // Nilai disimpan apa adanya sesuai satuan (kg tetap kg, liter tetap liter, pcs/set/unit integer)
+    $formatSatuan = function ($nilai, $satuanRaw) use ($normSatuan, $satuanDesimal) {
+        $nilai  = (float) $nilai;
         $satuan = $normSatuan($satuanRaw);
-        return match ($satuan) {
-            'kg' => [number_format($nilaiDasar / 1000, 2, ',', '.'), 'Kg'],
-            'gram' => [number_format($nilaiDasar, 0, ',', '.'), 'Gram'],
-            'pcs' => [number_format($nilaiDasar, 0, ',', '.'), 'Pcs'],
-            'unit' => [number_format($nilaiDasar, 0, ',', '.'), 'Unit'],
-            'set' => [number_format($nilaiDasar, 0, ',', '.'), 'Set'],
-            'liter' => [number_format($nilaiDasar, 2, ',', '.'), 'Liter'],
-            default => [number_format($nilaiDasar, 2, ',', '.'), ucfirst($satuan)],
+        $desimal = in_array($satuan, $satuanDesimal, true) ? 2 : 0;
+
+        $label = match ($satuan) {
+            'kg'    => 'Kg',
+            'gram'  => 'Gram',
+            'pcs'   => 'Pcs',
+            'unit'  => 'Unit',
+            'set'   => 'Set',
+            'liter' => 'Liter',
+            default => ucfirst($satuan),
         };
+
+        return [number_format($nilai, $desimal, ',', '.'), $label];
     };
 
     $urutanSatuan = ['kg' => 1, 'gram' => 2, 'pcs' => 3, 'unit' => 4, 'set' => 5, 'liter' => 6];
@@ -201,7 +209,7 @@
                         </svg>
                         <input type="text" id="searchPenjualan" name="search_penjualan"
                             value="{{ request('search_penjualan') }}"
-                            placeholder="Cari nama pembeli... (Enter untuk cari semua data)"
+                            placeholder="Cari nama pembeli..."
                             autocomplete="off">
                     </form>
                     @if (request('search_penjualan'))
@@ -233,30 +241,19 @@
                         @forelse($riwayatPenjualan as $item)
                             @php
                                 $satuanItem = $normSatuan($item->kategori->satuan ?? null);
-                                [$beratTampil, $satuanTampil] = $formatSatuan($item->berat_gram, $satuanItem);
-                                $hargaTampil = $satuanItem === 'kg'
-                                    ? $item->harga_jual_per_gram * 1000
-                                    : $item->harga_jual_per_gram;
+                                [$beratTampil, $satuanTampil] = $formatSatuan($item->berat, $satuanItem);
+                                // Harga disimpan apa adanya per satuan (Rp/kg, Rp/liter, Rp/pcs, dst.)
+                                $hargaTampil = (float) $item->harga_jual_satuan;
                             @endphp
                             <tr>
                                 <td class="nowrap">
                                     {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}
                                 </td>
                                 <td><strong>{{ $item->pembeli ?: '-' }}</strong></td>
-                                <td>
-                                    @if ($item->kategori->nama_kategori ?? null)
-                                        <strong>{{ $item->kategori->nama_kategori }}</strong>
-                                    @else
-                                        -
-                                    @endif
-                                </td>
+                                <td>{{ $item->kategori->nama_kategori ?? '-' }}</td>
+                                <td class="col-num nowrap">{{ $beratTampil }} {{ $satuanTampil }}</td>
                                 <td class="col-num nowrap">
-                                    <strong>{{ $beratTampil }}</strong>
-                                    <span class="unit">{{ $satuanTampil }}</span>
-                                </td>
-                                <td class="col-num nowrap">
-                                    Rp {{ number_format($hargaTampil, 0, ',', '.') }}
-                                    <span class="unit">/ {{ $satuanTampil }}</span>
+                                    Rp {{ number_format($hargaTampil, 0, ',', '.') }} / {{ $satuanTampil }}
                                 </td>
                                 <td class="col-num nowrap">
                                     <strong class="amount-in">
@@ -296,7 +293,7 @@
                     <div class="per-page">
                         <label for="cari_perPagePenjualan">Baris per halaman:</label>
                         <div class="combo combo--up combo--arrow" id="combo_perPagePenjualan">
-                            <input type="text" id="cari_perPagePenjualan" class="combo-input" readonly
+                            <input type="text" id="cari_perPagePenjualan" class="combo-input" placeholder=""
                                 autocomplete="off" aria-label="Baris per halaman penjualan">
                             <div class="combo-list" id="list_perPagePenjualan"></div>
                         </div>
@@ -355,7 +352,7 @@
                         </svg>
                         <input type="text" id="searchSetoran" name="search_setoran"
                             value="{{ request('search_setoran') }}"
-                            placeholder="Cari nama warga atau NIK... (Enter untuk cari semua data)"
+                            placeholder="Cari nama warga atau NIK..."
                             autocomplete="off">
                     </form>
                     @if (request('search_setoran'))
@@ -402,7 +399,7 @@
                                 $rincianBerat = $details
                                     ->groupBy(fn($detail) => $normSatuan(optional($detail->kategori)->satuan))
                                     ->map(function ($group, $satuanKey) use ($formatSatuan) {
-                                        [$nilai, $label] = $formatSatuan($group->sum('berat_gram'), $satuanKey);
+                                        [$nilai, $label] = $formatSatuan($group->sum('berat'), $satuanKey);
                                         return $nilai . ' ' . $label;
                                     })
                                     ->values();
@@ -424,16 +421,12 @@
                                         <span class="mono">{{ $setoran->warga->nik ?? '-' }}</span>
                                     </span>
                                 </td>
-                                <td>
-                                    @if ($namaKategori)
-                                        <strong>{{ $namaKategori }}</strong>
-                                    @else
-                                        -
-                                    @endif
-                                </td>
+                                <td>{{ $namaKategori ?: '-' }}</td>
                                 <td class="col-num">{{ $totalBeratTampil }}</td>
                                 <td class="col-num nowrap">
-                                    <strong>Rp {{ number_format($setoran->total_nilai, 0, ',', '.') }}</strong>
+                                    <strong class="amount-in">
+                                        Rp {{ number_format($setoran->total_nilai, 0, ',', '.') }}
+                                    </strong>
                                 </td>
                                 <td>
                                     <span class="badge badge--{{ $badgeVariant }}">{{ $badgeLabel }}</span>
@@ -475,7 +468,7 @@
                     <div class="per-page">
                         <label for="cari_perPageSetoran">Baris per halaman:</label>
                         <div class="combo combo--up combo--arrow" id="combo_perPageSetoran">
-                            <input type="text" id="cari_perPageSetoran" class="combo-input" readonly
+                            <input type="text" id="cari_perPageSetoran" class="combo-input" placeholder=""
                                 autocomplete="off" aria-label="Baris per halaman setoran">
                             <div class="combo-list" id="list_perPageSetoran"></div>
                         </div>
@@ -491,7 +484,8 @@
                     @php
                         $riwayatSetoran->appends(
                             array_merge(request()->except('setoran_page', 'tab'), ['tab' => 'setoran'])
-                        );$halamanSetoran = $paginationWindow($riwayatSetoran);
+                        );
+                        $halamanSetoran = $paginationWindow($riwayatSetoran);
                     @endphp
 
                     <div class="pagination-wrap">

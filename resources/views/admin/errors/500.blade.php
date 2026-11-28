@@ -1,7 +1,16 @@
-@extends('layouts.error')
-
-@section('title', '500')
-
-@section('content')
-<div class="error-card"><span class="error-eyebrow">Error · Server</span><div class="error-code">500</div><h1 class="error-title">Something broke on our end</h1><p class="error-sub">We've been notified and are looking into it. Please try again in a moment, or head back to the dashboard.</p><div class="error-actions"><a class="btn btn--primary" href="javascript:location.reload()"><svg viewbox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path><path d="M21 3v5h-5"></path></svg> Try again </a><a class="btn btn--ghost" href="{{ route('dashboard') }}"><svg viewbox="0 0 24 24"><path d="M3 12 12 3l9 9"></path><path d="M5 10v10h14V10"></path></svg> Dashboard</a></div><div class="error-meta"><span><strong>STATUS</strong> 500</span> <span><strong>CODE</strong> INTERNAL_ERROR</span> <span><strong>REF</strong> 7d2e-44b9</span></div></div>
+@extends('errors.layout')
+@section('code', '419')
+@section('tag', 'Page Expired (CSRF)')
+@section('title', 'Halaman Kedaluwarsa')
+@section('message', 'Sesi keamanan formulir telah habis karena halaman terlalu lama terbuka sebelum dikirim.')
+@section('hint', 'Muat ulang halaman untuk mendapatkan token baru, lalu kirim ulang formulir Anda.')
+@section('icon', 'fa-solid fa-hourglass-half')
+@section('icon_style', 'bg-amber-50 border-amber-200/80 text-amber-600')
+@section('actions')
+    <button type="button" onclick="location.reload()" class="w-full sm:w-auto px-6 py-3 rounded-full bg-gradient-to-r from-[#28B446] to-[#1E9638] text-white font-display font-semibold text-sm shadow-green-glow transition flex items-center justify-center gap-2 cursor-pointer">
+        <i class="fa-solid fa-rotate-right text-xs"></i> <span>Muat Ulang Halaman</span>
+    </button>
+    <a href="{{ url('/') }}" class="w-full sm:w-auto px-5 py-3 rounded-full bg-white hover:bg-green-50 text-brand-forest border border-green-200 font-display font-semibold text-sm transition flex items-center justify-center gap-2">
+        <i class="fa-solid fa-house text-xs text-brand"></i> <span>Beranda</span>
+    </a>
 @endsection

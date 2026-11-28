@@ -214,6 +214,13 @@ function hargaDariSelect(select) {
     return Number(select.options[select.selectedIndex]?.dataset.harga || 0);
 }
 
+// Satuan yang boleh desimal (berbasis berat/volume). Selain ini wajib bilangan bulat.
+const SATUAN_DESIMAL = ['kg', 'liter'];
+
+function satuanBolehDesimal(satuan) {
+    return SATUAN_DESIMAL.includes((satuan || '').toLowerCase());
+}
+
 function satuanDariSelect(select) {
     if (!select || select.selectedIndex < 0) return '';
     return select.options[select.selectedIndex]?.dataset.satuan || '';
@@ -247,6 +254,25 @@ function createItemEditor(cfg) {
         const nilai = tersimpan !== null ? tersimpan : harga * jumlah;
 
         row.querySelector('.item-unit').value = satuan || '-';
+
+        // Atur input jumlah sesuai satuan: kg/liter desimal, pcs/set/unit/gram bulat
+        const qtyInput = row.querySelector('.item-qty');
+        if (satuan && row.dataset.satuanDipakai !== satuan) {
+            row.dataset.satuanDipakai = satuan;
+            if (satuanBolehDesimal(satuan)) {
+                qtyInput.step = 'any';
+                qtyInput.min = '0.01';
+                qtyInput.setAttribute('inputmode', 'decimal');
+            } else {
+                qtyInput.step = '1';
+                qtyInput.min = '1';
+                qtyInput.setAttribute('inputmode', 'numeric');
+                const v = parseFloat(qtyInput.value);
+                if (!isNaN(v) && !Number.isInteger(v)) {
+                    qtyInput.value = Math.ceil(v);
+                }
+            }
+        }
 
         let info = 'Pilih kategori terlebih dahulu.';
         if (select.value) {
@@ -416,6 +442,13 @@ function createItemEditor(cfg) {
                 return 'Jumlah setiap jenis sampah harus lebih dari 0.';
             }
 
+            const satuanRow = satuanDariSelect(row.querySelector('select'));
+            if (!satuanBolehDesimal(satuanRow) && !Number.isInteger(jml)) {
+                row.classList.add('is-invalid');
+                row.querySelector('.item-qty').focus();
+                return 'Satuan ' + satuanRow + ' harus berupa bilangan bulat (tanpa desimal).';
+            }
+
             if (dipakai.has(kat)) {
                 row.classList.add('is-invalid');
                 row.querySelector('.combo-input').focus();
@@ -437,15 +470,17 @@ function createItemEditor(cfg) {
     return { setItems, getItems, validate, addRow };
 }
 
-function bukaVerifikasi(item) {
+function bukaVerifikasi(item, allowEdit = true) {
     const nama = item.warga?.nama || '-';
-    const bisaDiedit = item.status === 'pending';
+    const bisaDiedit = item.status === 'pending' && !!allowEdit;
 
     document.getElementById('verifAvatar').textContent = nama.trim().charAt(0).toUpperCase();
     document.getElementById('verifNama').textContent = nama;
     document.getElementById('verifNik').textContent = item.warga?.nik || '-';
     document.getElementById('verifKode').textContent = 'ID Transaksi: ' + (item.kode_transaksi || '-');
-    document.getElementById('verifJudul').textContent = bisaDiedit ? 'Verifikasi Setoran' : 'Detail Setoran';
+    document.getElementById('verifJudul').textContent = bisaDiedit
+        ? 'Edit & Verifikasi Setoran'
+        : 'Detail Setoran';
     document.getElementById('verifId').value = item.id;
 
     const statusEl = document.getElementById('verifStatus');
@@ -460,6 +495,13 @@ function bukaVerifikasi(item) {
 
     document.getElementById('verifAlasan').value = item.catatan_admin || '';
     document.getElementById('verifAlasanBlock').classList.remove('open');
+
+    const hintEl = document.getElementById('verifHintEdit');
+    if (hintEl) {
+        hintEl.textContent = bisaDiedit
+            ? 'Sesuaikan jenis dan jumlah dengan hasil pengecekan ulang sebelum menyetujui.'
+            : 'Mode lihat detail (hanya baca).';
+    }
 
     const fotoEl = document.getElementById('verifFoto');
     const fotoKosong = document.getElementById('verifFotoKosong');
@@ -505,13 +547,18 @@ function prosesVerifikasi(event) {
     .then(async (res) => {
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            throw new Error(err.message || 'Gagal menyetujui setoran.');
+            let errorMessage = err.message || 'Gagal menyetujui setoran.';
+            if (err.errors) {
+                const firstErrorKey = Object.keys(err.errors)[0];
+                if (firstErrorKey) errorMessage = err.errors[firstErrorKey][0];
+            }
+            throw new Error(errorMessage);
         }
         return res.json();
     })
     .then(() => {
         tutupModal('modalVerifikasi');
-        verifikasiShowToast('Setoran disetujui', 'Saldo warga telah diperbarui.');
+        verifikasiShowToast('Setoran disetujui', 'Data hasil cek ulang tersimpan dan saldo warga diperbarui.');
         setTimeout(() => window.location.reload(), 800);
     })
     .catch((err) => {
@@ -522,14 +569,19 @@ function prosesVerifikasi(event) {
 }
 
 function bukaTambahSetoran() {
-    document.getElementById('formTambahSetoran').reset();
+    const form = document.getElementById('formTambahSetoran');
+    form.reset();
     resetVerifikasiCombo('tambahWarga', 'cariWarga', 'listWarga');
 
+    // Mengambil tanggal hari ini (Waktu Lokal) dan menyimpannya otomatis
     const now = new Date();
-    const today = now.getFullYear() + '-' +
-        String(now.getMonth() + 1).padStart(2, '0') + '-' +
-        String(now.getDate()).padStart(2, '0');
-    document.getElementById('tambahTanggal').value = today;
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const today = `${year}-${month}-${day}`;
+
+    const inputTanggal = document.getElementById('tambahTanggal');
+    if(inputTanggal) inputTanggal.value = today;
 
     tambahEditor.setItems([{}], true);
     bukaModal('modalTambah');
@@ -571,7 +623,12 @@ function simpanSetoranBaru(event) {
     .then(async (res) => {
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            throw new Error(err.message || 'Gagal menyimpan setoran.');
+            let errorMessage = err.message || 'Gagal menyimpan setoran.';
+            if (err.errors) {
+                const firstErrorKey = Object.keys(err.errors)[0];
+                if (firstErrorKey) errorMessage = err.errors[firstErrorKey][0];
+            }
+            throw new Error(errorMessage);
         }
         return res.json();
     })
@@ -617,7 +674,12 @@ function tolakSetoran() {
     .then(async (res) => {
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            throw new Error(err.message || 'Gagal menolak setoran.');
+            let errorMessage = err.message || 'Gagal menolak setoran.';
+            if (err.errors) {
+                const firstErrorKey = Object.keys(err.errors)[0];
+                if (firstErrorKey) errorMessage = err.errors[firstErrorKey][0];
+            }
+            throw new Error(errorMessage);
         }
         return res.json();
     })

@@ -36,7 +36,7 @@
                     <circle cx="11" cy="11" r="7"></circle>
                     <path d="m21 21-4.3-4.3"></path>
                 </svg>
-                <input type="text" id="searchPencairan" placeholder="Cari ID, NIK, nama, nomor HP, atau alamat..."
+                <input type="text" id="searchPencairan" placeholder="Cari nama, NIK, nomor HP, atau metode..."
                     autocomplete="off">
             </div>
 
@@ -54,11 +54,11 @@
             <table class="data-table" id="pencairanTable">
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Tanggal</th>
                         <th>Warga</th>
                         <th>Kontak</th>
-                        <th>Rekening / Metode</th>
+                        <th>Metode</th>
+                        <th>Rekening</th>
                         <th>Nominal</th>
                         <th>Status</th>
                         <th>Aksi</th>
@@ -66,42 +66,32 @@
                 </thead>
                 <tbody>
                     @forelse($pencairan as $item)
+                        @php
+                            $statusNormalized = strtolower(trim((string) ($item->status ?? '')));
+                            $metodeNormalized = strtolower(trim((string) ($item->metode_transfer ?? '')));
+                        @endphp
                         <tr data-row-pencairan>
-                            <td><span class="mono">#{{ $item->id_pencairan }}</span></td>
-                            <td>
-                                <span class="mono">
-                                    {{ $item->tanggal_pencairan ? \Carbon\Carbon::parse($item->tanggal_pencairan)->format('d/m/Y') : '-' }}
-                                </span>
+                            <td class="nowrap">
+                                {{ $item->tanggal_pencairan ? \Carbon\Carbon::parse($item->tanggal_pencairan)->format('d/m/Y') : '-' }}
                             </td>
                             <td>
                                 <strong>{{ $item->warga->nama ?? 'Anonim' }}</strong>
-                                <div class="mono">NIK: {{ $item->warga->nik ?? '-' }}</div>
+                                <div class="mono">{{ $item->warga->nik ?? '-' }}</div>
+                            </td>
+                            <td class="nowrap">{{ $item->warga->no_hp ?? '-' }}</td>
+                            <td>
+                                @if ($metodeNormalized === 'tunai')
+                                    <span class="metode-badge metode-badge--tunai">Tunai</span>
+                                @elseif ($metodeNormalized === 'transfer')
+                                    <span class="metode-badge metode-badge--transfer">Transfer</span>
+                                @else
+                                    <span class="muted-text">-</span>
+                                @endif
                             </td>
                             <td>
-                                <div>{{ $item->warga->no_hp ?? '-' }}</div>
-                                <div class="muted-text pencairan-addr" title="{{ $item->warga->alamat ?? '-' }}">
-                                    {{ \Illuminate\Support\Str::limit($item->warga->alamat ?? '-', 22) }}
-                                </div>
-                            </td>
-                            <td>
-                                @if ($item->warga && $item->warga->nama_bank_ewallet)
+                                @if ($metodeNormalized !== 'tunai' && $item->warga && $item->warga->nama_bank_ewallet)
                                     <div class="bank-info">
                                         <div class="bank-main">
-                                            <span
-                                                class="status-badge status-badge--icon {{ $item->warga->status_rekening === 'verified' ? 'status-badge--approved' : 'status-badge--pending' }}"
-                                                title="{{ $item->warga->status_rekening === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi' }}"
-                                                aria-label="{{ $item->warga->status_rekening === 'verified' ? 'Terverifikasi' : 'Belum Verifikasi' }}">
-                                                @if ($item->warga->status_rekening === 'verified')
-                                                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                                                        <path d="M20 6 9 17l-5-5"></path>
-                                                    </svg>
-                                                @else
-                                                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                                                        <circle cx="12" cy="12" r="9"></circle>
-                                                        <path d="M12 7v5l3 2"></path>
-                                                    </svg>
-                                                @endif
-                                            </span>
                                             <strong title="{{ $item->warga->nama_bank_ewallet }}">
                                                 {{ $item->warga->nama_bank_ewallet }}
                                             </strong>
@@ -111,7 +101,7 @@
                                         </div>
                                     </div>
                                 @else
-                                    <span class="muted-text">Tunai / Lainnya</span>
+                                    <span class="muted-text">-</span>
                                 @endif
                             </td>
                             <td>
@@ -120,9 +110,9 @@
                                 </strong>
                             </td>
                             <td>
-                                @if ($item->status == 'menunggu')
+                                @if ($statusNormalized === 'menunggu')
                                     <span class="badge badge--warning">Menunggu</span>
-                                @elseif($item->status == 'selesai')
+                                @elseif($statusNormalized === 'selesai')
                                     <span class="badge badge--success">Selesai</span>
                                 @else
                                     <span class="badge badge--danger">Ditolak</span>
@@ -138,15 +128,15 @@
                                         </svg>
                                     </button>
 
-                                    <button class="icon-btn"
-                                        title="{{ $item->status === 'menunggu' ? 'Ubah Status Pencairan' : 'Status sudah dikunci' }}"
-                                        type="button" onclick='prosesPencairan(@json($item))'
-                                        {{ $item->status !== 'menunggu' ? 'disabled' : '' }}>
-                                        <svg viewBox="0 0 24 24">
-                                            <path d="M12 20h9"></path>
-                                            <path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"></path>
-                                        </svg>
-                                    </button>
+                                    @if ($statusNormalized === 'menunggu')
+                                        <button class="icon-btn icon-btn--edit" title="Ubah Status Pencairan" type="button"
+                                            onclick='prosesPencairan(@json($item))'>
+                                            <svg viewBox="0 0 24 24">
+                                                <path d="M12 20h9"></path>
+                                                <path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"></path>
+                                            </svg>
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

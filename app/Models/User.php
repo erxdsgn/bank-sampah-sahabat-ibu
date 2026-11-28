@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens; // 1. Ditambahkan
+use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable; // 2. Ditambahkan HasApiTokens
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $table = 'users';
     protected $primaryKey = 'id';
@@ -22,6 +23,7 @@ class User extends Authenticatable
         'avatar',
         'fcm_token',
         'notifikasi_aktif',
+        'email_verified_at',
     ];
 
     protected $hidden = [
@@ -30,21 +32,15 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
+        'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
 
-    /**
-     * Relasi ke profil Admin
-     */
     public function admin()
     {
-        // PERBAIKAN: Diubah dari 'id_user' menjadi 'user_id' agar sesuai dengan Admin.php
         return $this->hasOne(Admin::class, 'user_id', 'id');
     }
 
-    /**
-     * Relasi ke profil Warga
-     */
     public function warga()
     {
         return $this->hasOne(Warga::class, 'id_user', 'id');

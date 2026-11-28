@@ -21,15 +21,17 @@ class PencairanController extends Controller
             ->orderByDesc('id_pencairan')
             ->get();
 
-        $warga = Warga::orderBy('nama')->get([
-            'id_warga',
-            'nik',
-            'nama',
-            'saldo',
-            'nama_bank_ewallet',
-            'nomor_rekening',
-            'status_rekening',
-        ]);
+        $warga = Warga::where('status', 'aktif')
+            ->orderBy('nama')
+            ->get([
+                'id_warga',
+                'nik',
+                'nama',
+                'saldo',
+                'nama_bank_ewallet',
+                'nomor_rekening',
+                'status_rekening',
+            ]);
 
         return view('admin.pages.pencairan', compact('pencairan', 'warga'));
     }
@@ -75,11 +77,16 @@ class PencairanController extends Controller
 
         $warga = Warga::findOrFail($validated['id_warga']);
 
+        if (($warga->status ?? 'aktif') !== 'aktif') {
+            return response()->json([
+                'message' => 'Warga yang dipilih berstatus tidak aktif sehingga tidak dapat mengajukan pencairan baru.',
+            ], 422);
+        }
+
         $jumlahPencairan = (float) $validated['jumlah'];
         $saldoWarga      = (float) ($warga->saldo ?? 0);
         $saldoKas        = $this->getSaldoKas();
 
-        // 1. Validasi Saldo Tabungan Warga
         if ($jumlahPencairan > $saldoWarga) {
             return response()->json([
                 'message' => 'Saldo tabungan warga tidak mencukupi (Saldo Warga: Rp '
@@ -89,7 +96,6 @@ class PencairanController extends Controller
             ], 422);
         }
 
-        // 2. Validasi Kas Fisik Bank Sampah
         if ($jumlahPencairan > $saldoKas) {
             return response()->json([
                 'message' => 'Kas fisik Bank Sampah tidak mencukupi (Sisa Kas: Rp '
@@ -132,12 +138,17 @@ class PencairanController extends Controller
         if ($validated['status'] === 'selesai') {
             $warga = Warga::where('id_warga', $pencairan->id_warga)->first();
 
+            if (!$warga || ($warga->status ?? 'aktif') !== 'aktif') {
+                return response()->json([
+                    'message' => 'Pencairan tidak dapat diselesaikan karena status warga tidak aktif.',
+                ], 422);
+            }
+
             $jumlahPencairan = (float) $pencairan->jumlah;
             $saldoWarga      = (float) ($warga->saldo ?? 0);
             $saldoKas        = $this->getSaldoKas();
 
-            // 1. Validasi Saldo Warga
-            if (!$warga || $jumlahPencairan > $saldoWarga) {
+            if ($jumlahPencairan > $saldoWarga) {
                 return response()->json([
                     'message' => 'Saldo tabungan warga tidak mencukupi (Saldo Warga: Rp '
                         . number_format($saldoWarga, 0, ',', '.')
@@ -146,7 +157,6 @@ class PencairanController extends Controller
                 ], 422);
             }
 
-            // 2. Validasi Kas Fisik Bank Sampah
             if ($jumlahPencairan > $saldoKas) {
                 return response()->json([
                     'message' => 'Kas fisik Bank Sampah tidak mencukupi (Sisa Kas: Rp '
@@ -157,10 +167,8 @@ class PencairanController extends Controller
             }
 
             DB::transaction(function () use ($pencairan, $warga, $jumlahPencairan) {
-                // Potong saldo tabungan warga
                 $warga->decrement('saldo', $jumlahPencairan);
 
-                // Catat mutasi keluar pada tabungan warga
                 MutasiSaldo::create([
                     'id_warga' => $pencairan->id_warga,
                     'id_setoran' => null,
@@ -170,7 +178,6 @@ class PencairanController extends Controller
                     'keterangan' => 'Pencairan saldo #' . $pencairan->id_pencairan,
                 ]);
 
-                // Catat Pengeluaran Kas di modul Keuangan
                 Keuangan::create([
                     'jenis'              => 'Pengeluaran',
                     'tanggal'            => now()->toDateString(),

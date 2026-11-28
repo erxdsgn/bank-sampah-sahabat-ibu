@@ -21,6 +21,7 @@ return new class extends Migration
             $table->text('alamat')->nullable();
             $table->integer('jumlah_anggota_keluarga')->nullable()->default(0);
             $table->decimal('saldo', 15, 2)->nullable()->default(0);
+            $table->enum('status', ['aktif', 'tidak_aktif'])->default('aktif');
             $table->date('tanggal_daftar');
             $table->timestamps();
         });

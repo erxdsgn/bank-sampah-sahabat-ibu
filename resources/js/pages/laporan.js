@@ -1,3 +1,4 @@
+import { initComboSelect } from '../utils/combo-select';
 import { escapeHtml } from '../utils/helpers';
 
 function fmtDate(d) {
@@ -244,88 +245,153 @@ function initTabs() {
 
 function initPerPageCombo(selectId) {
     const select = document.getElementById(selectId);
-    const input = document.getElementById(`cari_${selectId}`);
-    const list = document.getElementById(`list_${selectId}`);
-    if (!select || !input || !list) return;
+    if (!select) return;
 
-    let aktif = -1;
-    const teks = o => o.textContent.replace(/\s+/g, ' ').trim();
-
-    function sync() {
-        const o = select.options[select.selectedIndex];
-        input.value = o ? teks(o) : '';
-    }
-
-    function buka() {
-        list.innerHTML = Array.from(select.options).map(o =>
-            `<div class="combo-item${o.value === select.value ? ' is-selected' : ''}" data-value="${escapeHtml(o.value)}">${escapeHtml(teks(o))}</div>`
-        ).join('');
-        aktif = -1;
-        list.classList.add('show');
-    }
-
-    function tutup() {
-        list.classList.remove('show');
-        sync();
-    }
-
-    function pilih(value) {
-        select.value = value;
-        tutup();
-
+    // Saat nilai berubah: muat ulang halaman dengan jumlah baris baru
+    select.addEventListener('change', () => {
         const url = new URL(window.location.href);
         const navParam = select.dataset.navParam;
         const pageParam = select.dataset.navPageParam;
-        if (navParam) url.searchParams.set(navParam, value);
+        if (navParam) url.searchParams.set(navParam, select.value);
         if (pageParam) url.searchParams.delete(pageParam);
         if (selectId === 'perPagePenjualan') url.searchParams.set('tab', 'penjualan');
         if (selectId === 'perPageSetoran') url.searchParams.set('tab', 'setoran');
         window.location.href = url.toString();
-    }
-
-    function sorot(arah) {
-        const items = list.querySelectorAll('.combo-item');
-        if (!items.length) return;
-        aktif = (aktif + arah + items.length) % items.length;
-        items.forEach((el, i) => el.classList.toggle('is-active', i === aktif));
-    }
-
-    input.addEventListener('focus', buka);
-    input.addEventListener('click', () => {
-        if (!list.classList.contains('show')) buka();
     });
-    input.addEventListener('blur', tutup);
 
-    input.addEventListener('keydown', e => {
-        const items = list.querySelectorAll('.combo-item');
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (!list.classList.contains('show')) buka();
-            sorot(1);
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            sorot(-1);
-        } else if (e.key === 'Enter' && list.classList.contains('show') && aktif > -1 && items[aktif]) {
-            e.preventDefault();
-            pilih(items[aktif].dataset.value);
-        } else if (e.key === 'Escape' && list.classList.contains('show')) {
-            e.stopPropagation();
-            tutup();
+    // Dropdown yang sama dengan halaman Keuangan
+    initComboSelect(selectId, { readonly: true });
+}
+
+// ---------- Pencarian & paginasi tanpa refresh ----------
+// Data dipaginasi di server, jadi pencarian tetap mencari ke seluruh data:
+// halaman diambil lewat fetch lalu hanya tabel, info, pagination, dan jumlah tab yang diganti.
+const panelRequest = {};
+
+async function muatPanel(panel, urlStr) {
+    const key = panel.dataset.panel;
+
+    if (panelRequest[key]) panelRequest[key].abort();
+    const ctrl = new AbortController();
+    panelRequest[key] = ctrl;
+    panel.classList.add('is-loading');
+
+    try {
+        const res = await fetch(urlStr, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+            signal: ctrl.signal,
+        });
+        if (!res.ok) throw new Error('Gagal memuat data');
+
+        const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+        const baru = doc.querySelector(`[data-panel="${key}"]`);
+        if (!baru) throw new Error('Panel tidak ditemukan');
+
+        const ganti = (selector) => {
+            const dari = baru.querySelector(selector);
+            const ke = panel.querySelector(selector);
+            if (dari && ke) ke.innerHTML = dari.innerHTML;
+        };
+        ganti('tbody');
+        ganti('.table-info');
+        ganti('.pagination-wrap');
+
+        // Jumlah di label tab
+        const countBaru = doc.querySelector(`.report-tab[data-tab="${key}"] .tab-count`);
+        const countLama = document.querySelector(`.report-tab[data-tab="${key}"] .tab-count`);
+        if (countBaru && countLama) countLama.textContent = countBaru.textContent;
+
+        // Tombol Reset hanya ada saat sedang mencari
+        const toolbar = panel.querySelector('.toolbar-left');
+        const resetBaru = baru.querySelector('.toolbar-left a.btn');
+        const resetLama = toolbar?.querySelector('a.btn');
+        if (toolbar) {
+            if (resetBaru && !resetLama) toolbar.appendChild(document.importNode(resetBaru, true));
+            if (!resetBaru && resetLama) resetLama.remove();
         }
+
+        window.history.replaceState({}, '', urlStr);
+    } catch (err) {
+        if (err.name === 'AbortError') return;
+        window.location.href = urlStr; // fallback: muat ulang biasa
+    } finally {
+        if (panelRequest[key] === ctrl) panel.classList.remove('is-loading');
+    }
+}
+
+function urlPencarian(panel, input) {
+    const key = panel.dataset.panel;
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', key);
+
+    const nilai = input.value.trim();
+    if (nilai) url.searchParams.set(input.name, nilai);
+    else url.searchParams.delete(input.name);
+
+    const perPage = input.closest('form')?.querySelector(`input[name="${key}_per_page"]`);
+    if (perPage) url.searchParams.set(perPage.name, perPage.value);
+
+    url.searchParams.delete(`${key}_page`);
+    return url.toString();
+}
+
+function initLiveSearch(inputId) {
+    const input = document.getElementById(inputId);
+    const form = input?.closest('form');
+    const panel = input?.closest('[data-panel]');
+    if (!input || !form || !panel) return;
+
+    let timer = null;
+    let terakhir = input.value.trim();
+
+    function cari() {
+        const nilai = input.value.trim();
+        if (nilai === terakhir) return;
+        terakhir = nilai;
+        muatPanel(panel, urlPencarian(panel, input));
+    }
+
+    input.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(cari, 250);
     });
 
-    list.addEventListener('mousedown', e => {
-        const item = e.target.closest('.combo-item');
-        if (!item) return;
+    // Enter: cari langsung tanpa menunggu jeda & tanpa refresh
+    form.addEventListener('submit', (e) => {
         e.preventDefault();
-        pilih(item.dataset.value);
+        clearTimeout(timer);
+        cari();
     });
 
-    sync();
+    // Tombol Reset (dibuat ulang tiap respons, jadi pakai event delegation)
+    panel.querySelector('.toolbar-left')?.addEventListener('click', (e) => {
+        const reset = e.target.closest('a.btn');
+        if (!reset) return;
+        e.preventDefault();
+        input.value = '';
+        clearTimeout(timer);
+        cari();
+        input.focus();
+    });
+
+    // Pagination tanpa refresh
+    panel.addEventListener('click', (e) => {
+        const link = e.target.closest('.pagination-wrap a');
+        if (!link) return;
+        const href = link.getAttribute('href');
+        if (!href || href === '#' || link.getAttribute('aria-disabled') === 'true') {
+            e.preventDefault();
+            return;
+        }
+        e.preventDefault();
+        muatPanel(panel, link.href);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     initTabs();
+    initLiveSearch('searchPenjualan');
+    initLiveSearch('searchSetoran');
     initPerPageCombo('perPagePenjualan');
     initPerPageCombo('perPageSetoran');
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Admin\AuthViewController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\HomeController;
@@ -14,13 +15,13 @@ use App\Http\Controllers\Admin\KategoriHargaController;
 use App\Http\Controllers\Admin\LaporanController;
 use App\Http\Controllers\Admin\ArtikelEdukasiController;
 use App\Http\Controllers\Admin\JadwalSetoranController;
+use App\Http\Controllers\Admin\PengaduanController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('guest')->group(function () {
-    Route::get('/', function () {
-        return redirect()->route('login');
-    });
+// Halaman Landing Page Publik (bisa diakses siapa saja)
+Route::get('/', [LandingController::class, 'index'])->name('home');
 
+Route::middleware('guest')->group(function () {
     // View Login
     Route::get('/login', [AuthViewController::class, 'showLogin'])->name('login');
 
@@ -141,5 +142,12 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
             Route::post('/', [KategoriHargaController::class, 'hargaStore'])->name('store');
             Route::delete('/{hargaSampah}', [KategoriHargaController::class, 'hargaDestroy'])->name('destroy');
         });
+    });
+
+    // Pengaduan Warga
+    Route::prefix('pages/pengaduan')->name('pengaduan.')->group(function () {
+        Route::get('/', [PengaduanController::class, 'index'])->name('index');
+        Route::patch('/{pengaduan}', [PengaduanController::class, 'update'])->name('update');
+        Route::get('/summary', [PengaduanController::class, 'summary'])->name('summary');
     });
 });

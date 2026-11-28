@@ -8,18 +8,29 @@ use App\Http\Controllers\Api\SetoranApiController;
 use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\LeaderboardApiController;
 use App\Http\Controllers\Api\ArtikelEdukasiApiController;
+use App\Http\Controllers\Api\PengaduanApiController;
 use Illuminate\Support\Facades\Route;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 
 // =============================
 // 1. Endpoint Publik (Tanpa Login)
 // =============================
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register-warga', [AuthController::class, 'registerWarga']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1'); // Maks 5x per menit
+Route::post('/register-warga', [AuthController::class, 'registerWarga'])->middleware('throttle:3,1'); // Maks 3x per menit
+
+// Konfirmasi Email Registrasi (Link)
+Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmailLink'])
+    ->middleware(['signed'])
+    ->name('verification.verify.link');
+Route::post('/email/resend-verification', [AuthController::class, 'resendVerification'])
+    ->middleware('throttle:3,1');
+Route::post('/email/check-status', [AuthController::class, 'checkVerificationStatus'])
+    ->middleware('throttle:10,1'); // Maks 10x per menit (karena user mungkin klik berulang)
+
 // Fitur Lupa Password (OTP)
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendOtp'])->middleware('throttle:3,1');
-Route::post('/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
-Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
+Route::post('/verify-otp', [ForgotPasswordController::class, 'verifyOtp'])->middleware('throttle:5,1');
+Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->middleware('throttle:3,1');
 
 Route::get('/harga-sampah', [HargaSampahApiController::class, 'index']);
 Route::get('/artikel-edukasi', [ArtikelEdukasiApiController::class, 'index']);
@@ -37,7 +48,7 @@ Route::get('/test-firebase', function () {
 });
 
 // =============================
-// 2. Endpoint Terproteksi Token (Wajib Login)
+// 2. Endpoint Terproteksi Token (Wajib Login & Warga Aktif)
 // =============================
 Route::middleware('auth:sanctum')->group(function () {
     // Auth & Profil Warga
@@ -67,4 +78,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Leaderboard
     Route::get('/leaderboard', [LeaderboardApiController::class, 'index']);
+
+    // Fitur Pengaduan Warga
+    Route::get('/pengaduan', [PengaduanApiController::class, 'index']);
+    Route::post('/pengaduan', [PengaduanApiController::class, 'store']);
 });

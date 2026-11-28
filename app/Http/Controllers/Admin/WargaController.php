@@ -33,7 +33,6 @@ class WargaController extends Controller
             ->join('detail_setoran', 'penyetoran.id_setoran', '=', 'detail_setoran.id_setoran')
             ->where('penyetoran.status', 'approved');
 
-        // Filter berdasarkan periode
         if ($periode === 'season_ini') {
             $query->whereRaw(
                 'QUARTER(penyetoran.tanggal_setoran) = ?',
@@ -58,7 +57,6 @@ class WargaController extends Controller
             )->render()
         ]);
     }
-    // =========================================
 
     public function create()
     {
@@ -67,9 +65,9 @@ class WargaController extends Controller
 
     public function store(Request $request)
     {
-        if (Warga::count() >= 100) {
+        if (Warga::where('status', 'aktif')->count() >= 100) {
             return response()->json([
-                'message' => 'Gagal menambah data. Batas maksimal 100 warga telah tercapai.'
+                'message' => 'Gagal menambah data. Batas maksimal 100 warga aktif telah tercapai.'
             ], 422);
         }
 
@@ -80,22 +78,27 @@ class WargaController extends Controller
             'no_hp' => 'required|string|min:10|max:15|regex:/^[0-9]+$/',
             'jumlah_anggota_keluarga' => 'required|integer|min:1|max:15',
             'alamat' => 'required|string',
-            'kelompok' => 'required|in:A,B',
-            'nama_bank_ewallet' => 'required|string|min:5|max:50|regex:/^[a-zA-Z\s\.\-]+$/',
-            'nomor_rekening' => 'required|string|max:30|regex:/^[0-9]+$/',
+            'kelompok' => 'required|in:A (Perumahan),B (Luar Perumahan)',
+            'nama_bank_ewallet' => 'required|string|min:3|max:50|regex:/^[a-zA-Z\s\.\-]+$/',
+            'nomor_rekening' => 'required|string|min:6|max:20|regex:/^[0-9]+$/',
             'nama_pemilik_rekening' => 'required|string|max:50|regex:/^[a-zA-Z\s\.\'\-]+$/',
         ], [
             'nik.digits' => 'NIK harus berisi tepat 16 digit angka.',
             'nama.regex' => 'Nama lengkap hanya boleh berisi huruf, spasi, titik, atau tanda hubung.',
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email sudah terdaftar.',
+            'no_hp.min' => 'Nomor HP minimal 10 digit.',
             'no_hp.regex' => 'Nomor HP hanya boleh berisi angka.',
             'no_hp.max' => 'Nomor HP maksimal 15 digit.',
             'kelompok.required' => 'Kelompok warga wajib dipilih.',
             'kelompok.in' => 'Pilihan kelompok tidak valid.',
+            'jumlah_anggota_keluarga.min' => 'Jumlah anggota keluarga minimal 1 orang.',
             'jumlah_anggota_keluarga.max' => 'Jumlah anggota keluarga maksimal 15 orang.',
+            'nama_bank_ewallet.min' => 'Nama bank/e-wallet minimal 3 karakter.',
             'nama_bank_ewallet.max' => 'Nama bank/e-wallet maksimal 50 karakter.',
             'nama_bank_ewallet.regex' => 'Nama bank/e-wallet tidak valid.',
+            'nomor_rekening.min' => 'Nomor rekening/e-wallet minimal 6 digit.',
+            'nomor_rekening.max' => 'Nomor rekening/e-wallet maksimal 20 digit.',
             'nomor_rekening.regex' => 'Nomor rekening/e-wallet hanya boleh berisi angka.',
             'nama_pemilik_rekening.regex' => 'Nama pemilik rekening tidak valid.',
         ]);
@@ -115,7 +118,7 @@ class WargaController extends Controller
             $user = User::create([
                 'username' => $username,
                 'email'    => $email,
-                'password' => Hash::make('password123'),
+                'password' => Hash::make($request->password ?? 'password123'),
                 'role'     => 'warga',
             ]);
 
@@ -131,6 +134,7 @@ class WargaController extends Controller
                 'alamat'                  => $validated['alamat'],
                 'kelompok'                => $validated['kelompok'],
                 'saldo'                   => 0,
+                'status'                  => 'aktif',
                 'tanggal_daftar'          => now(),
                 'nama_bank_ewallet'       => $validated['nama_bank_ewallet'] ?? null,
                 'nomor_rekening'          => $validated['nomor_rekening'] ?? null,
@@ -187,18 +191,26 @@ class WargaController extends Controller
     {
         $warga = Warga::findOrFail($id);
 
-        DB::transaction(function () use ($warga) {
-            $warga->delete();
+        $statusBaru = ($warga->status ?? 'aktif') === 'tidak_aktif' ? 'aktif' : 'tidak_aktif';
+        $warga->update(['status' => $statusBaru]);
 
-            if ($warga->user) {
-                $warga->user->delete();
-            }
-        });
-
-        if ($request->wantsJson()) {
-            return response()->json(['success' => true]);
+        // Jika dinonaktifkan, cabut token Sanctum aktif agar sesi mobile yang sedang jalan terputus
+        if ($statusBaru === 'tidak_aktif' && $warga->user) {
+            $warga->user->tokens()->delete();
         }
 
-        return redirect()->route('admin.warga')->with('success', 'Data warga berhasil dihapus.');
+        $pesan = $statusBaru === 'tidak_aktif'
+            ? 'Status warga berhasil diubah menjadi tidak aktif.'
+            : 'Status warga berhasil diaktifkan kembali.';
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status'  => $statusBaru,
+                'message' => $pesan,
+            ]);
+        }
+
+        return redirect()->route('admin.warga')->with('success', $pesan);
     }
 }

@@ -57,10 +57,9 @@ class VerifikasiSetoranController extends Controller
             ->sortBy('nama_lengkap')
             ->values();
 
-        $wargaList = Warga::orderBy(
-            'nama',
-            'asc'
-        )->get();
+        $wargaList = Warga::where('status', 'aktif')
+            ->orderBy('nama', 'asc')
+            ->get();
 
         return view(
             'admin.pages.verifikasi-setoran',
@@ -109,15 +108,20 @@ class VerifikasiSetoranController extends Controller
             ], 409);
         }
 
+        $warga = Warga::where('id_warga', $setoran->id_warga)->first();
+        if (!$warga || ($warga->status ?? 'aktif') !== 'aktif') {
+            return response()->json([
+                'message' => 'Setoran tidak dapat disetujui karena status warga tidak aktif.',
+            ], 422);
+        }
+
         DB::transaction(function () use ($request, $setoran) {
             $totalSemuaNilai = 0;
-            $totalBerat = 0; // Diubah dari totalBeratGram
+            $totalBerat = 0;
 
-            // Hapus detail lama jika ada sebelum dimasukkan ulang yang baru
             DB::table('detail_setoran')->where('id_setoran', $setoran->getKey())->delete();
 
             foreach ($request->items as $itemData) {
-                // Memuat kategori beserta harga terbaru agar accessor getPoinPerSatuanAttribute aktif
                 $kategori = KategoriSampah::with('hargaTerbaru')->find($itemData['id_kategori']);
 
                 if (!$kategori || !$kategori->hargaTerbaru) {
@@ -129,13 +133,10 @@ class VerifikasiSetoranController extends Controller
                 $hargaSatuan = (float) $kategori->hargaTerbaru->harga_satuan;
                 $subtotal = round($jumlah * $hargaSatuan, 2);
 
-                // --- PERHITUNGAN POIN OTOMATIS BERDASARKAN ACCESSOR MODEL ---
                 $poinPerSatuan = $kategori->poin_per_satuan;
                 $totalPoinItem = round($jumlah * $poinPerSatuan);
 
                 $totalSemuaNilai += $subtotal;
-
-                // LANGSUNG TAMBAHKAN ANGKA ASLINYA (TANPA DIKALI 1000)
                 $totalBerat += $jumlah;
 
                 $detailData = [
@@ -145,8 +146,8 @@ class VerifikasiSetoranController extends Controller
                     'satuan'       => $satuan,
                     'subtotal'     => $subtotal,
                     'poin'         => $totalPoinItem,
-                    'harga_satuan' => $hargaSatuan, // KOLOM BARU
-                    'berat'        => $jumlah,      // KOLOM BARU (Tanpa * 1000)
+                    'harga_satuan' => $hargaSatuan,
+                    'berat'        => $jumlah,
                     'created_at'   => now(),
                     'updated_at'   => now(),
                 ];
@@ -161,7 +162,6 @@ class VerifikasiSetoranController extends Controller
                 'status'      => 'approved',
             ])->save();
 
-            // Update Saldo & Keuangan
             $setoran->warga()->increment('saldo', $totalSemuaNilai);
 
             DB::table('mutasi_saldo')->insert([
@@ -280,6 +280,13 @@ class VerifikasiSetoranController extends Controller
             ], 422);
         }
 
+        $warga = Warga::where('id_warga', $request->id_warga)->first();
+        if (!$warga || ($warga->status ?? 'aktif') !== 'aktif') {
+            return response()->json([
+                'message' => 'Warga yang dipilih sudah tidak aktif dan tidak dapat melakukan setoran baru.',
+            ], 422);
+        }
+
         DB::transaction(function () use ($request) {
             $setoran = new Setoran();
             $setoran->forceFill([
@@ -294,10 +301,9 @@ class VerifikasiSetoranController extends Controller
             $setoran->save();
 
             $totalSemuaNilai = 0;
-            $totalBerat = 0; // Diubah dari totalBeratGram
+            $totalBerat = 0;
 
             foreach ($request->items as $itemData) {
-                // Memuat kategori beserta harga terbaru agar accessor getPoinPerSatuanAttribute aktif
                 $kategori = KategoriSampah::with('hargaTerbaru')->find($itemData['id_kategori']);
 
                 if (!$kategori || !$kategori->hargaTerbaru) {
@@ -309,13 +315,10 @@ class VerifikasiSetoranController extends Controller
                 $hargaSatuan = (float) $kategori->hargaTerbaru->harga_satuan;
                 $subtotal = round($jumlah * $hargaSatuan, 2);
 
-                // --- PERHITUNGAN POIN OTOMATIS TAMBAHAN UNTUK METHOD STORE ---
                 $poinPerSatuan = $kategori->poin_per_satuan;
                 $totalPoinItem = round($jumlah * $poinPerSatuan);
 
                 $totalSemuaNilai += $subtotal;
-
-                // LANGSUNG TAMBAHKAN ANGKA ASLINYA (TANPA DIKALI 1000)
                 $totalBerat += $jumlah;
 
                 $detailData = [
@@ -325,8 +328,8 @@ class VerifikasiSetoranController extends Controller
                     'satuan'       => $satuan,
                     'subtotal'     => $subtotal,
                     'poin'         => $totalPoinItem,
-                    'harga_satuan' => $hargaSatuan, // KOLOM BARU
-                    'berat'        => $jumlah,      // KOLOM BARU (Tanpa * 1000)
+                    'harga_satuan' => $hargaSatuan,
+                    'berat'        => $jumlah,
                     'created_at'   => now(),
                     'updated_at'   => now(),
                 ];
@@ -339,10 +342,8 @@ class VerifikasiSetoranController extends Controller
                 'total_nilai' => $totalSemuaNilai,
             ])->save();
 
-            // 1. Update Saldo Warga
             $setoran->warga()->increment('saldo', $totalSemuaNilai);
 
-            // 2. Catat Mutasi Saldo
             DB::table('mutasi_saldo')->insert([
                 'id_warga'     => $setoran->id_warga,
                 'id_setoran'   => $setoran->getKey(),
@@ -352,7 +353,6 @@ class VerifikasiSetoranController extends Controller
                 'keterangan'   => 'Setoran sampah manual oleh admin (Multi-item)',
             ]);
 
-            // 3. Catat Keuangan
             Keuangan::updateOrCreate(
                 [
                     'tipe_referensi' => 'setoran',
@@ -363,7 +363,7 @@ class VerifikasiSetoranController extends Controller
                     'jenis'              => 'Pemasukan',
                     'tanggal'            => $setoran->tanggal_setoran ?? now()->toDateString(),
                     'kategori_transaksi' => 'Setoran Sampah',
-                    'keterangan'         => 'Setoran sampah manual warga (ID: ' . $setoran->getKey() . ')',
+                    'keterangan'         => 'Setoran sampah warga (ID: ' . $setoran->getKey() . ')',
                     'jumlah'             => $totalSemuaNilai,
                 ]
             );

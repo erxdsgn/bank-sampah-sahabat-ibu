@@ -1,7 +1,16 @@
-@extends('layouts.error')
-
-@section('title', '404')
-
-@section('content')
-<div class="error-card"><span class="error-eyebrow">Error · Not found</span><div class="error-code">404</div><h1 class="error-title">This page wandered off</h1><p class="error-sub">The link may be outdated, or the page might have been moved or deleted. Try the dashboard to get back on track.</p><div class="error-actions"><a class="btn btn--primary" href="{{ route('dashboard') }}"><svg viewbox="0 0 24 24"><path d="M3 12 12 3l9 9"></path><path d="M5 10v10h14V10"></path></svg> Back to dashboard </a><a class="btn btn--ghost" href="javascript:history.back()"><svg viewbox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg> Go back</a></div><div class="error-meta"><span><strong>STATUS</strong> 404</span> <span><strong>CODE</strong> NOT_FOUND</span> <span><strong>REF</strong> a8c1-9f23</span></div></div>
+@extends('errors.layout')
+@section('code', '403')
+@section('tag', 'Tidak Memiliki Hak Akses')
+@section('title', 'Akses Halaman Ditolak')
+@section('message', $exception->getMessage() ?: 'Akun Anda sudah masuk, namun tidak memiliki izin untuk membuka halaman ini.')
+@section('hint', 'Halaman ini khusus untuk pengurus/administrator aktif Bank Sampah Sahabat Ibu.')
+@section('icon', 'fa-solid fa-shield-halved')
+@section('icon_style', 'bg-red-50 border-red-200/80 text-red-600')
+@section('actions')
+    <a href="{{ url('/') }}" class="w-full sm:w-auto px-6 py-3 rounded-full bg-gradient-to-r from-[#28B446] to-[#1E9638] text-white font-display font-semibold text-sm shadow-green-glow transition flex items-center justify-center gap-2">
+        <i class="fa-solid fa-house text-xs"></i> <span>Kembali ke Beranda</span>
+    </a>
+    <a href="{{ route('login') }}" class="w-full sm:w-auto px-5 py-3 rounded-full bg-white hover:bg-green-50 text-brand-forest border border-green-200 font-display font-semibold text-sm transition flex items-center justify-center gap-2">
+        <i class="fa-solid fa-user-shield text-xs text-brand"></i> <span>Login Admin</span>
+    </a>
 @endsection

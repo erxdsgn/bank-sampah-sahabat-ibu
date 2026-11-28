@@ -147,9 +147,13 @@ class JadwalSetoranApiController extends Controller
     /**
      * Helper Format Data -> JSON Flutter
      */
-    private function formatForFlutter($item): array
+        private function formatForFlutter($item): array
     {
         Carbon::setLocale('id');
+
+        // Gabungkan tanggal dan jam_mulai untuk fullDate
+        $dateTime = Carbon::parse($item->tanggal_setoran . ' ' . $item->jam_mulai);
+
         $date = Carbon::parse($item->tanggal_setoran);
         $today = Carbon::today();
 
@@ -176,7 +180,8 @@ class JadwalSetoranApiController extends Controller
             'dayName'       => strtoupper($date->isoFormat('dddd')),
             'dayNumber'     => (int) $date->format('d'),
             'monthYear'     => $date->isoFormat('MMMM YYYY'),
-            'fullDate'      => $date->format('Y-m-d'),
+            // [FIX] Ubah ini agar mengirim tanggal DAN jam (Format ISO 8601)
+            'fullDate'      => $item->tanggal_setoran . ' ' . $item->jam_mulai . ':00',
             'timeRange'     => $timeRange,
             'countdownText' => $countdownText,
             'isCompleted'   => $isPast,

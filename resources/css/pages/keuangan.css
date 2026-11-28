@@ -14,6 +14,54 @@ html[data-theme="dark"] .keuangan-page textarea {
     color-scheme: dark;
 }
 
+/* ---------- HERO ALIGNMENT ---------- */
+.keuangan-page .hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.keuangan-page .hero-text {
+    min-width: 0;
+    flex: 1 1 320px;
+}
+
+.keuangan-page .hero-title {
+    margin: 4px 0;
+}
+
+.keuangan-page .hero-sub {
+    margin: 0;
+}
+
+.keuangan-page .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.keuangan-page .hero-actions .btn {
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.keuangan-page .hero-actions .btn svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    flex-shrink: 0;
+}
+
 /* ---------- SUMMARY ---------- */
 .keuangan-page .summary-grid {
     display: grid;
@@ -186,6 +234,13 @@ html[data-theme="dark"] .keuangan-page textarea {
 
 .keuangan-page .description-cell {
     max-width: 280px;
+}
+
+/* Tanggal & Keterangan: warna/ukuran/ketebalan sama dengan tabel Penjualan */
+.keuangan-page .data-table tbody td.cell-text {
+    color: var(--t-base);
+    font-size: 13px;
+    font-weight: 400;
 }
 
 .keuangan-page .nowrap {
@@ -656,6 +711,15 @@ html[data-theme="dark"] .keuangan-page .modal-overlay {
 }
 
 @media (max-width: 760px) {
+    .keuangan-page .hero {
+        align-items: stretch;
+    }
+    .keuangan-page .hero-actions {
+        width: 100%;
+    }
+    .keuangan-page .hero-actions .btn {
+        width: 100%;
+    }
     .keuangan-page .keuangan-card .table-toolbar {
         align-items: stretch;
         padding: 0 0 14px;

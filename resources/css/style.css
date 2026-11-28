@@ -2989,3 +2989,7 @@ body.search-open { overflow: hidden; }
     from { opacity: 0; transform: translateY(8px) scale(.98); }
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+.is-hidden {
+    display: none !important;
+}

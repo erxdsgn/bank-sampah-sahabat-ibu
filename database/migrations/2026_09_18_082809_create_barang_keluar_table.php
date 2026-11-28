@@ -16,8 +16,8 @@ return new class extends Migration
             $table->unsignedBigInteger('id_admin')->index('fk_barang_keluar_admin');
             $table->unsignedBigInteger('id_kategori')->index('fk_barang_keluar_kategori');
             $table->date('tanggal');
-            $table->decimal('berat_gram', 10, 2);
-            $table->decimal('harga_jual_per_gram', 15, 2);
+            $table->decimal('berat', 10, 2);
+            $table->decimal('harga_jual_satuan', 15, 2);
             $table->decimal('total', 15, 2);
             $table->string('pembeli');
             $table->timestamps();

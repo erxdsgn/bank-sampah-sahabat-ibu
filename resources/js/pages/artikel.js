@@ -5,7 +5,6 @@ import { showToast } from '../utils/toast';
 
 const dashArtikelData = window.__ARTIKEL_DATA__ || {};
 const dataArtikel = Array.isArray(dashArtikelData.items) ? dashArtikelData.items : [];
-const jsLabelJenis = dashArtikelData.labelJenis || {};
 const urls = dashArtikelData.urls || {};
 
 const bannerMeta = {
@@ -120,7 +119,14 @@ function isiFormEdit(id) {
     document.getElementById('artikelId').value = artikel.id_artikel;
     document.getElementById('artikelJudul').value = artikel.judul ?? '';
     document.getElementById('artikelJenis').value = (artikel.jenis === 'acara' ? 'event' : artikel.jenis) ?? 'edukasi';
-    document.getElementById('artikelTanggal').value = artikel.tanggal_publish ? artikel.tanggal_publish.split('T')[0].split(' ')[0] : '';
+
+    // FIX: pastikan tidak ada batasan min/max agar tanggal lampau bisa dipilih
+    const tanggalEl = document.getElementById('artikelTanggal');
+    if (tanggalEl) {
+        tanggalEl.removeAttribute('min');
+        tanggalEl.removeAttribute('max');
+        tanggalEl.value = artikel.tanggal_publish ? artikel.tanggal_publish.split('T')[0].split(' ')[0] : '';
+    }
 
     const detectedUrl = extractSingleUrl(artikel.konten ?? '');
     if (detectedUrl) {
@@ -166,6 +172,13 @@ function alihKeForm(mode, id = null) {
     document.getElementById('gambarPreviewWrap').style.display = 'none';
     document.getElementById('gambarLamaInfo').innerHTML = '';
 
+    // FIX: hapus batasan min/max agar hari kemarin (dan tanggal lampau) bisa dipilih
+    const tanggalEl = document.getElementById('artikelTanggal');
+    if (tanggalEl) {
+        tanggalEl.removeAttribute('min');
+        tanggalEl.removeAttribute('max');
+    }
+
     if (myEditor) myEditor.setData('');
 
     if (mode === 'tambah') {
@@ -185,7 +198,8 @@ function tutupFormFull() {
     document.getElementById('viewForm').style.display = 'none';
     document.getElementById('viewDaftar').style.display = 'grid';
     document.getElementById('wrapperSummary').style.display = 'grid';
-    document.getElementById('heroActionBtn').style.display = 'block';
+    // FIX: gunakan '' agar kembali ke display: flex dari CSS .hero-actions (bukan 'block')
+    document.getElementById('heroActionBtn').style.display = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -334,73 +348,6 @@ function previewGambar(input) {
     }
 }
 
-function renderPreview(id) {
-    const body = document.getElementById('phonePreviewBody');
-    if (!body) return;
-
-    const item = dataArtikel.find((a) => String(a.id_artikel) === String(id));
-    if (!item) {
-        body.innerHTML = '<div class="phone-empty">Belum ada konten untuk ditampilkan.</div>';
-        return;
-    }
-
-    const baseImgUrl = urls.gambar || '';
-    let headerMediaHtml = '';
-
-    if (item.gambar && item.gambar.startsWith('banner:')) {
-        const tema = item.gambar.replace('banner:', '');
-        const meta = bannerMeta[tema] || bannerMeta.edukasi;
-        headerMediaHtml = `
-            <div class="phone-banner-box ${meta.gradClass}">
-                <span class="phone-banner-pill">${meta.label}</span>
-                <div class="phone-banner-title">${escapeHtml(item.judul)}</div>
-            </div>
-        `;
-    } else if (item.gambar) {
-        const src = item.gambar.startsWith('http') ? item.gambar : `${baseImgUrl}/${encodeURIComponent(item.gambar)}`;
-        headerMediaHtml = `<img src="${src}" class="phone-image" alt="${escapeHtml(item.judul)}">`;
-    } else {
-        headerMediaHtml = '<div class="phone-textonly-bar"></div>';
-    }
-
-    const jenisLabel = jsLabelJenis[item.jenis] || 'Edukasi Sampah';
-    let metaHtml = '♻ ' + escapeHtml(jenisLabel);
-    if (item.tanggal_publish) {
-        metaHtml += ' &nbsp;•&nbsp; ' + item.tanggal_publish.split('T')[0].split(' ')[0];
-    } else {
-        metaHtml += ' <span class="phone-badge-draft">Draft</span>';
-    }
-
-    const previewUrl = extractSingleUrl(item.konten || '');
-    const previewContentHtml = previewUrl
-        ? `<div style="background:#EAF6F0;border:1px solid #C8D8BE;border-radius:8px;padding:10px;color:#157A4E;font-size:10px;line-height:1.45;">
-             <strong>🔗 Halaman Web Utuh (WebView)</strong><br>
-             <span style="word-break:break-all;color:#566B59;">${escapeHtml(previewUrl)}</span>
-           </div>`
-        : `<div class="phone-content">${item.konten || ''}</div>`;
-
-    body.innerHTML = `
-        ${headerMediaHtml}
-        <div class="phone-title">${escapeHtml(item.judul)}</div>
-        <div class="phone-meta">${metaHtml}</div>
-        ${previewContentHtml}
-        <div class="phone-tip">💡 <strong>Tips Warga</strong><br>Pilah sampah dari rumah untuk lingkungan yang lebih bersih.</div>
-    `;
-}
-
-function initComboPreview() {
-    const select = document.getElementById('previewSelector');
-    const input = document.getElementById('cariPreview');
-    if (!select || !input) return;
-
-    initComboSelect('previewSelector');
-    select.addEventListener('change', () => renderPreview(select.value));
-
-    if (select.selectedOptions[0]) {
-        input.value = select.selectedOptions[0].textContent.trim();
-    }
-}
-
 function bukaModal(id) {
     document.getElementById(id)?.classList.add('active');
 }
@@ -496,8 +443,10 @@ Object.assign(window, {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    ['perPageSelect', 'kategoriArtikel', 'statusArtikel'].forEach(initComboSelect);
-    initComboPreview();
+    // Dropdown sama seperti halaman Keuangan (readonly, pilih dari daftar)
+    initComboSelect('perPageSelect', { readonly: true });
+    initComboSelect('kategoriArtikel', { readonly: true });
+    initComboSelect('statusArtikel', { readonly: true });
 
     if (typeof window.ClassicEditor !== 'undefined' && document.querySelector('#editorKonten')) {
         window.ClassicEditor
@@ -528,6 +477,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     jalankanFilter(true);
 
-    const previewSelector = document.getElementById('previewSelector');
-    renderPreview(previewSelector?.value || '');
 });

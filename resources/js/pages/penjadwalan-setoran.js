@@ -771,7 +771,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const key = row.dataset.group;
             let g = groups.find(x => x.key === key);
             if (!g) {
-                g = { key, rows: [] };
+                g = {
+                    key,
+                    rows: []
+                };
                 groups.push(g);
             }
             g.rows.push(row);

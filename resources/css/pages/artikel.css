@@ -52,6 +52,54 @@ html[data-theme="dark"] .artikel-page textarea {
     color-scheme: dark;
 }
 
+/* ---------- HERO ALIGNMENT (FIX: tombol sejajar judul) ---------- */
+.artikel-page .hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.artikel-page .hero-text {
+    min-width: 0;
+    flex: 1 1 320px;
+}
+
+.artikel-page .hero-title {
+    margin: 4px 0;
+}
+
+.artikel-page .hero-sub {
+    margin: 0;
+}
+
+.artikel-page .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.artikel-page .hero-actions .btn {
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.artikel-page .hero-actions .btn svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    flex-shrink: 0;
+}
+
 /* GRADIEN BANNER WARNA */
 .artikel-page .banner-grad--edukasi {
     background: var(--banner-edukasi);
@@ -143,7 +191,7 @@ html[data-theme="dark"] .artikel-page textarea {
 /* 2 COLUMN DAFTAR */
 .artikel-page .artikel-columns {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-columns: minmax(0, 1fr);
     gap: 16px;
     margin-bottom: 16px;
     align-items: start;
@@ -191,9 +239,17 @@ html[data-theme="dark"] .artikel-page textarea {
     box-shadow: 0 0 0 3px rgba(30, 158, 102, .12);
 }
 
+.artikel-page .toolbar-right .combo {
+    width: 160px;
+}
+
 .artikel-page .toolbar-right .combo-input {
-    height: 40px;
-    color: var(--text-secondary);
+    height: 38px;
+    color: var(--text);
+}
+
+.artikel-page .per-page .combo-input {
+    height: 34px;
 }
 
 /* TABLE */
@@ -346,18 +402,45 @@ html[data-theme="dark"] .artikel-page textarea {
     color: var(--text-secondary);
 }
 
-.artikel-page .per-page .combo {
-    width: 75px;
+/* ---------- EMPTY STATE (sama seperti halaman lain) ---------- */
+.artikel-page .empty-row td,
+.artikel-page .catalog-empty {
+    text-align: center;
+    padding: 50px 40px;
+    background: var(--table-row);
+    color: var(--text);
 }
 
-.artikel-page .catalog-empty,
 .artikel-page .empty-row td {
+    border-bottom: none;
+}
+
+.artikel-page .data-table tbody tr.empty-row:hover td {
+    background: var(--table-row);
+}
+
+/* Hasil pencarian kosong: tampil lewat JS */
+.artikel-page .catalog-empty {
     display: none;
-    text-align: center;
-    padding: 40px;
+}
+
+.artikel-page .empty-icon {
+    font-size: 30px;
+    margin-bottom: 10px;
+    line-height: 1;
+    opacity: .8;
+}
+
+.artikel-page .empty-row strong,
+.artikel-page .catalog-empty strong {
+    display: block;
+    font-size: 14px;
+    color: var(--text);
 }
 
 .artikel-page .empty-text {
+    margin: 5px 0 0;
+    font-size: 13px;
     color: var(--text-secondary);
 }
 
@@ -387,137 +470,6 @@ html[data-theme="dark"] .artikel-page textarea {
 .artikel-page .badge--purple {
     background: rgba(154, 91, 19, .14);
     color: #C27B28;
-}
-
-/* PREVIEW MOBILE */
-.artikel-page .preview-card {
-    padding: 20px;
-}
-
-.artikel-page .preview-head {
-    margin-bottom: 14px;
-}
-
-.artikel-page .preview-select-group {
-    margin-bottom: 14px;
-}
-
-.artikel-page .phone {
-    width: 100%;
-    max-width: 220px;
-    height: 440px;
-    border: 7px solid #182B24;
-    border-radius: 28px;
-    overflow: hidden;
-    margin: 0 auto;
-    background: #F5F8F6;
-    box-shadow: 0 12px 30px rgba(24, 43, 36, .22);
-}
-
-.artikel-page .phone-header {
-    background: #1E9E66;
-    color: #fff;
-    padding: 14px 12px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.artikel-page .phone-body {
-    padding: 12px;
-    height: calc(100% - 42px);
-    overflow-y: auto;
-    background: #F5F8F6;
-}
-
-.artikel-page .phone-image {
-    width: 100%;
-    height: 110px;
-    border-radius: 8px;
-    object-fit: cover;
-    margin-bottom: 10px;
-}
-
-.artikel-page .phone-banner-box {
-    width: 100%;
-    min-height: 92px;
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 10px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    box-shadow: 0 4px 12px rgba(24, 43, 36, .10);
-}
-
-.artikel-page .phone-banner-pill {
-    display: inline-block;
-    align-self: flex-start;
-    font-size: 8px;
-    font-weight: 700;
-    background: rgba(255, 255, 255, .20);
-    padding: 2px 7px;
-    border-radius: 99px;
-    text-transform: uppercase;
-    letter-spacing: .4px;
-}
-
-.artikel-page .phone-banner-title {
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.3;
-    margin-top: 8px;
-}
-
-.artikel-page .phone-textonly-bar {
-    width: 32px;
-    height: 3px;
-    border-radius: 99px;
-    background: #1E9E66;
-    margin-bottom: 8px;
-}
-
-.artikel-page .phone-title {
-    color: #182B24;
-    font-size: 15px;
-    line-height: 1.3;
-    font-weight: 700;
-}
-
-.artikel-page .phone-meta {
-    color: #157A4E;
-    font-size: 9px;
-    margin: 6px 0 10px;
-}
-
-.artikel-page .phone-meta .phone-badge-draft {
-    background: #FEF3D6;
-    color: #A66008;
-    padding: 1px 5px;
-    border-radius: 10px;
-    font-weight: 700;
-}
-
-.artikel-page .phone-content {
-    color: #5D736B;
-    font-size: 10px;
-    line-height: 1.6;
-}
-
-.artikel-page .phone-tip {
-    background: #EAF6F0;
-    color: #157A4E;
-    border: 1px solid #D8E6DF;
-    padding: 8px;
-    border-radius: 6px;
-    font-size: 9px;
-    margin-top: 12px;
-}
-
-.artikel-page .phone-empty {
-    text-align: center;
-    color: #92A59E;
-    padding-top: 120px;
-    font-size: 11px;
 }
 
 /* PILIHAN MODE MEDIA & SUMBER KONTEN */
@@ -877,35 +829,6 @@ html[data-theme="dark"] .artikel-page textarea {
     color: var(--text-secondary);
 }
 
-.artikel-page .combo-input {
-    width: 100% !important;
-    height: auto !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 8px !important;
-    padding: 9px 12px !important;
-    font-size: 13px !important;
-    font-weight: 400 !important;
-    background: var(--input-bg) !important;
-    color: var(--text) !important;
-    box-shadow: none !important;
-}
-
-.artikel-page .combo-list {
-    background: var(--surface);
-    border-color: var(--border);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, .22);
-}
-
-.artikel-page .combo-item {
-    padding: 10px 14px;
-    font-size: 13px;
-}
-
-.artikel-page .combo-item:hover {
-    background: var(--table-hover);
-    color: #1E9E66;
-}
-
 /* RESPONSIVE */
 @media (max-width: 1200px) {
     .artikel-page .media-mode-grid {
@@ -922,10 +845,6 @@ html[data-theme="dark"] .artikel-page textarea {
         grid-template-columns: 1fr;
     }
 
-    .artikel-page .preview-card {
-        display: none;
-    }
-
     .artikel-page .form-grid-columns {
         grid-template-columns: 1fr;
     }
@@ -936,6 +855,18 @@ html[data-theme="dark"] .artikel-page textarea {
 }
 
 @media (max-width: 768px) {
+    .artikel-page .hero {
+        align-items: stretch;
+    }
+
+    .artikel-page .hero-actions {
+        width: 100%;
+    }
+
+    .artikel-page .hero-actions .btn {
+        width: 100%;
+    }
+
     .artikel-page .form-full-view {
         padding: 16px;
     }

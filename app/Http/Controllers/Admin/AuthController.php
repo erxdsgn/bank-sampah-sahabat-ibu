@@ -23,7 +23,7 @@ class AuthController extends Controller
             $user = Auth::user();
 
             // 1. Validasi Role: Pastikan akun ini adalah Admin (bukan Warga)
-            if ($user->role !== 'admin' && !$user->admin) {
+            if ($user->role !== 'admin') {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();

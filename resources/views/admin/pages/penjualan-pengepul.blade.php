@@ -66,22 +66,17 @@
                 <tbody>
                     @forelse ($barangKeluar as $index => $item)
                         @php
-                            $satuanKat = strtolower($item->kategori->satuan ?? 'kg');
-                            $isKg = ($satuanKat === 'kg');
-                            $kuantitasTampil = $isKg ? (($item->berat_gram ?? 0) / 1000) : ($item->berat_gram ?? 0);
-                            $formattedKuantitas = $isKg
-                                ? number_format($kuantitasTampil, 2, ',', '.')
-                                : number_format($kuantitasTampil, 0, ',', '.');
-
-                            $hargaSatuanTampil = $isKg ? (($item->harga_jual_per_gram ?? 0) * 1000) : ($item->harga_jual_per_gram ?? 0);
+                            $satuan  = strtolower($item->kategori->satuan ?? 'kg');
+                            $desimal = in_array($satuan, ['kg', 'liter'], true) ? 2 : 0;
+                            $berat   = (float) ($item->berat ?? 0);
                         @endphp
                         <tr data-row-penjualan>
                             <td class="no-urut">{{ $index + 1 }}</td>
                             <td>{{ \Carbon\Carbon::parse($item->tanggal ?? $item->created_at)->format('d/m/Y') }}</td>
                             <td><strong>{{ $item->pembeli ?? 'Umum' }}</strong></td>
                             <td>{{ $item->kategori->nama_kategori ?? '-' }}</td>
-                            <td>{{ $formattedKuantitas }} {{ $item->kategori->satuan ?? 'kg' }}</td>
-                            <td>Rp {{ number_format($hargaSatuanTampil, 0, ',', '.') }}</td>
+                            <td>{{ number_format($berat, $desimal, ',', '.') }} {{ $item->kategori->satuan ?? 'kg' }}</td>
+                            <td>Rp {{ number_format($item->harga_jual_satuan ?? 0, 0, ',', '.') }}</td>
                             <td>
                                 <strong class="saldo">
                                     Rp {{ number_format($item->total ?? 0, 0, ',', '.') }}
@@ -189,7 +184,7 @@
                         <div class="form-group">
                             <label for="tambahHargaSatuan">Harga Jual per <span class="label-satuan">Satuan</span>
                                 (Rp)</label>
-                            <input type="number" id="tambahHargaSatuan" min="0" placeholder="Masukkan harga"
+                            <input type="number" id="tambahHargaSatuan" min="0" step="any" placeholder="Masukkan harga"
                                 required>
                         </div>
 

@@ -7,8 +7,9 @@ use App\Models\JadwalSetoran;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log; // Import Log Facade
+use Illuminate\Support\Facades\Log;
 use Kreait\Laravel\Firebase\Facades\Firebase;
+use Kreait\Firebase\Messaging\AndroidConfig;   // [FIX] tambah import
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 
@@ -91,8 +92,7 @@ class JadwalSetoranController extends Controller
             $query = User::whereNotNull('fcm_token')
                 ->where('notifikasi_aktif', true);
 
-            // 2. FILTER BERDASARKAN KELOMPOK (Jika wilayah diisi, bukan "Semua Kelompok")
-            // Pastikan isi value dropdown di form admin SAMA PERSIS dengan isi kolom 'kelompok' di tabel warga.
+            // 2. FILTER BERDASARKAN KELOMPOK
             if (!empty($jadwal->wilayah) && $jadwal->wilayah !== 'Semua Kelompok') {
                 $query->whereHas('warga', function ($q) use ($jadwal) {
                     $q->where('kelompok', $jadwal->wilayah);
@@ -112,17 +112,30 @@ class JadwalSetoranController extends Controller
 
             $judul = 'Jadwal Setoran Baru! 📢';
 
-            // Info target di pesan notifikasi
             $infoTarget = ($jadwal->wilayah && $jadwal->wilayah !== 'Semua Kelompok')
                 ? "Target: {$jadwal->wilayah}\n"
                 : "Untuk: Semua Warga\n";
 
             $pesan = "Agenda: {$jadwal->nama_agenda}\nTanggal: {$tanggal}\nJam: {$jam}\n{$infoTarget}";
 
+            // [FIX] AndroidConfig dengan priority high + channel_id
+            // Channel ID ini HARUS sama dengan yang dibuat di Flutter
+            // (flutter_local_notifications -> AndroidNotificationChannel) dan
+            // default_notification_channel_id di AndroidManifest.xml.
+            $androidConfig = AndroidConfig::fromArray([
+                'priority' => 'high',
+                'notification' => [
+                    'channel_id' => 'high_importance_channel',
+                    'sound' => 'default',
+                    'default_vibrate_timings' => true,
+                ],
+            ]);
+
             foreach ($wargaList as $user) {
                 $message = CloudMessage::new()
                     ->toToken($user->fcm_token)
                     ->withNotification(Notification::create($judul, $pesan))
+                    ->withAndroidConfig($androidConfig)   // [FIX]
                     ->withData([
                         'type' => 'jadwal_setoran',
                         'id_jadwal' => (string) $jadwal->id_jadwal,

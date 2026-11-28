@@ -1,0 +1,443 @@
+.pengaduan-page .is-hidden {
+    display: none !important;
+}
+
+.pengaduan-page .hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.pengaduan-page .hero-text {
+    max-width: 580px;
+}
+
+.pengaduan-page .hero-title {
+    margin: 4px 0;
+}
+
+.pengaduan-page .hero-sub {
+    margin: 0;
+}
+
+.pengaduan-page .hero-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.pengaduan-page .stat-chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 126px;
+    box-shadow: var(--shadow-card);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.pengaduan-page .stat-chip:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.pengaduan-page .stat-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.pengaduan-page .stat-dot--amber {
+    background: var(--warning);
+}
+
+.pengaduan-page .stat-dot--blue {
+    background: var(--info);
+}
+
+.pengaduan-page .stat-dot--green {
+    background: var(--success);
+}
+
+.pengaduan-page .stat-num {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--t-base);
+    font-family: 'Inter Tight', Inter, sans-serif;
+}
+
+.pengaduan-page .stat-label {
+    font-size: 12px;
+    color: var(--t-muted);
+    margin-top: 3px;
+}
+
+/* ---------- TOOLBAR & COMBO FILTER ---------- */
+.pengaduan-page .pengaduan-card .table-toolbar {
+    padding: 0 0 16px;
+}
+
+.pengaduan-page .toolbar-right .combo {
+    width: 165px;
+}
+
+.pengaduan-page .toolbar-right .combo-input {
+    height: 38px;
+    color: var(--t-base);
+    font-weight: 500;
+}
+
+.pengaduan-page .toolbar-right .btn {
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pengaduan-page .modal-body .combo {
+    width: 100%;
+}
+
+.pengaduan-page .modal-body .combo-input {
+    height: 40px;
+    color: var(--t-base);
+    font-weight: 500;
+}
+
+/* ---------- TABEL & BADGE ---------- */
+.pengaduan-page .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.pengaduan-page .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 920px;
+    color: var(--t-base);
+}
+
+.pengaduan-page .data-table thead th {
+    padding: 11px 14px;
+    background: var(--bg-muted);
+    color: var(--t-muted);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    white-space: nowrap;
+}
+
+.pengaduan-page .data-table tbody td {
+    padding: 14px;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 13px;
+    color: var(--t-base);
+    vertical-align: middle;
+    background: var(--bg-card);
+    transition: background .15s ease;
+}
+
+.pengaduan-page .data-table tbody tr:hover td {
+    background: var(--bg-hover);
+}
+
+.pengaduan-page .col-no {
+    width: 56px;
+    text-align: center;
+}
+
+.pengaduan-page .report-title {
+    font-weight: 700;
+    color: var(--t-base);
+    margin-bottom: 2px;
+}
+
+.pengaduan-page .report-snippet {
+    font-size: 12.5px;
+    color: var(--t-muted);
+    max-width: 340px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pengaduan-page .kategori-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--success-soft);
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+    white-space: nowrap;
+}
+
+.pengaduan-page .status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 11px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.pengaduan-page .status-badge--menunggu {
+    background: var(--warning-soft);
+    color: var(--warning);
+    border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+}
+
+.pengaduan-page .status-badge--diproses {
+    background: var(--info-soft);
+    color: var(--info);
+    border: 1px solid color-mix(in srgb, var(--info) 30%, transparent);
+}
+
+.pengaduan-page .status-badge--selesai {
+    background: var(--success-soft);
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+}
+
+.pengaduan-page .status-badge--ditolak {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+}
+
+.pengaduan-page .empty-cell {
+    text-align: center;
+    padding: 50px 40px;
+    color: var(--t-base);
+    background: var(--bg-card);
+}
+
+.pengaduan-page .data-table tbody tr:hover td.empty-cell {
+    background: var(--bg-card);
+}
+
+.pengaduan-page .empty-icon {
+    font-size: 30px;
+    margin-bottom: 10px;
+    line-height: 1;
+    opacity: .8;
+}
+
+.pengaduan-page .empty-cell strong {
+    display: block;
+    color: var(--t-base);
+    font-size: 14px;
+}
+
+.pengaduan-page .empty-text {
+    margin: 5px 0 0;
+    color: var(--t-muted);
+    font-size: 13px;
+}
+
+/* Memuat hasil pencarian tanpa refresh */
+.pengaduan-page .pengaduan-card.is-loading .table-responsive {
+    opacity: .55;
+    transition: opacity .15s ease;
+}
+
+.pengaduan-page .pagination-wrap {
+    padding: 16px 0 0;
+}
+
+/* ---------- MODAL DETAIL & TANGGAPAN ---------- */
+.pengaduan-page .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .52);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+html[data-theme="dark"] .pengaduan-page .modal-overlay {
+    background: rgba(2, 6, 23, .72);
+}
+
+.pengaduan-page .modal-overlay.is-open {
+    display: flex;
+    animation: fade-in .16s ease forwards;
+}
+
+.pengaduan-page .modal-box {
+    width: 100%;
+    max-width: 620px;
+    max-height: calc(100vh - 40px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    color: var(--t-base);
+    animation: modalPop .18s ease-out;
+}
+
+.pengaduan-page .modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.pengaduan-page .modal-sub {
+    font-size: 12px;
+    color: var(--t-muted);
+    margin-top: 4px;
+}
+
+.pengaduan-page .modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: var(--t-muted);
+    font-size: 20px;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    transition: background .15s ease, color .15s ease;
+}
+
+.pengaduan-page .modal-close:hover {
+    background: var(--bg-hover);
+    color: var(--t-base);
+}
+
+.pengaduan-page .modal-body {
+    padding: 20px 22px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.pengaduan-page .detail-box {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--bg-muted);
+    border: 1px solid var(--border-soft);
+    font-size: 13px;
+    color: var(--t-base);
+    white-space: pre-line;
+    line-height: 1.55;
+}
+
+.pengaduan-page .photo-preview {
+    width: 100%;
+    max-height: 250px;
+    object-fit: contain;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-muted);
+}
+
+.pengaduan-page .modal-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 8px;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 760px) {
+    .pengaduan-page .pengaduan-card .table-toolbar {
+        align-items: stretch;
+        padding: 0 0 14px;
+    }
+
+    .pengaduan-page .table-search {
+        width: 100%;
+    }
+
+    .pengaduan-page .toolbar-right {
+        width: 100%;
+    }
+
+    .pengaduan-page .toolbar-right .combo {
+        flex: 1 1 140px;
+        min-width: 130px;
+        width: auto;
+    }
+}
+
+@media (max-width: 560px) {
+    .pengaduan-page .hero-stats {
+        width: 100%;
+    }
+
+    .pengaduan-page .stat-chip {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .pengaduan-page .toolbar-right {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .pengaduan-page .toolbar-right .combo {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .pengaduan-page .toolbar-right .btn {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .pengaduan-page .modal-overlay {
+        padding: 12px;
+    }
+
+    .pengaduan-page .modal-box {
+        max-height: calc(100vh - 24px);
+        border-radius: 12px;
+    }
+
+    .pengaduan-page .modal-head,
+    .pengaduan-page .modal-body {
+        padding: 16px;
+    }
+
+    .pengaduan-page .modal-foot {
+        flex-wrap: wrap;
+    }
+
+    .pengaduan-page .modal-foot .btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
