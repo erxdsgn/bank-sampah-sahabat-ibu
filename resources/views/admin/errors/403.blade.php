@@ -1,4 +1,4 @@
-@extends('errors.layout')
+@extends('admin.errors.layout')
 @section('code', '403')
 @section('tag', 'Tidak Memiliki Hak Akses')
 @section('title', 'Akses Halaman Ditolak')

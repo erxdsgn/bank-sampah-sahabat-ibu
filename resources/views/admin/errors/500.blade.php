@@ -1,4 +1,4 @@
-@extends('errors.layout')
+@extends('admin.errors.layout')
 @section('code', '419')
 @section('tag', 'Page Expired (CSRF)')
 @section('title', 'Halaman Kedaluwarsa')

@@ -32,16 +32,16 @@ class AuthController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nik'                     => 'required|string|digits:16|regex:/^[0-9]{16}$/|unique:warga,nik',
-            'nama'                    => 'required|string|max:100',
-            'email'                   => 'required|email:rfc,dns|max:100|unique:users,email',
-            'password'                => 'required|string|min:8',
-            'no_hp'                   => 'nullable|string|min:10|max:14|regex:/^(08|628)[0-9]{7,11}$/',
-            'jumlah_anggota_keluarga' => 'nullable|integer|min:1',
-            'nama_bank_ewallet'       => 'nullable|string|max:50',
-            'nomor_rekening'          => 'nullable|string|min:6|max:16|regex:/^[0-9]+$/',
-            'nama_pemilik_rekening'   => 'nullable|string|max:100',
-            'alamat'                  => 'nullable|string|max:255',
+            'nik'                     => ['required', 'string', 'digits:16', 'regex:/^[0-9]{16}$/', 'unique:warga,nik'],
+            'nama'                    => ['required', 'string', 'max:100'],
+            'email'                   => ['required', 'email', 'max:100', 'unique:users,email'],
+            'password'                => ['required', 'string', 'min:8'],
+            'no_hp'                   => ['nullable', 'string', 'min:10', 'max:14', 'regex:/^(08|628)[0-9]{7,11}$/'],
+            'jumlah_anggota_keluarga' => ['nullable', 'integer', 'min:1'],
+            'nama_bank_ewallet'       => ['nullable', 'string', 'max:50'],
+            'nomor_rekening'          => ['nullable', 'string', 'min:6', 'max:16', 'regex:/^[0-9]+$/'],
+            'nama_pemilik_rekening'   => ['nullable', 'string', 'max:100'],
+            'alamat'                  => ['nullable', 'string', 'max:255'],
         ], [
             'nik.required'           => 'NIK wajib diisi.',
             'nik.digits'             => 'NIK harus berjumlah 16 digit.',
@@ -134,9 +134,19 @@ class AuthController extends Controller
      */
     public function verifyEmailLink(Request $request, $id, $hash)
     {
-        $user = User::findOrFail($id);
+        $user = User::find($id);
+
+        if (!$user) {
+            if (view()->exists('admin.errors.404')) {
+                return response()->view('admin.errors.404', [], 404);
+            }
+            return response('Akun tidak ditemukan atau link sudah tidak berlaku.', 404);
+        }
 
         if (!hash_equals(sha1($user->getEmailForVerification()), (string) $hash)) {
+            if (view()->exists('admin.errors.403')) {
+                return response()->view('admin.errors.403', [], 403);
+            }
             return response('Link konfirmasi tidak valid.', 403);
         }
 
@@ -173,7 +183,6 @@ class AuthController extends Controller
         $emailNormalized = strtolower(trim($request->email));
         $user = User::where('email', $emailNormalized)->first();
 
-        // PERBAIKAN: Jangan ungkapkan apakah email terdaftar atau tidak (Anti User Enumeration)
         if (!$user) {
             return response()->json([
                 'status'   => 'success',
@@ -294,16 +303,16 @@ class AuthController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'username'                => 'required|string|max:50|unique:users,username,' . $user->id,
-            'email'                   => 'required|email:rfc,dns|max:100|unique:users,email,' . $user->id,
-            'nama'                    => 'required|string|max:100',
-            'kelompok'                => 'nullable|string|max:50',
-            'no_hp'                   => 'nullable|string|min:10|max:14|regex:/^(08|628)[0-9]{7,11}$/',
-            'jumlah_anggota_keluarga' => 'nullable|integer|min:1',
-            'nama_bank_ewallet'       => 'nullable|string|max:50',
-            'nomor_rekening'          => 'nullable|string|min:6|max:16|regex:/^[0-9]+$/',
-            'nama_pemilik_rekening'   => 'nullable|string|max:100',
-            'alamat'                  => 'nullable|string|max:255',
+            'username'                => ['required', 'string', 'max:50', 'unique:users,username,' . $user->id],
+            'email'                   => ['required', 'email', 'max:100', 'unique:users,email,' . $user->id],
+            'nama'                    => ['required', 'string', 'max:100'],
+            'kelompok'                => ['nullable', 'string', 'max:50'],
+            'no_hp'                   => ['nullable', 'string', 'min:10', 'max:14', 'regex:/^(08|628)[0-9]{7,11}$/'],
+            'jumlah_anggota_keluarga' => ['nullable', 'integer', 'min:1'],
+            'nama_bank_ewallet'       => ['nullable', 'string', 'max:50'],
+            'nomor_rekening'          => ['nullable', 'string', 'min:6', 'max:16', 'regex:/^[0-9]+$/'],
+            'nama_pemilik_rekening'   => ['nullable', 'string', 'max:100'],
+            'alamat'                  => ['nullable', 'string', 'max:255'],
         ], [
             'username.required'    => 'Username wajib diisi.',
             'username.unique'      => 'Username sudah digunakan orang lain.',
@@ -342,15 +351,35 @@ class AuthController extends Controller
 
                 $user->update($userData);
 
+                // Hanya perbarui kolom yang benar-benar dikirim dan tidak kosong
+                // agar data lama (no_hp, alamat, rekening) tidak tertimpa menjadi NULL
                 $dataWarga = [
-                    'nama'                    => $request->nama,
-                    'no_hp'                   => $request->no_hp,
-                    'jumlah_anggota_keluarga' => $request->jumlah_anggota_keluarga,
-                    'nama_bank_ewallet'       => $request->nama_bank_ewallet,
-                    'nomor_rekening'          => $request->nomor_rekening,
-                    'nama_pemilik_rekening'   => $request->nama_pemilik_rekening,
-                    'alamat'                  => $request->alamat,
+                    'nama' => $request->nama,
                 ];
+
+                if ($request->filled('no_hp')) {
+                    $dataWarga['no_hp'] = $request->no_hp;
+                }
+
+                if ($request->filled('jumlah_anggota_keluarga')) {
+                    $dataWarga['jumlah_anggota_keluarga'] = $request->jumlah_anggota_keluarga;
+                }
+
+                if ($request->filled('nama_bank_ewallet')) {
+                    $dataWarga['nama_bank_ewallet'] = $request->nama_bank_ewallet;
+                }
+
+                if ($request->filled('nomor_rekening')) {
+                    $dataWarga['nomor_rekening'] = $request->nomor_rekening;
+                }
+
+                if ($request->filled('nama_pemilik_rekening')) {
+                    $dataWarga['nama_pemilik_rekening'] = $request->nama_pemilik_rekening;
+                }
+
+                if ($request->filled('alamat')) {
+                    $dataWarga['alamat'] = $request->alamat;
+                }
 
                 if ($request->filled('kelompok') && $request->kelompok !== $warga->kelompok) {
                     $dataWarga['kelompok'] = $request->kelompok;
